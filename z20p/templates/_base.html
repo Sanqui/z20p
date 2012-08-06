@@ -1,28 +1,4 @@
-{% macro render_field(field) %}
-  <dt>{{ field.label }}
-  <dd>{{ field(**kwargs)|safe }}
-  {% if field.errors %}
-    <ul class=errors>
-    {% for error in field.errors %}
-      <li>{{ error }}</li>
-    {% endfor %}
-    </ul>
-  {% endif %}
-  </dd>
-{% endmacro %}
-{% macro display_article(article) -%}
-    <article>
-        <h1>{{ article.title }}</h1>
-        {% if article.image_url %}
-            <img src="{{article.image_url}}" title="{{article.image_title}}" alt="{{article.title}} - obrázek" class="image">
-        {% endif %}
-        {{article.text|replace("\n", "\n<p>")|safe}}
-        <footer>
-            <div>{{"Napsala" if article.author.gender == "f" else "Autor"}}: <author>{{article.author.name}}</author></div>
-            <div>Datum publikace: {{article.timestamp|datetime}}</div>            
-        </footer>        
-    </article>
-{%- endmacro %}
+{% from '_macros.html' import render_field, display_article %}
 <!DOCTYPE html>
 <html lang="cs">
     <head>
@@ -36,7 +12,11 @@
                   <div class="flash">{{ message }}</div>
                 {% endfor %}
             {% endwith %}
-            <a href="/new_article">Nový článek</a>
+            {% if session.user %}
+                Jste přihlášeni za {{session.user.name}} ({{session.user}}) práva {{session.user.rights}}
+            {% endif %}
+            <!-- move me -->
+            <div><a href="/new_article">Nový článek</a> - <a href="/login">Login</a> - <a href="/logout">Logout</a> - <a href="/register">Registrovat</a></div>
             <menu id="leftmenu">
             {% for item, link in (('Vyhledávání', 'search'), ('Pro čtenáře', 'info'), ("Videa a 5 nej.", "columns"), ("Všechny články", "all_articles")) %}
                 <li><a href="{{link}}">{{item}}</a>

@@ -1,0 +1,16 @@
+{% extends "_base.html" %}
+
+{% block title %}Přihlášení{% endblock %}
+
+{% block content %}
+    <h2>Registrace</h2>
+    <form method="POST" action="/login">
+      <dl>
+        {{ render_field(form.name) }}
+        {{ render_field(form.password) }}
+      </dl>
+      <p><input type="submit" value="Přihlásit se">
+    </form>
+    
+    
+{% endblock %}

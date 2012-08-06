@@ -18,6 +18,7 @@ class User(Base):
     id = Column(Integer, primary_key=True, nullable=False)
     name = Column(Unicode(64), nullable=False)
     password = Column(Unicode(128))
+    rights = Column(Integer)
     gender = Column(Enum('m', 'f', '-'))
     minipic = Column(Unicode(256))
 
@@ -53,5 +54,6 @@ class Article(Base):
     
 
 if __name__ == "__main__":
-    Base.metadata.drop_all(bind=engine)
+    if raw_input('Drop all? ').strip().lower().startswith('y'):
+        Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(bind=engine)

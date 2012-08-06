@@ -4,18 +4,34 @@ from __future__ import absolute_import, unicode_literals, print_function
 from z20p import db
 
 from datetime import datetime
-from flask import Flask, render_template, request, flash, redirect
+import hashlib
+def pwhash(string):
+    return hashlib.sha224(string+"***REMOVED***").hexdigest()
+from flask import Flask, render_template, request, flash, redirect, session
 app = Flask('z20p')
 app.secret_key = b"superuniqueandsecret"
 
 # TODO split this into file
-from wtforms import Form, BooleanField, TextField, TextAreaField, PasswordField, IntegerField, validators
+from wtforms import Form, BooleanField, TextField, TextAreaField, PasswordField, RadioField, validators
+from flask.ext.wtf.html5 import IntegerField
 class ArticleForm(Form):
     title = TextField('Titulek', [validators.required()])
     text = TextAreaField('Text', [validators.required()])
-    rating = IntegerField('Hodnocení', [validators.optional()])
+    rating = IntegerField('Hodnocení', [validators.optional()], min=0, max=10)
     image_url = TextField('URL obrázku', [validators.optional()])
     image_title = TextField('Titulek obrázku', [validators.optional()])
+
+# Callable decorator
+def minrights(minrights):
+    def dec(function):
+        def f(*args, **kvargs):     
+            if 'user' in session:
+                if session['user'].rights >= minrights:
+                    return function(*args, **kvargs)
+                return "soft 403 (nedostatecna prava: {0} < {1})".format(session['user'].rights, minrights)
+            return "soft 403 (prihlas se)" # TODO use something
+        return f
+    return dec
 
 @app.teardown_request
 def shutdown_session(exception=None):
@@ -31,13 +47,63 @@ def root():
         .order_by(db.Article.timestamp.desc()).limit(4).all()
     return render_template("main.html", articles=articles)
 
+@app.route("/login", methods=['GET', 'POST'])
+def login():
+    class LoginForm(Form):
+        name = TextField('Jméno', [validators.required()])
+        password = PasswordField('Heslo', [validators.required()])
+    
+    form = LoginForm(request.form)
+    if request.method == 'POST' and form.validate():
+        user = db.session.query(db.User).filter_by(name=form.name.data).filter_by(password=pwhash(form.password.data)).scalar()
+        if user:
+            session['user'] = user
+            flash("Jste přihlášeni.")
+            return redirect("/")
+        else:
+            flash("Nesprávné uživatelské jméno nebo heslo.")
+    
+    return render_template("login.html", form=form)
+
+@app.route("/logout")
+def logout():
+    session.pop("user")
+    flash("Byli jste odhlášeni.")
+    return redirect("/")
+
+@app.route("/register", methods=['GET', 'POST'])
+def register():
+    class RegistrationForm(Form):
+        name = TextField('Jméno', [validators.required()])
+        password = PasswordField('Heslo', [
+            validators.Required(),
+            validators.EqualTo('confirm', message='Hesla se musí schodovat')
+        ])
+        confirm = PasswordField('Heslo znovu')
+        gender = RadioField('Pohlaví', choices=[("m", "ten"), ("f", "ta"), ("-", "to")])
+    
+    form = RegistrationForm(request.form)
+    if request.method == 'POST' and form.validate():
+        # TODO confirm that username is unique
+        user = db.User(name=form.name.data, gender=form.gender.data, 
+            rights=1, password=pwhash(form.password.data))
+        db.session.add(user)
+        db.session.commit()
+        session['user'] = db.session.query(db.User).filter_by(name=form.name.data).filter_by(password=pwhash(form.password.data)).scalar()
+        flash("Jste zaregistrováni.")
+        return redirect("/")
+    
+    return render_template("register.html", form=form)
+
 @app.route("/new_article", methods=['GET', 'POST'])
+@minrights(2)
 def new_article():
     form = ArticleForm(request.form)
     if request.method == 'POST' and form.validate():
         article = db.Article(title=form.title.data, text=form.text.data,
             rating=form.rating.data, image_url=form.image_url.data,
-            image_title=form.image_title.data, author_id=0, timestamp=datetime.utcnow())
+            image_title=form.image_title.data, author_id=session['user'], 
+            timestamp=datetime.utcnow())
         db.session.add(article)
         db.session.commit()
         flash('Článek přidán')

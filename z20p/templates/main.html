@@ -1,0 +1,15 @@
+{% extends "_base.html" %}
+
+{% block title %}Index{% endblock %}
+
+{% block content %}
+    <h2>Nejnovější minirecenze</h2>
+        {% for article in articles %}
+            {{ display_article(article) }}
+        {% endfor %}
+    <h2>Nejnovější sloupky</h2>
+        <article>recenze</article>
+        <article>recenze</article>
+    <h2>Herpy a derpy</h2>
+    
+{% endblock %}

@@ -1,13 +1,25 @@
+{% macro render_field(field) %}
+  <dt>{{ field.label }}
+  <dd>{{ field(**kwargs)|safe }}
+  {% if field.errors %}
+    <ul class=errors>
+    {% for error in field.errors %}
+      <li>{{ error }}</li>
+    {% endfor %}
+    </ul>
+  {% endif %}
+  </dd>
+{% endmacro %}
 {% macro display_article(article) -%}
     <article>
         <h1>{{ article.title }}</h1>
         {% if article.image_url %}
             <img src="{{article.image_url}}" title="{{article.image_title}}" alt="{{article.title}} - obrázek" class="image">
         {% endif %}
-        {{article.text|safe|replace("\n", "\n<p>")}}
+        {{article.text|replace("\n", "\n<p>")|safe}}
         <footer>
             <div>{{"Napsala" if article.author.gender == "f" else "Autor"}}: <author>{{article.author.name}}</author></div>
-            <div>Datum publikace: {{article.datetime|datetime}}</div>            
+            <div>Datum publikace: {{article.timestamp|datetime}}</div>            
         </footer>        
     </article>
 {%- endmacro %}
@@ -18,7 +30,13 @@
     </head>
     <body>
         <header>
-            <h1>Z20P, vše co jste kdy chtěli</h1>
+            <h1><a href="/">Z20P</a>, vše co jste kdy chtěli</h1>
+            {% with messages = get_flashed_messages() %}
+                {% for message in messages %}
+                  <div class="flash">{{ message }}</div>
+                {% endfor %}
+            {% endwith %}
+            <a href="/new_article">Nový článek</a>
             <menu id="leftmenu">
             {% for item, link in (('Vyhledávání', 'search'), ('Pro čtenáře', 'info'), ("Videa a 5 nej.", "columns"), ("Všechny články", "all_articles")) %}
                 <li><a href="{{link}}">{{item}}</a>

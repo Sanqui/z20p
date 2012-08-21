@@ -13,8 +13,8 @@
 {% macro display_article(article) -%}
     <article>
         <h1>{{ article.title }}</h1>
-        {% if article.image_url %}
-            <img src="{{article.image_url}}" title="{{article.image_title}}" alt="{{article.title}} - obrázek" class="image">
+        {% if article.media %}
+            <img src="{{article.media.url}}" title="{{article.media.title}}" alt="{{article.title}} - obrázek" class="image">
         {% endif %}
         {{article.text|replace("\n", "\n<p>")|safe}}
         <footer>

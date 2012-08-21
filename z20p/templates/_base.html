@@ -3,10 +3,11 @@
 <html lang="cs">
     <head>
         <title>Z20P > {% block title %}{% endblock %}</title>
+        <link href="/static/style.css" rel="stylesheet" type="text/css">
     </head>
     <body>
+        <h1 id="logo"><a href="/"><img src="http://www.zabij10prasat.cz/img/prasarny.png" alt="Zabij 10 prasat"></a></h1>
         <header>
-            <h1><a href="/">Z20P</a>, vše co jste kdy chtěli</h1>
             {% with messages = get_flashed_messages() %}
                 {% for message in messages %}
                   <div class="flash">{{ message }}</div>
@@ -16,7 +17,7 @@
                 Jste přihlášeni za {{session.user.name}} ({{session.user}}) práva {{session.user.rights}}
             {% endif %}
             <!-- move me -->
-            <div><a href="/new_article">Nový článek</a> - <a href="/login">Login</a> - <a href="/logout">Logout</a> - <a href="/register">Registrovat</a></div>
+            <div class="linkbar"><a href="/new_article">Nový článek</a>  • <a href="/login">Login</a>  • <a href="/logout">Logout</a>  • <a href="/register">Registrovat</a></div>
             <menu id="leftmenu">
             {% for item, link in (('Vyhledávání', 'search'), ('Pro čtenáře', 'info'), ("Videa a 5 nej.", "columns"), ("Všechny články", "all_articles")) %}
                 <li><a href="{{link}}">{{item}}</a>

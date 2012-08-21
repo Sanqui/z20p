@@ -4,12 +4,12 @@
 
 {% block content %}
     <h2>Nový článek</h2>
-    <form method="POST" action="/new_article">
+    <form method="POST" action="/new_article" enctype="multipart/form-data">
       <dl>
         {{ render_field(form.title) }}
         {{ render_field(form.text) }}
         {{ render_field(form.rating) }}
-        {{ render_field(form.image_url) }}
+        {{ render_field(form.image) }}
         {{ render_field(form.image_title) }}
       </dl>
       <p><input type="submit" value="Přidat">

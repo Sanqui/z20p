@@ -1,3 +1,4 @@
 *.pyc
 *~
 z20p/db
+z20p/static/uploads/*

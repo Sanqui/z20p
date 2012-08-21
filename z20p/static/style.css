@@ -1,0 +1,19 @@
+body {background-color: #f0f0f8;}
+header, #content {width: 55%; margin: auto;}
+#logo {margin:auto; width:650px;}
+#leftmenu, #rightmenu {position: fixed; top: 135px;  width: 17.5%; margin:0; padding:0; list-style:none;}
+#leftmenu {left: 2.5%;}
+#rightmenu {right: 2.5%;}
+
+.linkbar {background-color: rgb(187, 20, 26); text-align:right;}
+.linkbar, .linkbar a {color:white; text-decoration:none;}
+.linkbar a {font-weight:bold;}
+
+article {
+    border: 1px solid black;
+    border-width: 14px;
+	border-image: url('/static/img/article_border.png') 14 14 14 14 round round;
+	-moz-border-image: url('/static/img/article_border.png') 14 14 14 14 round round;
+	-webkit-border-image: url('/static/img/article_border.png') 14 14 14 14 round round;
+	-o-border-image: url('/static/img/article_border.png') 14 14 14 14 round round;
+}

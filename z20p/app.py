@@ -1,25 +1,43 @@
 # encoding: utf-8
 from __future__ import absolute_import, unicode_literals, print_function
 
-from z20p import db
+#from z20p import db
+import db
 
 from datetime import datetime
 import hashlib
+import os
+
 def pwhash(string):
     return hashlib.sha224(string+"***REMOVED***").hexdigest()
+    
+from werkzeug import secure_filename
 from flask import Flask, render_template, request, flash, redirect, session
+
 app = Flask('z20p')
 app.secret_key = b"superuniqueandsecret"
 
 # TODO split this into file
-from wtforms import Form, BooleanField, TextField, TextAreaField, PasswordField, RadioField, validators
+from wtforms import Form, BooleanField, TextField, TextAreaField, PasswordField, RadioField, validators, ValidationError
+from flask.ext.wtf import FileField, file_allowed, file_required
 from flask.ext.wtf.html5 import IntegerField
+from flask.ext.uploads import UploadSet, IMAGES
+
+uploads = UploadSet("uploads", IMAGES)
+
 class ArticleForm(Form):
     title = TextField('Titulek', [validators.required()])
     text = TextAreaField('Text', [validators.required()])
-    rating = IntegerField('Hodnocení', [validators.optional()], min=0, max=10)
-    image_url = TextField('URL obrázku', [validators.optional()])
+    rating = IntegerField('Hodnocení', [validators.optional()])
+    image = FileField('Obrázek', [file_allowed(uploads, "Jen obrázky")])
     image_title = TextField('Titulek obrázku', [validators.optional()])
+    
+    # TODO make this work??
+    #def validate_image(self, field):
+    #    if "." in field.data and field.data.split('.')[-1] in ('png', 'jpg', 'jpeg', 'gif'):
+    #        return
+    #    else:
+    #        raise ValidationError("Nepovolený typ souboru.")
 
 # Callable decorator
 def minrights(minrights):
@@ -95,14 +113,39 @@ def register():
     
     return render_template("register.html", form=form)
 
-@app.route("/new_article", methods=['GET', 'POST'])
-@minrights(2)
-def new_article():
+@app.route("/labels", methods=['GET', 'POST'])
+def labels():
+    labels = db.session.query(db.Label) \
+        .order_by(db.Article.timestamp.desc()).limit(4).all()
     form = ArticleForm(request.form)
     if request.method == 'POST' and form.validate():
         article = db.Article(title=form.title.data, text=form.text.data,
             rating=form.rating.data, image_url=form.image_url.data,
             image_title=form.image_title.data, author_id=session['user'], 
+            timestamp=datetime.utcnow())
+        db.session.add(article)
+        db.session.commit()
+        flash('Štítek přidán')
+        return redirect("/")
+    return render_template("new_article.html", form=form)
+
+@app.route("/new_article", methods=['GET', 'POST'])
+@minrights(2)
+def new_article():
+    form = ArticleForm(request.form)
+    if request.method == 'POST' and form.validate():
+        media = None
+        if 'image' in request.files:
+            image = request.files['image']
+            filename = secure_filename(image.filename)
+            image.save(os.path.join("static/uploads/", filename))
+            media = db.Media(type="image", url="/static/uploads/"+filename, title=form.image_title.data, author_id=session['user'].id)
+            db.session.add(media)
+            print(media)
+            flash("Obrázek nahrán.")
+    
+        article = db.Article(title=form.title.data, text=form.text.data,
+            rating=form.rating.data, media=media, author_id=session['user'].id, 
             timestamp=datetime.utcnow())
         db.session.add(article)
         db.session.commit()

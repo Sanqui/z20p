@@ -38,7 +38,8 @@
                 </ul>
             </div>
             <div>{{"Napsala" if article.author.gender == "f" else "Autor"}}: <author>{{article.author.name}}</author></div>
-            <div>Datum publikace: {{article.timestamp|datetime}}</div>            
+            <div>Datum publikace: {{article.timestamp|datetime}}</div> 
+            <div><a href="/article/{{article.id}}/edit">edit</a></div>           
         </footer>        
     </article>
 {%- endmacro %}

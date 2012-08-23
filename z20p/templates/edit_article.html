@@ -1,0 +1,20 @@
+{% extends "_base.html" %}
+
+{% block title %}Upravit článek{% endblock %}
+
+{% block content %}
+    <h2>Upravit článek</h2>
+    <form method="POST" action="/article/{{article.id}}/edit" enctype="multipart/form-data">
+      <dl>
+        {{ render_field(form.title) }}
+        {{ render_field(form.text) }}
+        {{ render_field(form.rating) }}
+        <div class="labelfloat">{{ render_field(form.labels) }}</div>
+        <dt>todo: vyber obrazku z tech prirazenym k clanku</dt>
+        {{ render_field(form.image_title) }}
+      </dl>
+      <p><input type="submit" value="Upravit">
+    </form>
+    
+    
+{% endblock %}

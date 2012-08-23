@@ -162,6 +162,18 @@ def labels(edit_id=None):
         .order_by(db.Label.category.asc()).all()
     return render_template("labels.html", form=form, labels=labels, edit_id=edit_id)
 
+def upload_image(**kvargs):
+    media = None
+    if 'image' in request.files and request.files['image'].filename != "":
+        image = request.files['image']
+        filename = secure_filename(image.filename)
+        image.save(os.path.join("static/uploads/", filename))
+        media = db.Media(type="image", url="/static/uploads/"+filename, **kvargs)
+        db.session.add(media)
+        print(media)
+        flash("Obrázek nahrán.")
+    return media
+
 @app.route("/new_article", methods=['GET', 'POST'])
 @minrights(2)
 def new_article():
@@ -170,15 +182,7 @@ def new_article():
         .order_by(db.Label.category.asc()).all()
     form.labels.choices = [(l.id, l.name+" ("+l.category+")") for l in labels]
     if request.method == 'POST' and form.validate():
-        media = None
-        if 'image' in request.files and request.files['image'].filename != "":
-            image = request.files['image']
-            filename = secure_filename(image.filename)
-            image.save(os.path.join("static/uploads/", filename))
-            media = db.Media(type="image", url="/static/uploads/"+filename, title=form.image_title.data, author_id=session['user'].id)
-            db.session.add(media)
-            print(media)
-            flash("Obrázek nahrán.")
+        media = upload_image(title=form.image_title.data, author_id=session['user'].id)
     
         article = db.Article(title=form.title.data, text=form.text.data,
             rating=form.rating.data, media=media, author_id=session['user'].id, 
@@ -191,6 +195,33 @@ def new_article():
         flash('Článek přidán')
         return redirect("/")
     return render_template("new_article.html", form=form)
+    
+@app.route("/article/<int:edit_id>/edit", methods=['GET', 'POST'])
+@minrights(2)
+def edit_article(edit_id):
+    article = db.session.query(db.Article).filter_by(id=edit_id).scalar()
+    form = ArticleForm(request.form, article)
+    labels = db.session.query(db.Label) \
+        .order_by(db.Label.category.asc()).all()
+    form.labels.choices = [(l.id, l.name+" ("+l.category+")") for l in labels]
+    if request.method == 'POST' and form.validate():
+        media = upload_image(title=form.image_title.data, author_id=session['user'].id)
+    
+        article.title = form.title.data
+        article.text = form.text.data
+        article.rating = form.rating.data
+        article.image_title = form.image_title.data
+        article.labels = []
+        for label_id in form.labels.data:
+            article.labels.append(db.session.query(db.Label).filter_by(id=label_id).scalar())
+        if media != None:
+            article.media = media
+        db.session.commit()
+        flash('Článek upraven')
+        return redirect("/")
+    if request.method == 'GET' and form.labels.data == []:
+        form.labels.data = [l.id for l in article.labels]
+    return render_template("edit_article.html", form=form, article=article)
     
 if __name__ == "__main__":
     app.run(host="0.0.0.0", debug=True)

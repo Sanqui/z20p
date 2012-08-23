@@ -19,6 +19,15 @@
             <!-- move me -->
             <div class="linkbar"><a href="/new_article">Nový článek</a>  • <a href="/login">Login</a>  • <a href="/logout">Logout</a>  • <a href="/register">Registrovat</a></div>
             <menu id="leftmenu">
+            <div class="categories">
+                <li><a href="#">Kategorie<span class="down">▽</span></a>
+                <li><a href="#">Kategorie<span class="down">▽</span></a>
+                <li><a href="#">Kategorie<span class="down">▽</span></a>
+                <li><a href="#">Kategorie<span class="down">▽</span></a>
+                <li><a href="#">Kategorie<span class="down">▽</span></a>
+                <li><a href="#">Kategorie<span class="down">▽</span></a>
+                <li><a href="#">Kategorie<span class="down">▽</span></a>
+                
             {% for item, link in (('Vyhledávání', 'search'), ('Pro čtenáře', 'info'), ("Videa a 5 nej.", "columns"), ("Všechny články", "all_articles")) %}
                 <li><a href="{{link}}">{{item}}</a>
             {% endfor %}

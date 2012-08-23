@@ -4,7 +4,8 @@ from sqlalchemy.orm import scoped_session, sessionmaker, relationship
 from sqlalchemy.schema import Column, ForeignKey, Table
 from sqlalchemy.types import DateTime, Integer, Unicode, Enum, UnicodeText
 
-engine = create_engine(open("db").read(), encoding="utf8") # XXX
+engine = create_engine(open("db").read(), encoding="utf8", pool_size = 100, pool_recycle=7200) # XXX
+# pool_recycle is to prevent "server has gone away"
 session = scoped_session(sessionmaker(bind=engine, autoflush=False))
 
 Base = declarative_base(bind=engine)

@@ -4,6 +4,9 @@ header, #content {width: 55%; margin: auto;}
 #leftmenu, #rightmenu {position: fixed; top: 135px;  width: 17.5%; margin:0; padding:0; list-style:none;}
 #leftmenu {left: 2.5%;}
 #rightmenu {right: 2.5%;}
+#leftmenu a, #rightmenu a {position: relative; border:1px solid #aaa; padding:3px; width:100%; display:block; background:white;}
+.down {position:absolute; right:4px; background-color: rgb(187, 20, 26); color:white;}
+menu li { padding: 1px; width:100%; }
 
 .linkbar {background-color: rgb(187, 20, 26); text-align:right;}
 .linkbar, .linkbar a {color:white; text-decoration:none;}

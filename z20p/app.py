@@ -19,17 +19,31 @@ app = Flask('z20p')
 app.secret_key = b"superuniqueandsecret"
 
 # TODO split this into file
-from wtforms import Form, BooleanField, TextField, TextAreaField, PasswordField, RadioField, SelectField, validators, ValidationError
+from wtforms import Form, BooleanField, TextField, TextAreaField, PasswordField, RadioField, SelectField, SelectMultipleField, validators, ValidationError, widgets
 from flask.ext.wtf import FileField, file_allowed, file_required
 from flask.ext.wtf.html5 import IntegerField
 from flask.ext.uploads import UploadSet, IMAGES
 
 uploads = UploadSet("uploads", IMAGES)
 
+class MultiCheckboxField(SelectMultipleField):
+    """
+    A multiple-select, except displays a list of checkboxes.
+
+    Iterating the field will produce subfields, allowing custom rendering of
+    the enclosed checkbox fields.
+    
+    Shamelessly stolen from WTForms FAQ.
+    """
+    widget = widgets.ListWidget(prefix_label=False)
+    option_widget = widgets.CheckboxInput()
+
+
 class ArticleForm(Form):
     title = TextField('Titulek', [validators.required()])
     text = TextAreaField('Text', [validators.required()])
     rating = IntegerField('Hodnocení', [validators.optional()])
+    labels = MultiCheckboxField('Štítky', coerce=int)
     image = FileField('Obrázek', [file_allowed(uploads, "Jen obrázky")])
     image_title = TextField('Titulek obrázku', [validators.optional()])
     
@@ -152,9 +166,12 @@ def labels(edit_id=None):
 @minrights(2)
 def new_article():
     form = ArticleForm(request.form)
+    labels = db.session.query(db.Label) \
+        .order_by(db.Label.category.asc()).all()
+    form.labels.choices = [(l.id, l.name+" ("+l.category+")") for l in labels]
     if request.method == 'POST' and form.validate():
         media = None
-        if 'image' in request.files:
+        if 'image' in request.files and request.files['image'].filename != "":
             image = request.files['image']
             filename = secure_filename(image.filename)
             image.save(os.path.join("static/uploads/", filename))
@@ -166,6 +183,9 @@ def new_article():
         article = db.Article(title=form.title.data, text=form.text.data,
             rating=form.rating.data, media=media, author_id=session['user'].id, 
             timestamp=datetime.utcnow())
+        article.labels = []
+        for label_id in form.labels.data:
+            article.labels.append(db.session.query(db.Label).filter_by(id=label_id).scalar())
         db.session.add(article)
         db.session.commit()
         flash('Článek přidán')

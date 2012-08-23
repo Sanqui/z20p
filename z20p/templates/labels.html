@@ -1,0 +1,42 @@
+{% extends "_base.html" %}
+
+{% block title %}Štítky{% endblock %}
+
+{% block content %}
+    <h2>Štítky</h2>
+    <table><thead><tr><td>edit</td><td>Štítek</td><td>Autor</td><td>Kategorie</td></tr></thead>
+    <tbody>
+        {% for label in labels %}
+            {% if label.id != edit_id %}
+                <tr id="label-{{label.id}}">
+                    <td><a href="/labels/{{label.id}}/edit#label-{{label.id}}">e</a></td>
+                    <td>{{label.name}}</td>
+                    <td>{{label.user.name}}</td>
+                    <td>{{{"platform":"Platforma", "genre":"Žánr", "other":"Jiné"}[label.category]}}</td>
+                </tr>
+            {% else %}
+                <form method="POST" action="/labels/{{label.id}}/edit">
+                    <tr id="label-{{label.id}}">
+                        <td><!--<a href="/labels/{{label.id}}/delete">X</a> --><input type="submit" value="OK"></td>
+                        {{ td_field(form.name) }}
+                        <td>{{label.user.name}}</td>
+                        {{ td_field(form.category) }}
+                    </tr>
+                </form>
+            {% endif %}
+        {% endfor %}
+    </tbody>
+    </table>
+    {% if edit_id == None %}
+        <h2>Nový štítek</h2>
+        <form method="POST" action="/labels">
+          <dl>
+            {{ render_field(form.name) }}
+            {{ render_field(form.category) }}
+          </dl>
+          <p><input type="submit" value="Přidat">
+        </form>
+    {% endif %}
+    
+    
+{% endblock %}

@@ -1,4 +1,4 @@
-{% from '_macros.html' import render_field, display_article %}
+{% from '_macros.html' import render_field, td_field, display_article %}
 <!DOCTYPE html>
 <html lang="cs">
     <head>
@@ -17,7 +17,7 @@
                 Jste přihlášeni za {{session.user.name}} ({{session.user}}) práva {{session.user.rights}}
             {% endif %}
             <!-- move me -->
-            <div class="linkbar"><a href="/new_article">Nový článek</a>  • <a href="/login">Login</a>  • <a href="/logout">Logout</a>  • <a href="/register">Registrovat</a></div>
+            <div class="linkbar"><a href="/new_article">Nový článek</a>  • <a href="/labels">Štítky</a> • <a href="/login">Login</a>  • <a href="/logout">Logout</a>  • <a href="/register">Registrovat</a></div>
             <menu id="leftmenu">
             <div class="categories">
                 <li><a href="#">Kategorie<span class="down">▽</span></a>

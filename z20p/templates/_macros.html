@@ -1,3 +1,4 @@
+## REMEMBER TO ADD AN IMPORT TO _base.html
 {% macro render_field(field) %}
   <dt>{{ field.label }}
   <dd>{{ field(**kwargs)|safe }}
@@ -9,6 +10,17 @@
     </ul>
   {% endif %}
   </dd>
+{% endmacro %}
+{% macro td_field(field) %}
+  <td title="{{field.name}}">{{ field(**kwargs)|safe }}
+  {% if field.errors %}
+    <ul class=errors>
+    {% for error in field.errors %}
+      <li>{{ error }}</li>
+    {% endfor %}
+    </ul>
+  {% endif %}
+  </td>
 {% endmacro %}
 {% macro display_article(article) -%}
     <article>

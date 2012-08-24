@@ -1,0 +1,32 @@
+{% extends "_base.html" %}
+
+{% block title %}Uživatelé{% endblock %}
+
+{% block content %}
+    <h2>Uživatelé</h2>
+    <table><thead><tr><td>Jméno</td><td>Datum registrace</td><td>Naposledy</td></tr></thead>
+    <tbody>
+        {% for user in users %}
+            <tr id="user-{{user.id}}">
+                <td><a href="/users/{{user.id}}">{{user.name}}</a></td>
+                <td>{{user.timestamp|datetime}}</td>
+                <td>{{user.laststamp|datetime}}</td>
+            </tr>
+        {% endfor %}
+    </tbody>
+    </table>
+
+    <h2>Anonymové</h2>
+    <table><thead><tr><td>Jméno</td><td>Naposledy</td></tr></thead>
+    <tbody>
+        {% for user in anons %}
+            <tr id="user-{{user.id}}">
+                <td><a href="/users/{{user.id}}">{{user.name}}</a></td>
+                <td>{{user.laststamp|datetime}}</td>
+            </tr>
+        {% endfor %}
+    </tbody>
+    </table>
+    
+    
+{% endblock %}

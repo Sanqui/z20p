@@ -1,4 +1,4 @@
-body {background-color: #f0f0f8; font-family:Ubuntu, Verdana, sans-serif; color:#414a5b;}
+body {background-color: #f0f0f8; font-family:Ubuntu, Verdana, sans-serif; color:#414a5b; font-size:88%;}
 ul, ul * {list-style:none;}
 header, #content {width: 55%; margin: auto;}
 #logo {margin:auto; width:650px;}
@@ -85,4 +85,4 @@ thead {background-color:rgb(187, 20, 26); text-align:center; color:white;}
 td {border: 1px solid #444;}
 
 .labelfloat {position:fixed; right:0; top:0; width:20%; background:white; height:100%; overflow-y:scroll;}
-.labelfloat dd, .labelfloat ul, .labelfloat li {margin:0; padding:0; list-style:none;}
+.labelfloat dd, .labelfloat ul, .labelfloat li {margin:0; padding:0; list-style:none; line-height:0.9;}

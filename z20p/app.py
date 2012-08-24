@@ -67,10 +67,15 @@ def minrights(minrights):
         return f
     return decorator
 
+@app.before_request
+def before_request():
+    if 'user_id' in session:
+        session['user'] = db.session.query(db.User).filter_by(id=session['user_id']).one()
+        session['user'].laststamp = datetime.utcnow()
+    db.session.commit()
+
 @app.teardown_request
 def shutdown_session(exception=None):
-    if 'user' in session:
-        session['user'].laststamp = datetime.utcnow()
     db.session.remove()
 
 @app.template_filter('datetime')
@@ -99,6 +104,7 @@ def login():
     if request.method == 'POST' and form.validate():
         user = db.session.query(db.User).filter_by(name=form.name.data).filter_by(password=pwhash(form.password.data)).scalar()
         if user:
+            session['user_id'] = user.id
             session['user'] = user
             session['user'].ip = request.remote_addr
             flash("Jste přihlášeni.")
@@ -140,6 +146,14 @@ def register():
     
     return render_template("register.html", form=form)
 
+@app.route("/users", methods=['GET'])
+def users():
+    users = db.session.query(db.User) \
+        .order_by(db.User.name.asc()).filter(db.User.password != None).all()
+    anons = db.session.query(db.User) \
+        .order_by(db.User.name.asc()).filter(db.User.password == None).all()
+    return render_template("users.html", users=users, anons=anons)
+
 @app.route("/labels", methods=['GET', 'POST'])
 @app.route("/labels/<int:edit_id>/edit", methods=['GET', 'POST'])
 @minrights(2)
@@ -169,7 +183,7 @@ def labels(edit_id=None):
             return redirect("/labels")
     
     labels = db.session.query(db.Label) \
-        .order_by(db.Label.category.asc()).all()
+        .order_by(db.Label.category.desc(), db.Label.name.asc()).all()
     return render_template("labels.html", form=form, labels=labels, edit_id=edit_id)
 
 def upload_image(**kvargs):
@@ -189,8 +203,8 @@ def upload_image(**kvargs):
 def new_article():
     form = ArticleForm(request.form)
     labels = db.session.query(db.Label) \
-        .order_by(db.Label.category.asc()).all()
-    form.labels.choices = [(l.id, l.name+" ("+l.category+")") for l in labels]
+        .order_by(db.Label.category.desc(), db.Label.name.asc()).all()
+    form.labels.choices = [(l.id, l.category[0]+": "+l.name) for l in labels]
     if request.method == 'POST' and form.validate():
         media = upload_image(title=form.image_title.data, author_id=session['user'].id)
     
@@ -212,8 +226,8 @@ def edit_article(edit_id):
     article = db.session.query(db.Article).filter_by(id=edit_id).scalar()
     form = ArticleForm(request.form, article)
     labels = db.session.query(db.Label) \
-        .order_by(db.Label.category.asc()).all()
-    form.labels.choices = [(l.id, l.name+" ("+l.category+")") for l in labels]
+        .order_by(db.Label.category.desc(), db.Label.name.asc()).all()
+    form.labels.choices = [(l.id, l.category[0]+": "+l.name) for l in labels]
     if request.method == 'POST' and form.validate():
         media = upload_image(title=form.image_title.data, author_id=session['user'].id)
     

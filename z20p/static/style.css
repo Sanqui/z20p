@@ -1,10 +1,17 @@
-body {background-color: #f0f0f8;}
+body {background-color: #f0f0f8; font-family:Ubuntu, Verdana, sans-serif;}
 header, #content {width: 55%; margin: auto;}
 #logo {margin:auto; width:650px;}
 #leftmenu, #rightmenu {position: fixed; top: 135px;  width: 17.5%; margin:0; padding:0; list-style:none;}
 #leftmenu {left: 2.5%;}
 #rightmenu {right: 2.5%;}
-#leftmenu a, #rightmenu a {position: relative; border:1px solid #aaa; padding:3px; width:100%; display:block; background:white;}
+#leftmenu a, #rightmenu a {position: relative; border:1px solid #aaa; padding:3px; width:100%; display:block; background:white;
+    color:black; text-decoration:none;
+    border-radius:4px;
+    -moz-box-shadow: inset 0px -5px 5px #ddd;
+    -webkit-box-shadow: inset 0px -5px 5px #ddd;
+    box-shadow: inset 0px -5px 5px #ddd;}
+#leftmenu a:hover, #rightmenu a:hover {background-color:rgb(187, 20, 26); color:white;
+    box-shadow:none;}
 .down {position:absolute; right:4px; background-color: rgb(187, 20, 26); color:white;}
 menu li { padding: 1px; width:100%; }
 
@@ -14,7 +21,9 @@ menu li { padding: 1px; width:100%; }
 
 .flash {padding:6px; background-color:yellow; margin: 2px 10% 2px 10%;}
 
-article {
+p {text-indent:18px; margin: 5px 0 0 0; padding:0;}
+
+article { display:block;
     border: 1px solid black;
     border-width: 14px;
 	border-image: url('/static/img/article_border.png') 14 14 14 14 round round;
@@ -22,6 +31,35 @@ article {
 	-webkit-border-image: url('/static/img/article_border.png') 14 14 14 14 round round;
 	-o-border-image: url('/static/img/article_border.png') 14 14 14 14 round round;
 }
+article h1 {margin:0; letter-spacing:0.15em; margin:0;}
+article .image {
+    max-width:166px; max-height:133px;
+    border: 1px solid black;
+    float:left;
+    margin:0px 5px 3px 0px;
+    clear:both;}
+article footer {display:block;
+    clear:both;
+    border-radius:6px; -moz-border-radius:6px;
+    background-color:#dcdee4;
+    padding:1px 5px 1px 5px;}
+
+.labels {float:right;}
+.labels, .labels li {margin:0; padding:0; list-style:none;}
+.labels li {display:inline-block; margin:1px 2px 1px 2px;}
+.labels a {border:1px solid #aaa; background:white; padding:2px; color:black; text-decoration:none;
+    border-radius:4px;
+    -moz-box-shadow: inset 0px -5px 5px #ddd;
+    -webkit-box-shadow: inset 0px -5px 5px #ddd;
+    box-shadow: inset 0px -5px 5px #ddd;}
+.labels a:hover {background-color:rgb(187, 20, 26); color:white;
+    box-shadow:none;
+}
+.authorline {float:left;}
+author {font-weight:bold;}
+.dateline {float:right; clear:right;}
+.adminline {float:right; clear:right;}
+
 
 table {width: 100%; border-collapse:collapse;}
 thead {background-color:rgb(187, 20, 26); text-align:center; color:white;}

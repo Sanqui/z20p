@@ -13,7 +13,7 @@ def pwhash(string):
     return hashlib.sha224(string+"***REMOVED***").hexdigest()
     
 from werkzeug import secure_filename
-from flask import Flask, render_template, request, flash, redirect, session
+from flask import Flask, render_template, request, flash, redirect, session, abort
 
 app = Flask('z20p')
 app.secret_key = b"superuniqueandsecret"
@@ -62,8 +62,8 @@ def minrights(minrights):
             if 'user' in session:
                 if session['user'].rights >= minrights:
                     return function(*args, **kvargs)
-                return "soft 403 (nedostatecna prava: {0} < {1})".format(session['user'].rights, minrights)
-            return "soft 403 (prihlas se)" # TODO use something
+                return abort(403) #"soft 403 (nedostatecna prava: {0} < {1})".format(session['user'].rights, minrights)
+            return abort(403) # "soft 403 (prihlas se)" # TODO use something
         return f
     return decorator
 

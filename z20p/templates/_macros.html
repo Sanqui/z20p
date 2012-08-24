@@ -24,22 +24,21 @@
 {% endmacro %}
 {% macro display_article(article) -%}
     <article>
-        <h1>{{ article.title }}</h1>
         {% if article.media %}
             <img src="{{article.media.url}}" title="{{article.media.title}}" alt="{{article.title}} - obrázek" class="image">
         {% endif %}
-        {{article.text|replace("\n", "\n<p>")|safe}}
+        <h1>{{ article.title }}</h1>
+        <p>{{article.text|replace("\n", "\n<p>")|safe}}
         <footer>
-            <div>Štítky:
-                <ul>
-                    {% for label in article.labels %}
-                        <li>{{label.name}}
-                    {% endfor %}
-                </ul>
-            </div>
-            <div>{{"Napsala" if article.author.gender == "f" else "Autor"}}: <author>{{article.author.name}}</author></div>
-            <div>Datum publikace: {{article.timestamp|datetime}}</div> 
-            <div><a href="/article/{{article.id}}/edit">edit</a></div>           
+            <ul class="labels">
+                {% for label in article.labels %}
+                    <li><a href="/search/label/{{label.id}}">{{label.name}}</a>
+                {% endfor %}
+            </ul>
+            <div class="authorline">{{"Napsala" if article.author.gender == "f" else "Autor"}}: <author>{{article.author.name}}</author></div>
+            <div class="dateline"><img src="/static/icons/calendar-blue.png" alt="Datum publikace: "> {{article.timestamp|datetime}}</div> 
+            <div class="adminline"><a href="/article/{{article.id}}/edit">edit</a></div>         
+            <div style="clear:both;"></div>  
         </footer>        
     </article>
 {%- endmacro %}

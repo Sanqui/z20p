@@ -23,7 +23,7 @@
   </td>
 {% endmacro %}
 {% macro display_article(article, crop=False) -%}
-    <article class="{{'crop' if crop else ''}}">
+    <article class="{{'crop' if crop else 'regular'}}">
         {% if article.media %}
             {% if crop %} <a href="/article/{{ article.id }}">
             {% else %} <a href="{{article.media.url}}">{% endif %}

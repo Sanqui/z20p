@@ -43,13 +43,15 @@ article { display:block;
 	-o-border-image: url('/static/img/article_border.png') 14 14 14 14 round round;
 }
 article h1 {margin:0; letter-spacing:0.15em; margin:0;}
+article.regular h1 a {color:inherit; text-decoration:none;}
+article.regular h1 a:hover {text-decoration:underline;}
 article .image {
     max-width:166px; max-height:133px;
     border: 1px solid black;
     float:left;
     margin:0px 5px 3px 0px;
     clear:both;}
-article.crop .image {width:99px;height:80px;}
+article.crop .image {max-width:99px;max-height:80px;}
 article.crop .platforms li {display:inline; padding-left:2px;}
 article.crop .platforms li:before {content:'• ';}
 article.crop .platforms li a {color:inherit; text-decoration:none;}

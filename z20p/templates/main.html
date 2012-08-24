@@ -6,6 +6,8 @@
     <!--<h2>Nejnovější minirecenze</h2>-->
         {% for article in articles %}
             {{ display_article(article, crop=True) }}
+        {% else %}
+            <div>Nemáme žádné články!  D:</div>
         {% endfor %}
     screenshoty, videa
     <!--<h2>Nejnovější sloupky</h2>

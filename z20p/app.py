@@ -69,6 +69,8 @@ def minrights(minrights):
 
 @app.teardown_request
 def shutdown_session(exception=None):
+    if 'user' in session:
+        session['user'].laststamp = datetime.utcnow()
     db.session.remove()
 
 @app.template_filter('datetime')
@@ -98,6 +100,7 @@ def login():
         user = db.session.query(db.User).filter_by(name=form.name.data).filter_by(password=pwhash(form.password.data)).scalar()
         if user:
             session['user'] = user
+            session['user'].ip = request.remote_addr
             flash("Jste přihlášeni.")
             return redirect("/")
         else:
@@ -127,7 +130,8 @@ def register():
     if request.method == 'POST' and form.validate():
         # TODO confirm that username is unique
         user = db.User(name=form.name.data, gender=form.gender.data, 
-            rights=1, password=pwhash(form.password.data))
+            rights=1, password=pwhash(form.password.data), timestamp=datetime.utcnow(),
+            laststamp=datetime.utcnow())
         db.session.add(user)
         db.session.commit()
         session['user'] = db.session.query(db.User).filter_by(name=form.name.data).filter_by(password=pwhash(form.password.data)).scalar()

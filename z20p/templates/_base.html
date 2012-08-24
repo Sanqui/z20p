@@ -14,7 +14,7 @@
                 {% endfor %}
             {% endwith %}
             {% if session.user %}
-                Jste přihlášeni za {{session.user.name}} ({{session.user}}) práva {{session.user.rights}}
+                Jste přihlášeni za {{session.user.name}}, práva {{session.user.rights}}, IP {{session.user.ip}}
             {% endif %}
             <!-- move me -->
             <div class="linkbar"><a href="/new_article">Nový článek</a>  • <a href="/labels">Štítky</a> • <a href="/login">Login</a>  • <a href="/logout">Logout</a>  • <a href="/register">Registrovat</a></div>

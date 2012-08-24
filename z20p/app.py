@@ -81,6 +81,12 @@ def root():
         .order_by(db.Article.timestamp.desc()).limit(4).all()
     return render_template("main.html", articles=articles)
 
+@app.route("/article/<int:article_id>")
+def article(article_id):
+    article = db.session.query(db.Article).filter_by(id=article_id).scalar()
+    if not article: abort(404)
+    return render_template("article.html", article=article)
+
 @app.route("/login", methods=['GET', 'POST'])
 def login():
     class LoginForm(Form):
@@ -100,7 +106,7 @@ def login():
     return render_template("login.html", form=form)
 
 @app.route("/logout")
-@minrights(2)
+@minrights(1)
 def logout():
     session.pop("user")
     flash("Byli jste odhlášeni.")
@@ -219,7 +225,7 @@ def edit_article(edit_id):
         db.session.commit()
         flash('Článek upraven')
         return redirect("/")
-    if request.method == 'GET' and form.labels.data == []:
+    if request.method == 'GET' and form.labels.data == None:
         form.labels.data = [l.id for l in article.labels]
     return render_template("edit_article.html", form=form, article=article)
     

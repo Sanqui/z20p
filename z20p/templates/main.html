@@ -1,16 +1,16 @@
 {% extends "_base.html" %}
-from wtforms import Form, BooleanField, TextField, PasswordField, validators
 
 {% block title %}Index{% endblock %}
 
 {% block content %}
-    <h2>Nejnovější minirecenze</h2>
+    <!--<h2>Nejnovější minirecenze</h2>-->
         {% for article in articles %}
-            {{ display_article(article) }}
+            {{ display_article(article, crop=True) }}
         {% endfor %}
-    <h2>Nejnovější sloupky</h2>
+    screenshoty, videa
+    <!--<h2>Nejnovější sloupky</h2>
         <article>recenze</article>
         <article>recenze</article>
-    <h2>Herpy a derpy</h2>
+    <h2>Herpy a derpy</h2>-->
     
 {% endblock %}

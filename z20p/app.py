@@ -19,7 +19,7 @@ app = Flask('z20p')
 app.secret_key = b"superuniqueandsecret"
 
 # TODO split this into file
-from wtforms import Form, BooleanField, TextField, TextAreaField, PasswordField, RadioField, SelectField, SelectMultipleField, validators, ValidationError, widgets
+from wtforms import Form, BooleanField, TextField, TextAreaField, PasswordField, RadioField, SelectField, SelectMultipleField, BooleanField, validators, ValidationError, widgets
 from flask.ext.wtf import FileField, file_allowed, file_required
 from flask.ext.wtf.html5 import IntegerField
 from flask.ext.uploads import UploadSet, IMAGES
@@ -46,6 +46,7 @@ class ArticleForm(Form):
     labels = MultiCheckboxField('Štítky', coerce=int)
     image = FileField('Obrázek', [file_allowed(uploads, "Jen obrázky")])
     image_title = TextField('Titulek obrázku', [validators.optional()])
+    published = BooleanField("Publikovat", default=True)
     
     # TODO make this work??
     #def validate_image(self, field):
@@ -70,10 +71,16 @@ def minrights(minrights):
 @app.before_request
 def before_request():
     if 'user_id' in session:
-        user = db.session.query(db.User).filter_by(id=session['user_id']).one()
+        user = db.session.query(db.User).filter_by(id=session['user_id']).scalar()
+        if not user: # We could've reset the database.  Let's not have to delete cookies.
+            logout()
+            return
         user.laststamp = datetime.utcnow()
         session['user'] = user
         db.session.commit()
+    else:
+        # Let's use a temporary dummy user.
+        session['user'] = db.User(name="Anonym", rights=0)
 
 @app.teardown_request
 def shutdown_session(exception=None):
@@ -89,11 +96,22 @@ def root():
         .order_by(db.Article.timestamp.desc()).limit(4).all()
     return render_template("main.html", articles=articles)
 
-@app.route("/article/<int:article_id>")
+@app.route("/article/<int:article_id>", methods=['GET', 'POST'])
 def article(article_id):
+    class ReactionForm(Form):
+        name = TextField('Jméno', [validators.optional()]) # Only for guests
+        text = TextAreaField('Text', [validators.required()])
+        rating = IntegerField('Hodnocení', [validators.optional()])
+    
+    if request.method == 'POST' and form.validate():
+        pass
+    
+    form = ReactionForm(request.form)
     article = db.session.query(db.Article).filter_by(id=article_id).scalar()
     if not article: abort(404)
-    return render_template("article.html", article=article)
+    article.views += 1
+    db.session.commit()
+    return render_template("article.html", article=article, form=form)
 
 @app.route("/login", methods=['GET', 'POST'])
 def login():
@@ -116,9 +134,11 @@ def login():
     return render_template("login.html", form=form)
 
 @app.route("/logout")
-@minrights(1)
 def logout():
-    session.pop("user")
+    if 'user' in session:
+        session.pop("user")
+    if 'user_id' in session:
+        session.pop("user_id")
     flash("Byli jste odhlášeni.")
     return redirect("/")
 
@@ -211,7 +231,7 @@ def edit_user(user_id):
 def labels(edit_id=None):
     class LabelForm(Form):
         name = TextField('Jméno', [validators.required()])
-        category = SelectField('Kategorie', choices=[("platform", "Platforma"), ("genre", "Žánr"), ("other", "Jiné")])
+        category = SelectField('Kategorie', choices=[("platform", "Platforma"), ("genre", "Žánr"), ("column", "Sloupek"), ("other", "Jiné")])
     
     if edit_id == None:
         form = LabelForm(request.form)
@@ -261,7 +281,7 @@ def new_article():
     
         article = db.Article(title=form.title.data, text=form.text.data,
             rating=form.rating.data, media=media, author_id=session['user'].id, 
-            timestamp=datetime.utcnow())
+            timestamp=datetime.utcnow(), published=True)
         article.labels = []
         for label_id in form.labels.data:
             article.labels.append(db.session.query(db.Label).filter_by(id=label_id).scalar())
@@ -286,6 +306,7 @@ def edit_article(edit_id):
         article.text = form.text.data
         article.rating = form.rating.data
         article.image_title = form.image_title.data
+        article.published = form.published.data
         article.labels = []
         for label_id in form.labels.data:
             article.labels.append(db.session.query(db.Label).filter_by(id=label_id).scalar())

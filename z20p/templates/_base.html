@@ -1,4 +1,4 @@
-{% from '_macros.html' import render_field, td_field, display_article, g %}
+{% from '_macros.html' import render_field, td_field, display_article, g with context%}
 <!DOCTYPE html>
 <html lang="cs">
     <head>
@@ -13,8 +13,8 @@
                   <div class="flash">{{ message }}</div>
                 {% endfor %}
             {% endwith %}
-            {% if session.user %}
-                Jste přihlášeni za {{session.user.name}}, práva {{session.user.rights}}, IP {{session.user.ip}}
+            {% if not session.user.guest %}
+                Jste přihlášen{{g()}} za {{session.user.name}}, práva {{session.user.rights}}, IP {{session.user.ip}}
             {% endif %}
             <!-- move me -->
             <div class="linkbar"><a href="/new_article">Nový článek</a>  • <a href="/labels">Štítky</a> • <a href="/users">Uživatelé</a> • <a href="/login">Login</a>  • <a href="/logout">Logout</a>  • <a href="/register">Registrovat</a></div>

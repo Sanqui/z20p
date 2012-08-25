@@ -6,9 +6,8 @@
     {% if session.user.rights >= 3 or session.user == user%}
         <a href="/users/{{user.id}}/edit">Upravit profil</a>
     {% endif%}
+    <h2>{{user.name}}</h2>
     <dl>
-        <dt>Jméno</dt>
-            <dd>{{user.name}}</dd>
         <dt>Email</dt>
             <dd>{{user.email if user.email else '-'}}</dd>
         <dt>Zaregistrován{{g(user.gender)}} dne</dt>
@@ -23,5 +22,10 @@
         {% endif %}
     </dl>
     {{user.profile|safe if user.profile else '-'}}
-    
+    {% if user.articles %}
+        <h3>Články</h3>
+        {% for article in user.articles %}
+            {{ display_article(article, crop=True) }}
+        {% endfor %}
+    {% endif %}
 {% endblock %}

@@ -50,12 +50,12 @@
                 {% endfor %}
             </ul>
             <div class="authorline">Napsal{{g(article.author.gender)}}: <author><a href="/users/{{article.author.id}}">{{article.author.name}}</a></author></div>       
-            <div class="adminline"><a href="/article/{{article.id}}/edit">edit</a></div>  
+            {% if session.user.admin or session.user == article.author %}<div class="adminline"><a href="/article/{{article.id}}/edit">edit</a></div>{% endif %}
             <div style="clear:both;"></div>  
         </footer>        
     </article>
 {%- endmacro %}
 ## This really needs some more thinking through...
-{% macro g(gender) -%}
-{{{'m':'', 'f':'a', '-':'o'}[gender]}}
+{% macro g(gender=None) -%}
+{{{'m':'', 'f':'a', '-':'o'}[gender if gender else session.user.gender]}}
 {%- endmacro %}

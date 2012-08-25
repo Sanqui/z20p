@@ -62,7 +62,7 @@ article footer {display:block;
     padding:1px 5px 1px 5px;}
 
 article.crop .labels {display:none;}
-.labels {float:right;}
+.labels {float:right; text-align:right;}
 .labels, .labels li {margin:0; padding:0; list-style:none;}
 .labels li {display:inline-block; margin:1px 2px 1px 2px;}
 .labels a {border:1px solid #aaa; background:white; padding:2px; color:black; text-decoration:none;

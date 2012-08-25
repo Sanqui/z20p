@@ -12,7 +12,7 @@
                     <td><a href="/labels/{{label.id}}/edit#label-{{label.id}}">e</a></td>
                     <td>{{label.name}}</td>
                     <td>{{label.user.name}}</td>
-                    <td>{{{"platform":"Platforma", "genre":"Žánr", "other":"Jiné"}[label.category]}}</td>
+                    <td>{{{"platform":"Platforma", "genre":"Žánr", "other":"Jiné", "column":"Sloupek"}[label.category]}}</td>
                 </tr>
             {% else %}
                 <form method="POST" action="/labels/{{label.id}}/edit">

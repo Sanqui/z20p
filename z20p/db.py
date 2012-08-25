@@ -4,7 +4,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import scoped_session, sessionmaker, relationship
 from sqlalchemy.schema import Column, ForeignKey, Table
-from sqlalchemy.types import DateTime, Integer, Unicode, Enum, UnicodeText
+from sqlalchemy.types import DateTime, Integer, Unicode, Enum, UnicodeText, Boolean
 
 engine = create_engine(open("db").read(), encoding="utf8", pool_size = 100, pool_recycle=7200) # XXX
 # pool_recycle is to prevent "server has gone away"
@@ -31,8 +31,12 @@ class User(Base):
     profile = Column(UnicodeText)
     
     @property
-    def anonymous(self):
+    def guest(self):
         return not bool(self.password)
+        
+    @property
+    def admin(self):
+        return self.rights >= 3
 
 class Label(Base):
     __tablename__ = 'labels'
@@ -41,7 +45,7 @@ class Label(Base):
     name = Column(Unicode(256), nullable=False)
     user_id = Column(Integer, ForeignKey('users.id'))
     user = relationship("User", backref='labels')
-    category = Column(Enum('platform', 'genre', 'other'))
+    category = Column(Enum('platform', 'genre', 'column', 'other'))
 
 articles_labels = Table('article_labels', Base.metadata,
     Column('article_id', Integer, ForeignKey('articles.id')),
@@ -67,10 +71,12 @@ class Article(Base):
     media_id = Column(Integer, ForeignKey('media.id'))
     media = relationship("Media", backref='article')
     timestamp = Column(DateTime, nullable=False, index=True)
+    published = Column(Boolean, nullable=False)
     title = Column(Unicode(256), nullable=False)
     text = Column(UnicodeText, nullable=False)
     year = Column(Integer)
     rating = Column(Integer)
+    views = Column(Integer, default=0, nullable=False)
     labels = relationship("Label", 
                 secondary=articles_labels, backref="articles")
     

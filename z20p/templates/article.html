@@ -4,4 +4,12 @@
 
 {% block content %}
     {{ display_article(article) }}
+    <h2>Napsat reakci</h2>
+    <form method="POST" action="/login">
+      <dl>
+        {% if session.user.guest %} {{ render_field(form.name) }} {%endif%}
+        {{ render_field(form.text) }}
+        {{ render_field(form.rating) }}
+      </dl>
+      <p><input type="submit" value="Přidat">
 {% endblock %}

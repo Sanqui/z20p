@@ -62,6 +62,13 @@ class Media(Base):
     type = Column(Enum("image", "video"))
     value = Column(Integer) # Enum('featured', 'good', 'regular), but then we'd get no ordering
 
+class Rating(Base):
+    __tablename__ = 'ratings'
+    id = Column(Integer, primary_key=True, nullable=False)
+    user_id = Column(Integer, ForeignKey('users.id'))
+    user = relationship("User", backref='ratings')
+    rating = Column(Integer)
+
 class Article(Base):
     __tablename__ = 'articles'
 
@@ -70,12 +77,13 @@ class Article(Base):
     author = relationship("User", backref='articles')
     media_id = Column(Integer, ForeignKey('media.id'))
     media = relationship("Media", backref='article')
+    rating_id = Column(Integer, ForeignKey('ratings.id'))
+    rating = relationship("Rating", backref='article')
     timestamp = Column(DateTime, nullable=False, index=True)
     published = Column(Boolean, nullable=False)
     title = Column(Unicode(256), nullable=False)
     text = Column(UnicodeText, nullable=False)
     year = Column(Integer)
-    rating = Column(Integer)
     views = Column(Integer, default=0, nullable=False)
     labels = relationship("Label", 
                 secondary=articles_labels, backref="articles")
@@ -90,9 +98,10 @@ class Reaction(Base):
     author = relationship("User", backref='reactions')
     media_id = Column(Integer, ForeignKey('media.id'))
     media = relationship("Media", backref='reactions')
+    rating_id = Column(Integer, ForeignKey('ratings.id'))
+    rating = relationship("Rating", backref='reaction')
     timestamp = Column(DateTime, nullable=False, index=True)
     text = Column(UnicodeText, nullable=False)
-    rating = Column(Integer)
 
 if __name__ == "__main__":
     if raw_input('Drop all? ').strip().lower().startswith('y'):

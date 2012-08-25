@@ -42,7 +42,7 @@ class MultiCheckboxField(SelectMultipleField):
 class ArticleForm(Form):
     title = TextField('Titulek', [validators.required()])
     text = TextAreaField('Text', [validators.required()])
-    rating = IntegerField('Hodnocení', [validators.optional()])
+    rating = SelectField('Hodnocení', choices=[(0, '-')]+[(i+1, str(i+1)) for i in range(0,10)], coerce=int)
     labels = MultiCheckboxField('Štítky', coerce=int)
     image = FileField('Obrázek', [file_allowed(uploads, "Jen obrázky")])
     image_title = TextField('Titulek obrázku', [validators.optional()])
@@ -280,8 +280,10 @@ def new_article():
         media = upload_image(title=form.image_title.data, author_id=session['user'].id)
     
         article = db.Article(title=form.title.data, text=form.text.data,
-            rating=form.rating.data, media=media, author_id=session['user'].id, 
+            media=media, author_id=session['user'].id, 
             timestamp=datetime.utcnow(), published=True)
+        if form.rating.data:
+            article.rating = db.Rating(rating=form.rating.data, user_id=session['user'].id)
         article.labels = []
         for label_id in form.labels.data:
             article.labels.append(db.session.query(db.Label).filter_by(id=label_id).scalar())
@@ -304,8 +306,14 @@ def edit_article(edit_id):
     
         article.title = form.title.data
         article.text = form.text.data
-        article.rating = form.rating.data
-        article.image_title = form.image_title.data
+        if article.rating:
+            if not form.rating.data:
+                db.session.delete(article.rating)
+                article.rating = None
+            else:
+                article.rating.rating = form.rating.data
+        else:
+            article.rating = db.Rating(rating=form.rating.data, user_id=session['user'].id)
         article.published = form.published.data
         article.labels = []
         for label_id in form.labels.data:
@@ -314,9 +322,13 @@ def edit_article(edit_id):
             article.media = media
         db.session.commit()
         flash('Článek upraven')
-        return redirect("/")
-    if request.method == 'GET' and form.labels.data == None:
+        return redirect("/article/{0}".format(article.id))
+    if request.method == 'GET' and form.labels.data == None: # welp
         form.labels.data = [l.id for l in article.labels]
+        if article.rating:
+            form.rating.data = article.rating.rating
+        print(form.rating.data)
+    
     return render_template("edit_article.html", form=form, article=article)
     
 if __name__ == "__main__":

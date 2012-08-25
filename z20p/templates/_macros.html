@@ -35,7 +35,9 @@
                 <span class="rating">{{ article.rating.rating }}</span><span class="outof">/10</span>
             </div>
         {% endif %}
-        <h1><a href="/article/{{ article.id }}">{{ article.title }}</a></h1>
+        {% if article.title %}
+            <h1><a href="/article/{{ article.id }}">{{ article.title }}</a></h1>
+        {% endif %}
         {% if not crop %}
             <p>{{article.text|replace("\n", "\n<p>")|safe}}
         {% else %}
@@ -54,7 +56,7 @@
                     <li><a href="/search/label/{{label.id}}">{{label.name}}</a>
                 {% endfor %}
             </ul>
-            <div class="authorline">Napsal{{g(article.author.gender)}}: <author><a href="/users/{{article.author.id}}">{{article.author.name}}</a></author></div>       
+            <div class="authorline">Napsal{{g(article.author.gender)}}: <author><a href="/users/{{article.author.id}}">{{article.author.name}}</a></author>{{'★' if article.author.rights >= 1}}</div>       
             {% if session.user.admin or session.user == article.author %}<div class="adminline"><a href="/article/{{article.id}}/edit">edit</a></div>{% endif %}
             <div style="clear:both;"></div>  
         </footer>        

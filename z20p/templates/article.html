@@ -4,6 +4,11 @@
 
 {% block content %}
     {{ display_article(article) }}
+    [sceenshoty] [videa]
+    <h2>Reakce</h2>
+    {% for reaction in article.reactions %}
+        {{ display_article(reaction) }}
+    {% endfor %}
     <div class="rightcolumn">
         <h2>Ohodnotit</h2>
         <form method="POST" action="/article/{{article.id}}">
@@ -17,9 +22,9 @@
         <h2>Napsat reakci</h2>
         <form method="POST" action="/article/{{article.id}}">
           <dl>
-            {% if session.user.guest %} {{ render_field(reaction_form.name) }} {%endif%}
+            {% if session.user.guest %} {{ render_field(reaction_form.name) }} {% endif %}
             {{ render_field(reaction_form.text) }}
-            {{ render_field(reaction_form.rating) }}
+            {% if session.user != article.author %} {{ render_field(reaction_form.rating) }} {% endif %}
             {{ render_field(reaction_form.submit) }}
           </dl>
         </form>

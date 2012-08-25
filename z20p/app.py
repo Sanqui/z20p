@@ -55,6 +55,14 @@ class ArticleForm(Form):
     #    else:
     #        raise ValidationError("Nepovolený typ souboru.")
 
+def get_guest(name):
+    guest = db.session.query(db.User).filter(db.User.name == name).filter(db.User.password == None).scalar()
+    if not guest:
+        guest = db.User(name=name, timestamp=datetime.utcnow(), laststamp=datetime.utcnow()) # TODO ip?
+        db.session.add(guest)
+        db.session.commit()
+    return guest
+
 # Callable decorator
 def minrights(minrights):
     def decorator(function):
@@ -120,22 +128,31 @@ def article(article_id):
                 article.rating = rating
             db.session.add(rating)
     
+    if session['user'].guest:
+        name_validators = [validators.required()]
+    else:
+        name_validators = [validators.optional()]
     class ReactionForm(Form):
-        name = TextField('Jméno', [validators.optional()]) # Only for guests
+        name = TextField('Jméno', name_validators) # Only for guests
         text = TextAreaField('Text', [validators.required()])
         rating = SelectField('Hodnocení', choices=[(0, '-')]+[(i+1, str(i+1)) for i in range(0,10)], coerce=int)
         submit = SubmitField('Přidat reakci')
     
-    reaction_form = ReactionForm(request.form, rating=rating)
+    reaction_form = ReactionForm(request.form, rating=rating.rating if (rating and article.author != session['user']) else 0)
     if request.method == 'POST' and request.form['submit'] == reaction_form.submit.label.text and reaction_form.validate():
-        if rating and rating_form.rating.data:
-            rating.raing = rating_form.rating.data
-        elif rating_form.rating.data:
-            rating = db.Rating(rating=form.rating.data, user_id=session['user'].id, article=article)
-            db.session.add(rating)
+        if reaction_form.name.data: # This technically allows logged-in users to post as guests if they hack the input in.
+            user = get_guest(reaction_form.name.data)
         else:
-            rating = None
-        reaction = Reaction(text=reaction_form.text.data, rating=rating)
+            user = session['user']
+        rating = None
+        if user != article.author:
+            if rating and rating_form.rating.data:
+                rating.raing = reaction_form.rating.data
+            elif rating_form.rating.data:
+                rating = db.Rating(rating=reaction_form.rating.data, user=user, article=article)
+                db.session.add(rating)
+            
+        reaction = db.Reaction(text=reaction_form.text.data, rating=rating, article=article, timestamp=datetime.utcnow(), author=user)
         db.session.add(reaction)
     
     article.views += 1

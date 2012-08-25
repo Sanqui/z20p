@@ -4,12 +4,24 @@
 
 {% block content %}
     {{ display_article(article) }}
-    <h2>Napsat reakci</h2>
-    <form method="POST" action="/login">
-      <dl>
-        {% if session.user.guest %} {{ render_field(form.name) }} {%endif%}
-        {{ render_field(form.text) }}
-        {{ render_field(form.rating) }}
-      </dl>
-      <p><input type="submit" value="Přidat">
+    <div class="rightcolumn">
+        <h2>Ohodnotit</h2>
+        <form method="POST" action="/article/{{article.id}}">
+          <dl>
+            {{ render_field(rating_form.rating) }}
+            {{ render_field(rating_form.submit) }}
+          </dl>
+        </form>
+    </div>
+    <div class="leftcolumn">
+        <h2>Napsat reakci</h2>
+        <form method="POST" action="/article/{{article.id}}">
+          <dl>
+            {% if session.user.guest %} {{ render_field(reaction_form.name) }} {%endif%}
+            {{ render_field(reaction_form.text) }}
+            {{ render_field(reaction_form.rating) }}
+            {{ render_field(reaction_form.submit) }}
+          </dl>
+        </form>
+    </div>
 {% endblock %}

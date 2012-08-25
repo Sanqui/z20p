@@ -62,11 +62,15 @@ class Media(Base):
     type = Column(Enum("image", "video"))
     value = Column(Integer) # Enum('featured', 'good', 'regular), but then we'd get no ordering
 
+# Reference for the following:
+# http://docs.sqlalchemy.org/en/latest/orm/relationships.html#rows-that-point-to-themselves-mutually-dependent-rows
+
 class Rating(Base):
     __tablename__ = 'ratings'
     id = Column(Integer, primary_key=True, nullable=False)
     user_id = Column(Integer, ForeignKey('users.id'))
     user = relationship("User", backref='ratings')
+    article_id = Column(Integer, ForeignKey('articles.id'), nullable=False)
     rating = Column(Integer)
 
 class Article(Base):
@@ -77,8 +81,9 @@ class Article(Base):
     author = relationship("User", backref='articles')
     media_id = Column(Integer, ForeignKey('media.id'))
     media = relationship("Media", backref='article')
-    rating_id = Column(Integer, ForeignKey('ratings.id'))
-    rating = relationship("Rating", backref='article')
+    rating_id = Column(Integer, ForeignKey('ratings.id', use_alter=True, name="fk_rating"))
+    rating = relationship("Rating", backref='assigned_article', primaryjoin=rating_id==Rating.id, post_update=True)
+    ratings = relationship("Rating", primaryjoin=id==Rating.article_id, backref="article")
     timestamp = Column(DateTime, nullable=False, index=True)
     published = Column(Boolean, nullable=False)
     title = Column(Unicode(256), nullable=False)
@@ -99,7 +104,7 @@ class Reaction(Base):
     media_id = Column(Integer, ForeignKey('media.id'))
     media = relationship("Media", backref='reactions')
     rating_id = Column(Integer, ForeignKey('ratings.id'))
-    rating = relationship("Rating", backref='reaction')
+    rating = relationship("Rating", backref='assigned_reaction')
     timestamp = Column(DateTime, nullable=False, index=True)
     text = Column(UnicodeText, nullable=False)
 

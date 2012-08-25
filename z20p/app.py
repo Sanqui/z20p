@@ -19,7 +19,7 @@ app = Flask('z20p')
 app.secret_key = b"superuniqueandsecret"
 
 # TODO split this into file
-from wtforms import Form, BooleanField, TextField, TextAreaField, PasswordField, RadioField, SelectField, SelectMultipleField, BooleanField, validators, ValidationError, widgets
+from wtforms import Form, BooleanField, TextField, TextAreaField, PasswordField, RadioField, SelectField, SelectMultipleField, BooleanField, SubmitField, validators, ValidationError, widgets
 from flask.ext.wtf import FileField, file_allowed, file_required
 from flask.ext.wtf.html5 import IntegerField
 from flask.ext.uploads import UploadSet, IMAGES
@@ -98,20 +98,49 @@ def root():
 
 @app.route("/article/<int:article_id>", methods=['GET', 'POST'])
 def article(article_id):
+    article = db.session.query(db.Article).filter_by(id=article_id).scalar()
+    if not article: abort(404)
+    class RatingForm(Form):
+        rating = SelectField('Hodnocení', choices=[(0, '-')]+[(i+1, str(i+1)) for i in range(0,10)], coerce=int)
+        submit = SubmitField('Přidat hodnocení')
+    
+    rating = db.session.query(db.Rating).filter(db.Rating.article == article) \
+        .filter(db.Rating.user == session['user']).scalar()
+    rating_form = RatingForm(request.form, rating=rating.rating if rating else 0)
+    
+    if request.method == 'POST' and request.form['submit'] == rating_form.submit.label.text and rating_form.validate(): # XXX
+        if rating:
+            if rating_form.rating.data:
+                rating.rating = rating_form.rating.data
+            else:
+                db.session.delete(rating)
+        else:
+            rating = db.Rating(rating=rating_form.rating.data, user_id=session['user'].id, article=article)
+            if article.author == session['user']: # If the author removes then adds an rating using this form
+                article.rating = rating
+            db.session.add(rating)
+    
     class ReactionForm(Form):
         name = TextField('Jméno', [validators.optional()]) # Only for guests
         text = TextAreaField('Text', [validators.required()])
-        rating = IntegerField('Hodnocení', [validators.optional()])
+        rating = SelectField('Hodnocení', choices=[(0, '-')]+[(i+1, str(i+1)) for i in range(0,10)], coerce=int)
+        submit = SubmitField('Přidat reakci')
     
-    if request.method == 'POST' and form.validate():
-        pass
+    reaction_form = ReactionForm(request.form, rating=rating)
+    if request.method == 'POST' and request.form['submit'] == reaction_form.submit.label.text and reaction_form.validate():
+        if rating and rating_form.rating.data:
+            rating.raing = rating_form.rating.data
+        elif rating_form.rating.data:
+            rating = db.Rating(rating=form.rating.data, user_id=session['user'].id, article=article)
+            db.session.add(rating)
+        else:
+            rating = None
+        reaction = Reaction(text=reaction_form.text.data, rating=rating)
+        db.session.add(reaction)
     
-    form = ReactionForm(request.form)
-    article = db.session.query(db.Article).filter_by(id=article_id).scalar()
-    if not article: abort(404)
     article.views += 1
     db.session.commit()
-    return render_template("article.html", article=article, form=form)
+    return render_template("article.html", article=article, reaction_form=reaction_form, rating_form=rating_form)
 
 @app.route("/login", methods=['GET', 'POST'])
 def login():
@@ -283,7 +312,7 @@ def new_article():
             media=media, author_id=session['user'].id, 
             timestamp=datetime.utcnow(), published=True)
         if form.rating.data:
-            article.rating = db.Rating(rating=form.rating.data, user_id=session['user'].id)
+            article.rating = db.Rating(rating=form.rating.data, user_id=session['user'].id, article=article)
         article.labels = []
         for label_id in form.labels.data:
             article.labels.append(db.session.query(db.Label).filter_by(id=label_id).scalar())
@@ -313,7 +342,7 @@ def edit_article(edit_id):
             else:
                 article.rating.rating = form.rating.data
         else:
-            article.rating = db.Rating(rating=form.rating.data, user_id=session['user'].id)
+            article.rating = db.Rating(rating=form.rating.data, user_id=session['user'].id, article=article)
         article.published = form.published.data
         article.labels = []
         for label_id in form.labels.data:

@@ -60,7 +60,8 @@ def get_guest(name):
     if not guest:
         guest = db.User(name=name, timestamp=datetime.utcnow(), laststamp=datetime.utcnow()) # TODO ip?
         db.session.add(guest)
-        db.session.commit()
+    guest.laststamp = datetime.utcnow()
+    db.session.commit()
     return guest
 
 # Callable decorator
@@ -88,7 +89,7 @@ def before_request():
         db.session.commit()
     else:
         # Let's use a temporary dummy user.
-        session['user'] = db.User(name="Anonym", rights=0)
+        session['user'] = db.session.query(db.User).filter_by(id=1).one() # This ought to be the guest...
 
 @app.teardown_request
 def shutdown_session(exception=None):
@@ -104,16 +105,28 @@ def root():
         .order_by(db.Article.timestamp.desc()).limit(4).all()
     return render_template("main.html", articles=articles)
 
+# TODO all these POSTs should go elsewhere with a redirect.  Better for refreshing.
 @app.route("/article/<int:article_id>", methods=['GET', 'POST'])
 def article(article_id):
     article = db.session.query(db.Article).filter_by(id=article_id).scalar()
     if not article: abort(404)
+    class UploadForm(Form):
+        image = FileField('Obrázek', [file_allowed(uploads, "Jen obrázky")])
+        title = TextField('Titulek obrázku', [validators.required()])
+        submit = SubmitField('Přidat obrázek')
+    
+    upload_form = UploadForm(request.form)
+    if request.method == 'POST' and request.form['submit'] == upload_form.submit.label.text and upload_form.validate():
+        media = upload_image(title=upload_form.title.data, author=session['user'],
+            article=article)
+        db.session.commit() # Gotta commit here 'cause we're reading media ids later
+    
     class RatingForm(Form):
         rating = SelectField('Hodnocení', choices=[(0, '-')]+[(i+1, str(i+1)) for i in range(0,10)], coerce=int)
         submit = SubmitField('Přidat hodnocení')
     
     rating = db.session.query(db.Rating).filter(db.Rating.article == article) \
-        .filter(db.Rating.user == session['user']).scalar()
+         .filter(db.Rating.user == session['user']).scalar()
     rating_form = RatingForm(request.form, rating=rating.rating if rating else 0)
     
     if request.method == 'POST' and request.form['submit'] == rating_form.submit.label.text and rating_form.validate(): # XXX
@@ -127,6 +140,7 @@ def article(article_id):
             if article.author == session['user']: # If the author removes then adds an rating using this form
                 article.rating = rating
             db.session.add(rating)
+        flash("Ohodnoceno.")
     
     if session['user'].guest:
         name_validators = [validators.required()]
@@ -136,9 +150,13 @@ def article(article_id):
         name = TextField('Jméno', name_validators) # Only for guests
         text = TextAreaField('Text', [validators.required()])
         rating = SelectField('Hodnocení', choices=[(0, '-')]+[(i+1, str(i+1)) for i in range(0,10)], coerce=int)
+        image = SelectField('Obrázek', choices=[(-1, '-')], coerce=int)
         submit = SubmitField('Přidat reakci')
     
     reaction_form = ReactionForm(request.form, rating=rating.rating if (rating and article.author != session['user']) else 0)
+    for media in article.all_media:
+        if media.author == session['user'] and not media.assigned_article and not media.assigned_reaction:
+            reaction_form.image.choices.append((media.id, media.title))
     if request.method == 'POST' and request.form['submit'] == reaction_form.submit.label.text and reaction_form.validate():
         if reaction_form.name.data: # This technically allows logged-in users to post as guests if they hack the input in.
             user = get_guest(reaction_form.name.data)
@@ -151,13 +169,14 @@ def article(article_id):
             elif rating_form.rating.data:
                 rating = db.Rating(rating=reaction_form.rating.data, user=user, article=article)
                 db.session.add(rating)
-            
-        reaction = db.Reaction(text=reaction_form.text.data, rating=rating, article=article, timestamp=datetime.utcnow(), author=user)
+        media = reaction_form.image.data if reaction_form.image.data != -1 else None
+        reaction = db.Reaction(text=reaction_form.text.data, rating=rating, article=article, timestamp=datetime.utcnow(), author=user, media_id=media)
         db.session.add(reaction)
+        flash("Reagováno.")
     
     article.views += 1
     db.session.commit()
-    return render_template("article.html", article=article, reaction_form=reaction_form, rating_form=rating_form)
+    return render_template("article.html", article=article, upload_form=upload_form, reaction_form=reaction_form, rating_form=rating_form)
 
 @app.route("/login", methods=['GET', 'POST'])
 def login():
@@ -322,12 +341,13 @@ def new_article():
     labels = db.session.query(db.Label) \
         .order_by(db.Label.category.desc(), db.Label.name.asc()).all()
     form.labels.choices = [(l.id, l.category[0]+": "+l.name) for l in labels]
-    if request.method == 'POST' and form.validate():
-        media = upload_image(title=form.image_title.data, author_id=session['user'].id)
-    
+    if request.method == 'POST' and form.validate():    
         article = db.Article(title=form.title.data, text=form.text.data,
-            media=media, author_id=session['user'].id, 
+            author_id=session['user'].id, 
             timestamp=datetime.utcnow(), published=True)
+        media = upload_image(title=form.image_title.data, author_id=session['user'].id,
+            article=article)
+        article.media = media
         if form.rating.data:
             article.rating = db.Rating(rating=form.rating.data, user_id=session['user'].id, article=article)
         article.labels = []

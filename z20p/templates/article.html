@@ -4,7 +4,23 @@
 
 {% block content %}
     {{ display_article(article) }}
-    [sceenshoty] [videa]
+    <div class="mediagallery">
+        {%- for media in article.all_media -%}
+            {%- if media.type == 'image' -%}
+                <div class="mediabox">
+                    <div><a href="{{media.url}}"><img src="{{media.url}}" class="image" alt="Obrázek"></a></div>
+                    <div>{{media.title}}</div>
+                </div>
+            {%- endif -%}
+        {%- endfor -%}<div class="mediabox">
+            <form method="POST" action="/article/{{article.id}}" enctype="multipart/form-data">
+              <dl>
+                {{ render_field(upload_form.image) }}
+                {{ render_field(upload_form.title) }}
+                {{ render_field(upload_form.submit) }}
+              </dl>
+            </form>
+        </div></div>
     <h2>Reakce</h2>
     {% for reaction in article.reactions %}
         {{ display_article(reaction) }}
@@ -25,6 +41,7 @@
             {% if session.user.guest %} {{ render_field(reaction_form.name) }} {% endif %}
             {{ render_field(reaction_form.text) }}
             {% if session.user != article.author %} {{ render_field(reaction_form.rating) }} {% endif %}
+            {% if reaction_form.image.choices|length > 1 %} {{ render_field(reaction_form.image) }} {% endif %}
             {{ render_field(reaction_form.submit) }}
           </dl>
         </form>

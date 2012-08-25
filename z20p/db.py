@@ -57,12 +57,13 @@ class Media(Base):
     id = Column(Integer, primary_key=True, nullable=False)
     author_id = Column(Integer, ForeignKey('users.id'))
     author = relationship("User", backref='media')
+    article_id = Column(Integer, ForeignKey('articles.id'), nullable=False)
     title = Column(Unicode(256), nullable=False)
     url = Column(Unicode(256), nullable=False)
     type = Column(Enum("image", "video"))
     value = Column(Integer) # Enum('featured', 'good', 'regular), but then we'd get no ordering
 
-# Reference for the following:
+# Reference for the following (and previous):
 # http://docs.sqlalchemy.org/en/latest/orm/relationships.html#rows-that-point-to-themselves-mutually-dependent-rows
 
 class Rating(Base):
@@ -79,8 +80,9 @@ class Article(Base):
     id = Column(Integer, primary_key=True, nullable=False)
     author_id = Column(Integer, ForeignKey('users.id'))
     author = relationship("User", backref='articles')
-    media_id = Column(Integer, ForeignKey('media.id'))
-    media = relationship("Media", backref='article')
+    media_id = Column(Integer, ForeignKey('media.id', use_alter=True, name="fk_media"))
+    media = relationship("Media", backref='assigned_article', primaryjoin=media_id==Media.id, post_update=True)
+    all_media = relationship("Media", primaryjoin=id==Media.article_id, backref="article")
     rating_id = Column(Integer, ForeignKey('ratings.id', use_alter=True, name="fk_rating"))
     rating = relationship("Rating", backref='assigned_article', primaryjoin=rating_id==Rating.id, post_update=True)
     ratings = relationship("Rating", primaryjoin=id==Rating.article_id, backref="article")
@@ -102,9 +104,9 @@ class Reaction(Base):
     author_id = Column(Integer, ForeignKey('users.id'))
     author = relationship("User", backref='reactions')
     media_id = Column(Integer, ForeignKey('media.id'))
-    media = relationship("Media", backref='reactions')
+    media = relationship("Media", backref='assigned_reaction')
     rating_id = Column(Integer, ForeignKey('ratings.id'))
-    rating = relationship("Rating", backref='assigned_reaction')
+    rating = relationship("Rating", backref='assigned_rating')
     timestamp = Column(DateTime, nullable=False, index=True)
     text = Column(UnicodeText, nullable=False)
 
@@ -112,8 +114,10 @@ if __name__ == "__main__":
     if raw_input('Drop all? ').strip().lower().startswith('y'):
         Base.metadata.drop_all(bind=engine)
         Base.metadata.create_all(bind=engine)
-        root = User(id=0, name=u"Root", password=u"df515bb71d7cc77e1287d9b94110aded391e5d202bfb98baba10b7ad", rights=9, gender="-", timestamp=datetime.utcnow(), laststamp=datetime.utcnow())
+        root = User(id=2, name=u"Root", password=u"df515bb71d7cc77e1287d9b94110aded391e5d202bfb98baba10b7ad", rights=9, gender="-", timestamp=datetime.utcnow(), laststamp=datetime.utcnow())
         session.add(root)
+        guest = User(id=1, name=u"Anonym", password=None, rights=0, gender="-", timestamp=datetime.utcnow(), laststamp=datetime.utcnow())
+        session.add(guest)
     Base.metadata.create_all(bind=engine)
     
     if raw_input('Import labels? ').strip().lower().startswith('y'):
@@ -122,7 +126,7 @@ if __name__ == "__main__":
         for row in l:
             id_labels, id_users, name, icon, hidden, platform, deleted = row
             if deleted=="0" and hidden=="0":
-                label = Label(name=name, category={"0":'other', '1':'platform', '2':'genre'}[platform], user_id=1)
+                label = Label(id=int(id_labels), name=name, category={"0":'other', '1':'platform', '2':'genre'}[platform], user_id=1)
                 session.add(label)
                 print(label.name)
     

@@ -1,0 +1,23 @@
+{% extends "_base.html" %}
+
+{% block title %}úprava - {{user.name}}{% endblock %}
+
+{% block content %}
+    <h2>Úprava - {{user.name}}</h2>
+    <form method="POST" action="/users/{{user.id}}/edit">
+      <dl>
+        {% if admin %}
+            {{ render_field(form.name) }}
+            {{ render_field(form.rights) }}
+        {% endif %}
+        {{ render_field(form.password) }}
+        {{ render_field(form.confirm) }}
+        {{ render_field(form.gender) }}
+        {{ render_field(form.minipic) }}
+        {{ render_field(form.profile) }}
+      </dl>
+      <p><input type="submit" value="Upravit">
+    </form>
+    
+    
+{% endblock %}

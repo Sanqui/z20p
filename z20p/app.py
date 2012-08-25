@@ -70,16 +70,17 @@ def minrights(minrights):
 @app.before_request
 def before_request():
     if 'user_id' in session:
-        session['user'] = db.session.query(db.User).filter_by(id=session['user_id']).one()
-        session['user'].laststamp = datetime.utcnow()
-    db.session.commit()
+        user = db.session.query(db.User).filter_by(id=session['user_id']).one()
+        user.laststamp = datetime.utcnow()
+        session['user'] = user
+        db.session.commit()
 
 @app.teardown_request
 def shutdown_session(exception=None):
     db.session.remove()
 
 @app.template_filter('datetime')
-def datetime_format(value, format='%d. %m. %Y  %H:%M'):
+def datetime_format(value, format='%d. %m. %Y  %H:%M'): # TODO add 2 hours
     return value.strftime(format)
 
 @app.route("/")
@@ -153,6 +154,56 @@ def users():
     anons = db.session.query(db.User) \
         .order_by(db.User.name.asc()).filter(db.User.password == None).all()
     return render_template("users.html", users=users, anons=anons)
+
+@app.route("/users/<int:user_id>", methods=['GET'])
+def user(user_id):
+    user = db.session.query(db.User).filter_by(id=user_id).scalar()
+    if not user: abort(404)
+    return render_template('user.html', user=user)
+
+@app.route("/users/<int:user_id>/edit", methods=['GET', 'POST'])
+@minrights(1)
+def edit_user(user_id):
+    user = db.session.query(db.User).filter_by(id=user_id).scalar()
+    if not user: abort(404)
+    class EditUserForm(Form):
+        email = TextField('Email', [validators.optional()])
+        password = PasswordField('Heslo (jen pokud nové)', [ validators.optional(),
+            validators.EqualTo('confirm', message='Hesla se musí schodovat')
+        ])
+        confirm = PasswordField('Heslo znovu', [validators.optional()])
+        gender = SelectField('Pohlaví', choices=[("m", "ten"), ("f", "ta"), ("-", "to")])
+        minipic = TextField('URL ikonky', [validators.optional()])
+        profile = TextAreaField('Profil', [validators.optional()])
+    
+    class AdminEditUserForm(EditUserForm):
+        name = TextField('Jméno')
+        rights = IntegerField('Práva')
+    
+    admin = False
+    if session['user'].rights >= 3:
+        form = AdminEditUserForm(request.form, user)
+        admin = True
+    elif user == session['user']:
+        form = EditUserForm(request.form, user)
+    else:
+        abort(403) # No editing other users!
+    
+    if request.method == 'POST' and form.validate():
+        if admin:
+            user.name = form.name.data
+            user.rights = form.rights.data
+        user.email = form.email.data
+        if form.password.data:
+            user.password = pwhash(form.password.data)
+        user.gender = form.gender.data
+        user.minipic = form.minipic.data
+        user.profile = form.profile.data
+        db.session.commit()
+        flash("Uživatel upraven!")
+        return redirect("/users/"+str(user.id))
+    
+    return render_template('edit_user.html', user=user, form=form, admin=admin)
 
 @app.route("/labels", methods=['GET', 'POST'])
 @app.route("/labels/<int:edit_id>/edit", methods=['GET', 'POST'])

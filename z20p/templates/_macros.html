@@ -49,9 +49,13 @@
                     <li><a href="/search/label/{{label.id}}">{{label.name}}</a>
                 {% endfor %}
             </ul>
-            <div class="authorline">{{"Napsala" if article.author.gender == "f" else "Autor"}}: <author>{{article.author.name}}</author></div>       
+            <div class="authorline">Napsal{{g(article.author.gender)}}: <author><a href="/users/{{article.author.id}}">{{article.author.name}}</a></author></div>       
             <div class="adminline"><a href="/article/{{article.id}}/edit">edit</a></div>  
             <div style="clear:both;"></div>  
         </footer>        
     </article>
+{%- endmacro %}
+## This really needs some more thinking through...
+{% macro g(gender) -%}
+{{{'m':'', 'f':'a', '-':'o'}[gender]}}
 {%- endmacro %}

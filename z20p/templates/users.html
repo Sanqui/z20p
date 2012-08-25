@@ -4,11 +4,12 @@
 
 {% block content %}
     <h2>Uživatelé</h2>
-    <table><thead><tr><td>Jméno</td><td>Datum registrace</td><td>Naposledy</td></tr></thead>
+    <table><thead><tr><td>Jméno</td><td>Práva</td><td>Datum registrace</td><td>Naposledy</td></tr></thead>
     <tbody>
         {% for user in users %}
             <tr id="user-{{user.id}}">
                 <td><a href="/users/{{user.id}}">{{user.name}}</a></td>
+                <td>{{user.rights}}</td>
                 <td>{{user.timestamp|datetime}}</td>
                 <td>{{user.laststamp|datetime}}</td>
             </tr>

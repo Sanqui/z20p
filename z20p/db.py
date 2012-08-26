@@ -52,6 +52,7 @@ articles_labels = Table('article_labels', Base.metadata,
     Column('label_id', Integer, ForeignKey('labels.id'))
 )
 
+# TODO store md5
 class Media(Base):
     __tablename__ = 'media'
     id = Column(Integer, primary_key=True, nullable=False)
@@ -94,7 +95,10 @@ class Article(Base):
     views = Column(Integer, default=0, nullable=False)
     labels = relationship("Label", 
                 secondary=articles_labels, backref="articles")
-    
+    is_article=True
+    @property
+    def url(self): # TODO title in url like on z10p
+        return "/articles/"+str(self.id)
 
 class Reaction(Base):
     __tablename__ = 'reactions'
@@ -106,9 +110,14 @@ class Reaction(Base):
     media_id = Column(Integer, ForeignKey('media.id'))
     media = relationship("Media", backref='assigned_reaction')
     rating_id = Column(Integer, ForeignKey('ratings.id'))
-    rating = relationship("Rating", backref='assigned_rating')
+    rating = relationship("Rating", backref='assigned_reaction')
     timestamp = Column(DateTime, nullable=False, index=True)
     text = Column(UnicodeText, nullable=False)
+    is_reaction=True
+    @property
+    def url(self):
+        return "/reactions/"+str(self.id)
+
 
 if __name__ == "__main__":
     if raw_input('Drop all? ').strip().lower().startswith('y'):

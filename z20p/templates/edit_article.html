@@ -4,7 +4,7 @@
 
 {% block content %}
     <h2>Upravit článek</h2>
-    <form method="POST" action="/article/{{article.id}}/edit" enctype="multipart/form-data">
+    <form method="POST" action="{{article.url}}/edit" enctype="multipart/form-data">
       <dl>
         {{ render_field(form.title) }}
         {{ render_field(form.text) }}

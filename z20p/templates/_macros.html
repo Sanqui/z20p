@@ -23,9 +23,9 @@
   </td>
 {% endmacro %}
 {% macro display_article(article, crop=False) -%}
-    <article class="{{'crop' if crop else 'regular'}}">
+    <article class="{{'crop' if crop else 'regular'}}" id="{{'article' if article.is_article else 'reaction'}}-{{article.id}}">
         {% if article.media %}
-            {% if crop %} <a href="/article/{{ article.id }}">
+            {% if crop %} <a href="{{article.url}}">
             {% else %} <a href="{{article.media.url}}">{% endif %}
             <img src="{{article.media.url}}" title="{{article.media.title}}" alt="{{article.title}} - obrázek" class="image">
             </a>
@@ -36,7 +36,7 @@
             </div>
         {% endif %}
         {% if article.title %}
-            <h1><a href="/article/{{ article.id }}">{{ article.title }}</a></h1>
+            <h1><a href="{{article.url}}">{{ article.title }}</a></h1>
         {% endif %}
         {% if not crop %}
             <p>{{article.text|replace("\n", "\n<p>")|safe}}
@@ -48,6 +48,7 @@
                 {% endif %}
             {% endfor %}
             </ul>
+            {{ article.all_media|count }} obrázků, {{ article.reactions|count }} reakcí
         {% endif %}
         <footer>
             <div class="dateline"><img src="/static/icons/calendar-blue.png" alt="Datum publikace: "> {{article.timestamp|datetime}}</div> 
@@ -57,7 +58,7 @@
                 {% endfor %}
             </ul>
             <div class="authorline">Napsal{{g(article.author.gender)}}: <author><a href="/users/{{article.author.id}}">{{article.author.name}}</a></author>{{'★' if article.author.rights >= 1}}</div>       
-            {% if session.user.admin or session.user == article.author %}<div class="adminline"><a href="/article/{{article.id}}/edit">edit</a></div>{% endif %}
+            {% if session.user.admin or session.user == article.author %}<div class="adminline"><a href="{{article.url}}/edit">edit</a></div>{% endif %}
             <div style="clear:both;"></div>  
         </footer>        
     </article>

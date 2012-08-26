@@ -106,7 +106,7 @@ def root():
     return render_template("main.html", articles=articles)
 
 # TODO all these POSTs should go elsewhere with a redirect.  Better for refreshing.
-@app.route("/article/<int:article_id>", methods=['GET', 'POST'])
+@app.route("/articles/<int:article_id>", methods=['GET', 'POST'])
 def article(article_id):
     article = db.session.query(db.Article).filter_by(id=article_id).scalar()
     if not article: abort(404)
@@ -150,7 +150,7 @@ def article(article_id):
         name = TextField('Jméno', name_validators) # Only for guests
         text = TextAreaField('Text', [validators.required()])
         rating = SelectField('Hodnocení', choices=[(0, '-')]+[(i+1, str(i+1)) for i in range(0,10)], coerce=int)
-        image = SelectField('Obrázek', choices=[(-1, '-')], coerce=int)
+        image = SelectField('Obrázek', choices=[(-1, '-')], coerce=int, default=-1)
         submit = SubmitField('Přidat reakci')
     
     reaction_form = ReactionForm(request.form, rating=rating.rating if (rating and article.author != session['user']) else 0)
@@ -158,6 +158,7 @@ def article(article_id):
         if media.author == session['user'] and not media.assigned_article and not media.assigned_reaction:
             reaction_form.image.choices.append((media.id, media.title))
     if request.method == 'POST' and request.form['submit'] == reaction_form.submit.label.text and reaction_form.validate():
+        print('derp')
         if reaction_form.name.data: # This technically allows logged-in users to post as guests if they hack the input in.
             user = get_guest(reaction_form.name.data)
         else:
@@ -177,6 +178,50 @@ def article(article_id):
     article.views += 1
     db.session.commit()
     return render_template("article.html", article=article, upload_form=upload_form, reaction_form=reaction_form, rating_form=rating_form)
+
+# TODO /reactions/id redirect to article#id
+
+@app.route("/reactions/<int:reaction_id>/edit", methods=['GET', 'POST'])
+@minrights(1)
+def edit_reaction(reaction_id):
+    reaction = db.session.query(db.Reaction).filter_by(id=reaction_id).scalar()
+    if not reaction: abort(404)
+    class EditReactionForm(Form):
+        text = TextAreaField('Text', [validators.required()])
+        rating = SelectField('Hodnocení', choices=[(0, '-')]+[(i+1, str(i+1)) for i in range(0,10)], coerce=int)
+        image = SelectField('Obrázek', choices=[(-1, '-')], coerce=int)
+        submit = SubmitField('Upravit reakci')
+    # This could be constructed better...
+    rating = db.session.query(db.Rating).filter(db.Rating.assigned_reaction.contains(reaction)) \
+         .filter(db.Rating.user == reaction.author).scalar()
+    form = EditReactionForm(request.form, reaction)
+    if form.rating.data == None: form.rating.data = rating.rating if (rating and rating.rating) else 0
+    for media in reaction.article.all_media:
+        if media.author == session['user'] and not media.assigned_article and not media.assigned_reaction:
+            form.image.choices.append((media.id, media.title))
+        elif media == reaction.media:
+            form.image.choices.append((media.id, media.title))
+            if form.image.data == None: form.image.data = media.id
+    
+    if request.method == 'POST' and form.validate():
+        reaction.text = form.text.data
+        if form.image.data != -1:
+            reaction.media_id = form.image.data
+        else:
+            reaction.media = None
+        if form.rating.data:
+            if rating:
+                rating.rating = form.rating.data
+            else:
+                rating = db.Rating(rating=form.rating.data, user=reaction.author, article=reaction.article)
+            reaction.rating = rating
+        else:
+            reaction.rating = None
+        db.session.commit()
+        flash("Reakce upravena.")
+        return redirect(reaction.article.url+"#reaction-"+str(reaction.id))
+    
+    return render_template("edit_reaction.html", reaction=reaction, form=form)
 
 @app.route("/login", methods=['GET', 'POST'])
 def login():
@@ -228,7 +273,7 @@ def register():
         db.session.commit()
         session['user'] = db.session.query(db.User).filter_by(name=form.name.data).filter_by(password=pwhash(form.password.data)).scalar()
         flash("Jste zaregistrováni.")
-        return redirect("/")
+        return redirect("/login")
     
     return render_template("register.html", form=form)
 
@@ -323,6 +368,7 @@ def labels(edit_id=None):
     return render_template("labels.html", form=form, labels=labels, edit_id=edit_id)
 
 def upload_image(**kvargs):
+    # TODO check for duplicate filenames
     media = None
     if 'image' in request.files and request.files['image'].filename != "":
         image = request.files['image']
@@ -359,10 +405,11 @@ def new_article():
         return redirect("/")
     return render_template("new_article.html", form=form)
     
-@app.route("/article/<int:edit_id>/edit", methods=['GET', 'POST'])
+@app.route("/articles/<int:edit_id>/edit", methods=['GET', 'POST'])
 @minrights(2)
 def edit_article(edit_id):
     article = db.session.query(db.Article).filter_by(id=edit_id).scalar()
+    if not article: abort(404)
     form = ArticleForm(request.form, article)
     labels = db.session.query(db.Label) \
         .order_by(db.Label.category.desc(), db.Label.name.asc()).all()

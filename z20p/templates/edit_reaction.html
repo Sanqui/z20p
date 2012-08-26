@@ -1,0 +1,17 @@
+{% extends "_base.html" %}
+
+{% block title %}Úprava reakce{% endblock %}
+
+{% block content %}
+    <h2>Úprava reakce na {{reaction.article.title}}</h2>
+    <form method="POST" action="{{reaction.url}}/edit">
+      <dl>
+        {{ render_field(form.text) }}
+        {{ render_field(form.image) }}
+        {{ render_field(form.rating) }}
+      </dl>
+      <p><input type="submit" value="Upravit">
+    </form>
+    
+    
+{% endblock %}

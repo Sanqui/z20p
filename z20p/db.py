@@ -59,6 +59,7 @@ class Media(Base):
     author_id = Column(Integer, ForeignKey('users.id'))
     author = relationship("User", backref='media')
     article_id = Column(Integer, ForeignKey('articles.id'), nullable=False)
+    timestamp = Column(DateTime, nullable=False, index=True)
     title = Column(Unicode(256), nullable=False)
     url = Column(Unicode(256), nullable=False)
     type = Column(Enum("image", "video"))

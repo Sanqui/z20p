@@ -7,9 +7,13 @@
     <div class="mediagallery">
         {%- for media in article.all_media -%}
             {%- if media.type == 'image' -%}
-                <div class="mediabox">
+                <div class="mediabox" id="media-{{media.id}}">
                     <div><a href="{{media.url}}"><img src="{{media.url}}" class="image" alt="Obrázek"></a></div>
-                    <div>{{media.title}}</div>
+                    <div title="{{media.author.name}}, {{media.timestamp|datetime}}">{{media.title}}
+                        {% if session.user.admin or (session.user == media.author and not session.user.guest) %}
+                            <a href="/media/{{media.id}}/edit">{{icon("pencil", "Edit")}}</a>
+                        {% endif %}
+                    </div>
                 </div>
             {%- endif -%}
         {%- endfor -%}<div class="mediabox">

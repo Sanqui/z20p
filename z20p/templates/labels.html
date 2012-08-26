@@ -4,12 +4,12 @@
 
 {% block content %}
     <h2>Štítky</h2>
-    <table><thead><tr><td>edit</td><td>Štítek</td><td>Autor</td><td>Kategorie</td></tr></thead>
+    <table><thead><tr><td></td><td>Štítek</td><td>Autor</td><td>Kategorie</td></tr></thead>
     <tbody>
         {% for label in labels %}
             {% if label.id != edit_id %}
                 <tr id="label-{{label.id}}">
-                    <td><a href="/labels/{{label.id}}/edit#label-{{label.id}}">e</a></td>
+                    <td><a href="/labels/{{label.id}}/edit#label-{{label.id}}">{{icon("pencil", "Edit")}}</a></td>
                     <td>{{label.name}}</td>
                     <td>{{label.user.name}}</td>
                     <td>{{{"platform":"Platforma", "genre":"Žánr", "other":"Jiné", "column":"Sloupek"}[label.category]}}</td>

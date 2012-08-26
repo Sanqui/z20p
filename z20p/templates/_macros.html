@@ -48,20 +48,23 @@
                 {% endif %}
             {% endfor %}
             </ul>
-            {{ article.all_media|count }} obrázků, {{ article.reactions|count }} reakcí
+            {{icon("images-stack", "Obrázků")}}×{{ article.all_media|count }} {{icon("blogs-stack", "Reakcí")}}×{{ article.reactions|count }}
         {% endif %}
         <footer>
-            <div class="dateline"><img src="/static/icons/calendar-blue.png" alt="Datum publikace: "> {{article.timestamp|datetime}}</div> 
+            <div class="dateline">{{icon("calendar-blue", "Datum publikace:")}} {{article.timestamp|datetime}}</div> 
             <ul class="labels">
                 {% for label in article.labels %}
                     <li><a href="/search/label/{{label.id}}">{{label.name}}</a>
                 {% endfor %}
             </ul>
             <div class="authorline">Napsal{{g(article.author.gender)}}: <author><a href="/users/{{article.author.id}}">{{article.author.name}}</a></author>{{'★' if article.author.rights >= 1}}</div>       
-            {% if session.user.admin or session.user == article.author %}<div class="adminline"><a href="{{article.url}}/edit">edit</a></div>{% endif %}
+            {% if session.user.admin or session.user == article.author %}<div class="adminline"><a href="{{article.url}}/edit">{{icon("pencil", "Editovat")}}</a></div>{% endif %}
             <div style="clear:both;"></div>  
         </footer>        
     </article>
+{%- endmacro %}
+{% macro icon(name, alt, title="") -%}
+<img src="/static/icons/{{name}}.png" alt="{{alt}}" title="{{alt if title=='' else title}}" width=16 height=16>
 {%- endmacro %}
 ## This really needs some more thinking through...
 {% macro g(gender=None) -%}

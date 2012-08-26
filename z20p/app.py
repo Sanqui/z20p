@@ -97,6 +97,7 @@ def shutdown_session(exception=None):
 
 @app.template_filter('datetime')
 def datetime_format(value, format='%d. %m. %Y  %H:%M'): # TODO add 2 hours
+    if not value: return "-"
     return value.strftime(format)
 
 @app.route("/")
@@ -133,14 +134,17 @@ def article(article_id):
         if rating:
             if rating_form.rating.data:
                 rating.rating = rating_form.rating.data
+                msg = "Hodnocení upraveno."
             else:
                 db.session.delete(rating)
+                msg = "Hodnocení odebráno."
         else:
             rating = db.Rating(rating=rating_form.rating.data, user_id=session['user'].id, article=article)
             if article.author == session['user']: # If the author removes then adds an rating using this form
                 article.rating = rating
             db.session.add(rating)
-        flash("Ohodnoceno.")
+            msg = "Ohodnoceno."
+        flash(msg)
     
     if session['user'].guest:
         name_validators = [validators.required()]
@@ -158,7 +162,6 @@ def article(article_id):
         if media.author == session['user'] and not media.assigned_article and not media.assigned_reaction:
             reaction_form.image.choices.append((media.id, media.title))
     if request.method == 'POST' and request.form['submit'] == reaction_form.submit.label.text and reaction_form.validate():
-        print('derp')
         if reaction_form.name.data: # This technically allows logged-in users to post as guests if they hack the input in.
             user = get_guest(reaction_form.name.data)
         else:
@@ -173,7 +176,7 @@ def article(article_id):
         media = reaction_form.image.data if reaction_form.image.data != -1 else None
         reaction = db.Reaction(text=reaction_form.text.data, rating=rating, article=article, timestamp=datetime.utcnow(), author=user, media_id=media)
         db.session.add(reaction)
-        flash("Reagováno.")
+        flash("Reakce přidána.")
     
     article.views += 1
     db.session.commit()
@@ -186,6 +189,7 @@ def article(article_id):
 def edit_reaction(reaction_id):
     reaction = db.session.query(db.Reaction).filter_by(id=reaction_id).scalar()
     if not reaction: abort(404)
+    if not session['user'].admin and (session['user'] != reaction.author): abort(403)
     class EditReactionForm(Form):
         text = TextAreaField('Text', [validators.required()])
         rating = SelectField('Hodnocení', choices=[(0, '-')]+[(i+1, str(i+1)) for i in range(0,10)], coerce=int)
@@ -222,6 +226,27 @@ def edit_reaction(reaction_id):
         return redirect(reaction.article.url+"#reaction-"+str(reaction.id))
     
     return render_template("edit_reaction.html", reaction=reaction, form=form)
+
+# TODO /media/id redirect to image itself
+@app.route("/media/<int:media_id>/edit", methods=['GET', 'POST'])
+def edit_media(media_id):
+    media = db.session.query(db.Media).filter_by(id=media_id).scalar()
+    if not media: abort(404)
+    if not session['user'].admin and (session['user'] != media.author): abort(403)
+    # TODO image rank
+    class EditMediaForm(Form):
+        title = TextField('Titulek', [validators.required()])
+        submit = SubmitField('Upravit obrázek')
+    
+    form = EditMediaForm(request.form, media)
+    
+    if request.method == 'POST' and form.validate():
+        media.title = form.title.data
+        db.session.commit()
+        flash("Obrázek upraven.")
+        return redirect(media.article.url+"#media-"+str(media.id))
+    
+    return render_template("edit_media.html", media=media, form=form)
 
 @app.route("/login", methods=['GET', 'POST'])
 def login():
@@ -374,7 +399,7 @@ def upload_image(**kvargs):
         image = request.files['image']
         filename = secure_filename(image.filename)
         image.save(os.path.join("static/uploads/", filename))
-        media = db.Media(type="image", url="/static/uploads/"+filename, **kvargs)
+        media = db.Media(type="image", url="/static/uploads/"+filename, timestamp=datetime.utcnow(), **kvargs)
         db.session.add(media)
         print(media)
         flash("Obrázek nahrán.")
@@ -406,16 +431,30 @@ def new_article():
     return render_template("new_article.html", form=form)
     
 @app.route("/articles/<int:edit_id>/edit", methods=['GET', 'POST'])
-@minrights(2)
+@minrights(1)
 def edit_article(edit_id):
     article = db.session.query(db.Article).filter_by(id=edit_id).scalar()
     if not article: abort(404)
-    form = ArticleForm(request.form, article)
+    if not session['user'].admin and (session['user'] != article.author): abort(403)
+    class EditArticleForm(ArticleForm):
+        image = SelectField('Obrázek', choices=[(-1, '-')], coerce=int)
+    form = EditArticleForm(request.form, article)
+    for media in article.all_media:
+        if media.author == session['user'] and not media.assigned_article and not media.assigned_reaction:
+            form.image.choices.append((media.id, media.title))
+        elif media == article.media:
+            print(article.media, form.image.data)
+            form.image.choices.append((media.id, media.title))
+            if form.image.data == None: form.image.data = media.id
     labels = db.session.query(db.Label) \
         .order_by(db.Label.category.desc(), db.Label.name.asc()).all()
     form.labels.choices = [(l.id, l.category[0]+": "+l.name) for l in labels]
     if request.method == 'POST' and form.validate():
-        media = upload_image(title=form.image_title.data, author_id=session['user'].id)
+        print (form.image.data)
+        if form.image.data != -1:
+            article.media_id = form.image.data
+        else:
+            article.media = None
     
         article.title = form.title.data
         article.text = form.text.data
@@ -431,16 +470,13 @@ def edit_article(edit_id):
         article.labels = []
         for label_id in form.labels.data:
             article.labels.append(db.session.query(db.Label).filter_by(id=label_id).scalar())
-        if media != None:
-            article.media = media
         db.session.commit()
         flash('Článek upraven')
-        return redirect("/article/{0}".format(article.id))
+        return redirect(article.url)
     if request.method == 'GET' and form.labels.data == None: # welp
         form.labels.data = [l.id for l in article.labels]
         if article.rating:
             form.rating.data = article.rating.rating
-        print(form.rating.data)
     
     return render_template("edit_article.html", form=form, article=article)
     

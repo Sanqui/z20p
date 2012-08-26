@@ -85,11 +85,13 @@ author {font-weight:bold;}
 article.crop .adminline {display:none;}
 
 .mediagallery {width:100%; max-height:200px; overflow-x:scroll; overflow-y:hidden; white-space: nowrap;}
-.mediabox img { 
+.mediabox .image { 
     max-width:166px; max-height:133px;
     border: 1px solid black;}
 .mediabox {max-width:168px; display:inline-block; text-align:center;}
 .mediabox dd {margin-left:0;}
+
+.largeimage {margin:auto; max-width:250px; max-height:200px; border:1px solid black;}
 
 table {width: 100%; border-collapse:collapse;}
 thead {background-color:rgb(187, 20, 26); text-align:center; color:white;}

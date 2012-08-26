@@ -1,0 +1,16 @@
+{% extends "_base.html" %}
+
+{% block title %}Úprava obrázku {{media.title}}{% endblock %}
+
+{% block content %}
+    <h2>Úprava obrázku {{media.title}}</h2>
+    <img src="{{media.url}}" class="largeimage">
+    <form method="POST" action="/media/{{media.id}}/edit">
+      <dl>
+        {{ render_field(form.title) }}
+        {{ render_field(form.submit) }}
+      </dl>
+    </form>
+    Obrázek nahrál{{g(media.author.gender)}} {{media.author.name}} dne {{media.timestamp}}
+    
+{% endblock %}

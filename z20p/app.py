@@ -3,6 +3,7 @@ from __future__ import absolute_import, unicode_literals, print_function
 
 #from z20p import db
 import db
+from sqlalchemy import or_, asc, desc
 
 from datetime import datetime
 from functools import wraps # We need this to make Flask understand decorated routes.
@@ -101,10 +102,63 @@ def datetime_format(value, format='%d. %m. %Y  %H:%M'): # TODO add 2 hours
     return value.strftime(format)
 
 @app.route("/")
-def root():
+def main():
     articles = db.session.query(db.Article) \
         .order_by(db.Article.timestamp.desc()).limit(4).all()
     return render_template("main.html", articles=articles)
+
+@app.route("/search")
+def search():
+    # Oh boy.
+    class SimplifiedSearchForm(Form):
+        text = TextField("Text", [validators.required()])
+        within_labels = BooleanField("Včetně štítků", default=True)
+        sort = SelectField("Řazení", choices=[("timestamp", "Datum publikace"), ("rating", "Hodnocení")], default="pubdate")
+        order = SelectField("Typ řazení", choices=[("desc", "Sestupně"), ("asc", "Vzestupně")], default="desc")
+        submit = SubmitField("Hledat")
+    
+    class SearchForm(SimplifiedSearchForm):
+        platform_labels = MultiCheckboxField('Platformy', choices=[], coerce=int)
+        genre_labels = MultiCheckboxField('Žánry', choices=[], coerce=int)
+        other_labels = MultiCheckboxField('Štítky', choices=[], coerce=int)
+        label_operator = SelectField("Operátor", choices=[("", " "), ("and", "a"), ("or", "nebo"), ("nor", "ani")])
+        authors = MultiCheckboxField('Autoři', choices=[], coerce=int)
+        author_operator = SelectField("Operátor", choices=[("", " "), ("and", "a"), ("or", "nebo"), ("nor", "ani")])
+    if False: # TODO
+        labels = db.session.query(db.Label) \
+            .order_by(db.Label.name.asc()).all()
+        for label in labels:
+            if label.category == 'platform': f = form.platform_labels
+            if label.category == 'genre': f = form.genre_labels
+            if label.category == 'other': f = form.other_labels
+            f.choices.append((label.id, label.name))
+        
+        users = db.session.query(db.User).filter(db.User.rights >= 2) \
+            .order_by(db.User.name.asc()).all()
+        form.authors.choices = [(u.id, u.name) for u in users]
+    
+    
+    form = SimplifiedSearchForm(request.args)
+    
+    searched = False
+    matched_labels = []
+    matched_articles = []
+    if "submit" in request.args and form.validate():
+        searched = True
+        or_conditions = []
+        if form.within_labels.data:
+            matched_labels = db.session.query(db.Label).filter(db.Label.name.like('%'+form.text.data+'%')).all()
+            if matched_labels:
+                or_conditions += [db.Article.labels.contains(l) for l in matched_labels]
+        or_conditions += [db.Article.title.like('%'+form.text.data+'%'),
+                         db.Article.text.like('%'+form.text.data+'%')]
+        
+        order_by = {"timestamp": db.Article.timestamp, "rating": db.Rating.rating}[form.sort.data]
+        order = {'asc': asc, 'desc': desc}[form.order.data]
+        
+        matched_articles = db.session.query(db.Article).join(db.Article.rating).filter(or_(*or_conditions)).order_by(order(order_by))
+    
+    return render_template("search.html", form=form, searched=searched, matched_articles=matched_articles, matched_labels=matched_labels)
 
 # TODO all these POSTs should go elsewhere with a redirect.  Better for refreshing.
 @app.route("/articles/<int:article_id>", methods=['GET', 'POST'])

@@ -5,7 +5,7 @@
         <meta charset="utf-8">
         <title>Z20P > {% block title %}{% endblock %}</title>
         <link href="/static/style.css" rel="stylesheet" type="text/css">
-        <script src="/static/js/libs/modernizr-2.5.3.min.js"></script>
+        <script src="/static/js/modernizr-2.5.3.min.js"></script>
     </head>
     <body>
         <h1 id="logo"><a href="/"><img src="http://www.zabij10prasat.cz/img/prasarny.png" alt="Zabij 10 prasat"></a></h1>
@@ -31,7 +31,7 @@
                 <li><a href="#">Kategorie<span class="down">▽</span></a>
                 
             {% for item, link in (('Vyhledávání', 'search'), ('Pro čtenáře', 'info'), ("Videa a 5 nej.", "columns"), ("Všechny články", "all_articles")) %}
-                <li><a href="{{link}}">{{item}}</a>
+                <li><a href="/{{link}}">{{item}}</a>
             {% endfor %}
             </menu>
             <menu id="rightmenu">
@@ -48,7 +48,7 @@
             z20p.  © Zabij 10 prasat.  Fugue icon set © <a href="http://p.yusukekamiyamane.com/">Yusuke Kamiyamane</a> <a href="http://creativecommons.org/licenses/by/3.0/deed.cs"><img src="/static/icons/creative-commons.png" alt="CC" title="pod Creative Commons licencí"></a> 
         </footer>
         <script src="//ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
-        <script>window.jQuery || document.write('<script src="/static/js/libs/jquery-1.7.1.min.js"><\/script>')</script>
+        <script>window.jQuery || document.write('<script src="/static/js/jquery-1.7.1.min.js"><\/script>')</script>
     </body>
 </html>
 

@@ -6,6 +6,7 @@ import db
 from sqlalchemy import or_, asc, desc
 
 from datetime import datetime
+import time
 from functools import wraps # We need this to make Flask understand decorated routes.
 import hashlib
 import os
@@ -44,6 +45,7 @@ class ArticleForm(Form):
     title = TextField('Titulek', [validators.required()])
     text = TextAreaField('Text', [validators.required()])
     rating = SelectField('Hodnocení', choices=[(0, '-')]+[(i+1, str(i+1)) for i in range(0,10)], coerce=int)
+    f2p = BooleanField('Hratelné zdarma')
     labels = MultiCheckboxField('Štítky', coerce=int)
     image = FileField('Obrázek', [file_allowed(uploads, "Jen obrázky")])
     image_title = TextField('Titulek obrázku', [validators.optional()])
@@ -56,13 +58,21 @@ class ArticleForm(Form):
     #    else:
     #        raise ValidationError("Nepovolený typ souboru.")
 
-def get_guest(name):
-    guest = db.session.query(db.User).filter(db.User.name == name).filter(db.User.password == None).scalar()
-    if not guest:
-        guest = db.User(name=name, timestamp=datetime.utcnow(), laststamp=datetime.utcnow()) # TODO ip?
-        db.session.add(guest)
-    guest.laststamp = datetime.utcnow()
-    db.session.commit()
+def get_guest(name=None):
+    if name:
+        guest = db.session.query(db.User).filter(db.User.name == name).filter(db.User.password == None).scalar()
+        if not guest:
+            guest = db.User(name=name, timestamp=datetime.utcnow(), laststamp=datetime.utcnow(), ip=request.remote_addr) # TODO ip?
+            db.session.add(guest)
+        guest.laststamp = datetime.utcnow()
+        db.session.commit()
+    else:
+        guest = db.session.query(db.User).filter(db.User.ip == request.remote_addr).filter(db.User.password == None).scalar()
+        if not guest:
+            guest = db.User(name=None, timestamp=datetime.utcnow(), laststamp=datetime.utcnow(), ip=request.remote_addr)
+            db.session.add(guest)
+        guest.laststamp = datetime.utcnow()
+        db.session.commit()
     return guest
 
 # Callable decorator
@@ -84,13 +94,15 @@ def before_request():
         user = db.session.query(db.User).filter_by(id=session['user_id']).scalar()
         if not user: # We could've reset the database.  Let's not have to delete cookies.
             logout()
+            session['user'] = get_guest()
             return
         user.laststamp = datetime.utcnow()
         session['user'] = user
         db.session.commit()
     else:
         # Let's use a temporary dummy user.
-        session['user'] = db.session.query(db.User).filter_by(id=1).one() # This ought to be the guest...
+        # session['user'] = db.session.query(db.User).filter_by(id=1).one() # This ought to be the guest...
+        session['user'] = get_guest()
 
 @app.teardown_request
 def shutdown_session(exception=None):
@@ -148,8 +160,8 @@ def search():
         or_conditions = []
         if form.within_labels.data:
             matched_labels = db.session.query(db.Label).filter(db.Label.name.like('%'+form.text.data+'%')).all()
-            if matched_labels:
-                or_conditions += [db.Article.labels.contains(l) for l in matched_labels]
+            #if matched_labels:
+            #    or_conditions += [db.Article.labels.contains(l) for l in matched_labels]
         or_conditions += [db.Article.title.like('%'+form.text.data+'%'),
                          db.Article.text.like('%'+form.text.data+'%')]
         
@@ -315,10 +327,20 @@ def login():
             session['user_id'] = user.id
             session['user'] = user
             session['user'].ip = request.remote_addr
+            db.session.commit()
             flash("Jste přihlášeni.")
             return redirect("/")
-        else:
-            flash("Nesprávné uživatelské jméno nebo heslo.")
+        else: # This ought to be removed in a "short" while.
+            user = db.session.query(db.User).filter_by(name=form.name.data).filter_by(password="FIXME").scalar()
+            if user:
+                session['user_id'] = user.id
+                session['user'] = user
+                session['user'].ip = request.remote_addr
+                session.commit()
+                flash("Byli jste přihlášeni, ale z důvodu masivních změn v systému nemáte heslo.  Prosím, nastavte si nové heslo pokud možno hned.")
+                return redirect("/users/"+str(user.id)+"/edit")
+            else:
+                flash("Nesprávné uživatelské jméno nebo heslo.")
     
     return render_template("login.html", form=form)
 
@@ -473,6 +495,7 @@ def new_article():
         media = upload_image(title=form.image_title.data, author_id=session['user'].id,
             article=article)
         article.media = media
+        article.f2p = form.f2p.data
         if form.rating.data:
             article.rating = db.Rating(rating=form.rating.data, user_id=session['user'].id, article=article)
         article.labels = []
@@ -509,7 +532,7 @@ def edit_article(edit_id):
             article.media_id = form.image.data
         else:
             article.media = None
-    
+        article.f2p = form.f2p.data
         article.title = form.title.data
         article.text = form.text.data
         if article.rating:

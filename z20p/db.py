@@ -1,4 +1,5 @@
 from datetime import datetime
+import time
 
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
@@ -17,9 +18,8 @@ Base = declarative_base(bind=engine)
 
 class User(Base):
     __tablename__ = 'users'
-
     id = Column(Integer, primary_key=True, nullable=False)
-    name = Column(Unicode(64), nullable=False)
+    name = Column(Unicode(64))
     password = Column(Unicode(128))
     timestamp = Column(DateTime, nullable=False, index=True)
     laststamp = Column(DateTime, nullable=False, index=True)
@@ -92,6 +92,7 @@ class Article(Base):
     published = Column(Boolean, nullable=False)
     title = Column(Unicode(256), nullable=False)
     text = Column(UnicodeText, nullable=False)
+    f2p = Column(Boolean)
     year = Column(Integer)
     views = Column(Integer, default=0, nullable=False)
     labels = relationship("Label", 
@@ -124,20 +125,51 @@ if __name__ == "__main__":
     if raw_input('Drop all? ').strip().lower().startswith('y'):
         Base.metadata.drop_all(bind=engine)
         Base.metadata.create_all(bind=engine)
-        root = User(id=2, name=u"Root", password=u"df515bb71d7cc77e1287d9b94110aded391e5d202bfb98baba10b7ad", rights=9, gender="-", timestamp=datetime.utcnow(), laststamp=datetime.utcnow())
+        # It would be REALLY nice if we could use some sane ids here..  but we
+        # must reserve ids 1 through 4 for old z10p authors, and MySQL
+        # won't allow id=0.  Yay.
+        root = User(id=5, name=u"Root", password=u"df515bb71d7cc77e1287d9b94110aded391e5d202bfb98baba10b7ad", rights=9, gender="-", timestamp=datetime.utcnow(), laststamp=datetime.utcnow())
         session.add(root)
-        guest = User(id=1, name=u"Anonym", password=None, rights=0, gender="-", timestamp=datetime.utcnow(), laststamp=datetime.utcnow())
-        session.add(guest)
     Base.metadata.create_all(bind=engine)
     
-    if raw_input('Import labels? ').strip().lower().startswith('y'):
+    if raw_input('Import stuff? ').strip().lower().startswith('y'):
         import csv
+        u = csv.reader(open('tmp/users.csv', 'rb'), delimiter=',', quotechar='"')
+        for row in u:
+            id_users, name, password, rights, minipic = row
+            user = User(id=int(id_users), name=name, password="FIXME", minipic=minipic, rights=int(rights), timestamp=0, laststamp=0)
+            session.add(user)
+            print(user.name)
+        
         l = csv.reader(open('tmp/labels.csv', 'rb'), delimiter=',', quotechar='"')
         for row in l:
             id_labels, id_users, name, icon, hidden, platform, deleted = row
             if deleted=="0" and hidden=="0":
-                label = Label(id=int(id_labels), name=name, category={"0":'other', '1':'platform', '2':'genre'}[platform], user_id=1)
+                label = Label(id=int(id_labels), name=name, category={"0":'other', '1':'platform', '2':'genre'}[platform], user_id=int(id_users))
                 session.add(label)
                 print(label.name)
-    
-    session.commit()
+
+        a = csv.reader(open('tmp/articles.csv', 'rb'), delimiter=',', quotechar='"', doublequote=False, escapechar='\\')
+        for row in a:
+            #print(row)
+            id_articles, id_users, date, title, text, image_display, image_url, image_alt, image_title, rating, f2p = row
+            article = Article(id=int(id_articles), author_id=int(id_users), timestamp=datetime.fromtimestamp(int(date)), title=title, text=text, f2p=bool(int(f2p)) if f2p != "-1" else None, published=True)
+            if int(rating) != 0:
+                article.rating = Rating(rating=int(rating), user_id=int(id_users), article=article)
+            session.add(article)
+            print(article.title)
+        
+        print ("*"*32)
+        print ("COMMITTING STEP 1")
+        session.commit()
+        
+        al = csv.reader(open('tmp/articles_labels.csv', 'rb'), delimiter=',', quotechar='"', doublequote=False, escapechar='\\')
+        for row in al:
+            id_articles_labels, id_articles, id_labels, date = row
+            article = session.query(Article).filter_by(id=int(id_articles)).scalar()
+            label = session.query(Label).filter_by(id=int(id_labels)).scalar()
+            if label and article:
+                article.labels.append(label)
+        
+        print ("Aaaand done.")
+        session.commit()

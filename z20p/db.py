@@ -1,5 +1,6 @@
 from datetime import datetime
 import time
+import os.path
 
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
@@ -156,6 +157,10 @@ if __name__ == "__main__":
             article = Article(id=int(id_articles), author_id=int(id_users), timestamp=datetime.fromtimestamp(int(date)), title=title, text=text, f2p=bool(int(f2p)) if f2p != "-1" else None, published=True)
             if int(rating) != 0:
                 article.rating = Rating(rating=int(rating), user_id=int(id_users), article=article)
+            if int(image_display):
+                url = "/static/old/"+os.path.basename(image_url)
+                media = Media(author_id=int(id_users), article=article, title=image_title, timestamp=datetime.fromtimestamp(int(date)), type="image", url=url)
+                article.media = media
             session.add(article)
             print(article.title)
         

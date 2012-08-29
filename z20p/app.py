@@ -62,16 +62,16 @@ def get_guest(name=None):
     if name:
         guest = db.session.query(db.User).filter(db.User.name == name).filter(db.User.password == None).scalar()
         if not guest:
-            guest = db.User(name=name, timestamp=datetime.utcnow(), laststamp=datetime.utcnow(), ip=request.remote_addr) # TODO ip?
+            guest = db.User(name=name, timestamp=datetime.now(), laststamp=datetime.now(), ip=request.remote_addr)
             db.session.add(guest)
-        guest.laststamp = datetime.utcnow()
+        guest.laststamp = datetime.now()
         db.session.commit()
     else:
         guest = db.session.query(db.User).filter(db.User.ip == request.remote_addr).filter(db.User.password == None).scalar()
         if not guest:
-            guest = db.User(name=None, timestamp=datetime.utcnow(), laststamp=datetime.utcnow(), ip=request.remote_addr)
+            guest = db.User(name=None, timestamp=datetime.now(), laststamp=datetime.now(), ip=request.remote_addr)
             db.session.add(guest)
-        guest.laststamp = datetime.utcnow()
+        guest.laststamp = datetime.now()
         db.session.commit()
     return guest
 
@@ -90,19 +90,20 @@ def minrights(minrights):
 
 @app.before_request
 def before_request():
-    if 'user_id' in session:
-        user = db.session.query(db.User).filter_by(id=session['user_id']).scalar()
-        if not user: # We could've reset the database.  Let's not have to delete cookies.
-            logout()
+    if request.script_root != "/static": # Yeah no.
+        if 'user_id' in session:
+            user = db.session.query(db.User).filter_by(id=session['user_id']).scalar()
+            if not user: # We could've reset the database.  Let's not have to delete cookies.
+                logout()
+                session['user'] = get_guest()
+                return
+            user.laststamp = datetime.now()
+            session['user'] = user
+            db.session.commit()
+        else:
+            # Let's use a temporary dummy user.
+            # session['user'] = db.session.query(db.User).filter_by(id=1).one() # This ought to be the guest...
             session['user'] = get_guest()
-            return
-        user.laststamp = datetime.utcnow()
-        session['user'] = user
-        db.session.commit()
-    else:
-        # Let's use a temporary dummy user.
-        # session['user'] = db.session.query(db.User).filter_by(id=1).one() # This ought to be the guest...
-        session['user'] = get_guest()
 
 @app.teardown_request
 def shutdown_session(exception=None):
@@ -122,6 +123,7 @@ def main():
 @app.route("/search")
 def search():
     # Oh boy.
+    # TODO this could use some ACTUAL FULLTEXT or whatever that is!  Match pokemon to pokémon for one!
     class SimplifiedSearchForm(Form):
         text = TextField("Text", [validators.required()])
         within_labels = BooleanField("Včetně štítků", default=True)
@@ -130,47 +132,59 @@ def search():
         submit = SubmitField("Hledat")
     
     class SearchForm(SimplifiedSearchForm):
-        platform_labels = MultiCheckboxField('Platformy', choices=[], coerce=int)
-        genre_labels = MultiCheckboxField('Žánry', choices=[], coerce=int)
-        other_labels = MultiCheckboxField('Štítky', choices=[], coerce=int)
-        label_operator = SelectField("Operátor", choices=[("", " "), ("and", "a"), ("or", "nebo"), ("nor", "ani")])
-        authors = MultiCheckboxField('Autoři', choices=[], coerce=int)
-        author_operator = SelectField("Operátor", choices=[("", " "), ("and", "a"), ("or", "nebo"), ("nor", "ani")])
-    if False: # TODO
+        platform_label = SelectField('Platforma', choices=[], coerce=int)
+        genre_label = SelectField('Žánr', choices=[], coerce=int)
+        other_label = SelectField('Štítek', choices=[], coerce=int)
+        #label_operator = SelectField("Operátor", choices=[("", " "), ("and", "a"), ("or", "nebo"), ("nor", "ani")])
+        #authors = MultiCheckboxField('Autoři', choices=[], coerce=int)
+        #author_operator = SelectField("Operátor", choices=[("", " "), ("and", "a"), ("or", "nebo"), ("nor", "ani")])
+    if False:
         labels = db.session.query(db.Label) \
             .order_by(db.Label.name.asc()).all()
         for label in labels:
-            if label.category == 'platform': f = form.platform_labels
-            if label.category == 'genre': f = form.genre_labels
-            if label.category == 'other': f = form.other_labels
+            if label.category == 'platform': f = form.platform_label
+            if label.category == 'genre': f = form.genre_label
+            if label.category == 'other': f = form.other_label
             f.choices.append((label.id, label.name))
         
-        users = db.session.query(db.User).filter(db.User.rights >= 2) \
-            .order_by(db.User.name.asc()).all()
-        form.authors.choices = [(u.id, u.name) for u in users]
+        #users = db.session.query(db.User).filter(db.User.rights >= 2) \
+        #    .order_by(db.User.name.asc()).all()
+        #form.authors.choices = [(u.id, u.name) for u in users]
     
     
     form = SimplifiedSearchForm(request.args)
+    try: # This needs more magic...
+        page = int(request.args.get("page"))
+    except TypeError:
+        page = 1
+    except ValueError:
+        abort(400)
     
     searched = False
     matched_labels = []
     matched_articles = []
+    count = None
     if "submit" in request.args and form.validate():
         searched = True
         or_conditions = []
         if form.within_labels.data:
             matched_labels = db.session.query(db.Label).filter(db.Label.name.like('%'+form.text.data+'%')).all()
-            #if matched_labels:
-            #    or_conditions += [db.Article.labels.contains(l) for l in matched_labels]
+            if matched_labels:
+                or_conditions += [db.Article.labels.contains(l) for l in matched_labels]
         or_conditions += [db.Article.title.like('%'+form.text.data+'%'),
                          db.Article.text.like('%'+form.text.data+'%')]
         
         order_by = {"timestamp": db.Article.timestamp, "rating": db.Rating.rating}[form.sort.data]
         order = {'asc': asc, 'desc': desc}[form.order.data]
         
-        matched_articles = db.session.query(db.Article).join(db.Article.rating).filter(or_(*or_conditions)).order_by(order(order_by))
-    
-    return render_template("search.html", form=form, searched=searched, matched_articles=matched_articles, matched_labels=matched_labels)
+        articles = db.session.query(db.Article).join(db.Article.rating).filter(or_(*or_conditions)).order_by(order(order_by)) 
+        matched_articles = articles.all() # Nope, this won't work without the all.  It'll just regard everything which matched, including dupes (which get nuked when /read/ but that's about it).  :(
+        count = len(matched_articles)
+        matched_articles = matched_articles[(page-1)*5:(page)*5]
+        
+    url_args = request.args.copy()
+    del url_args["page"]
+    return render_template("search.html", form=form, searched=searched, matched_articles=matched_articles, matched_labels=matched_labels, count=count, page=page, url_args=url_args)
 
 # TODO all these POSTs should go elsewhere with a redirect.  Better for refreshing.
 @app.route("/articles/<int:article_id>", methods=['GET', 'POST'])
@@ -240,7 +254,7 @@ def article(article_id):
                 rating = db.Rating(rating=reaction_form.rating.data, user=user, article=article)
                 db.session.add(rating)
         media = reaction_form.image.data if reaction_form.image.data != -1 else None
-        reaction = db.Reaction(text=reaction_form.text.data, rating=rating, article=article, timestamp=datetime.utcnow(), author=user, media_id=media)
+        reaction = db.Reaction(text=reaction_form.text.data, rating=rating, article=article, timestamp=datetime.now(), author=user, media_id=media)
         db.session.add(reaction)
         flash("Reakce přidána.")
     
@@ -368,8 +382,8 @@ def register():
     if request.method == 'POST' and form.validate():
         # TODO confirm that username is unique
         user = db.User(name=form.name.data, gender=form.gender.data, 
-            rights=1, password=pwhash(form.password.data), timestamp=datetime.utcnow(),
-            laststamp=datetime.utcnow())
+            rights=1, password=pwhash(form.password.data), timestamp=datetime.now(),
+            laststamp=datetime.now())
         db.session.add(user)
         db.session.commit()
         session['user'] = db.session.query(db.User).filter_by(name=form.name.data).filter_by(password=pwhash(form.password.data)).scalar()
@@ -475,7 +489,7 @@ def upload_image(**kvargs):
         image = request.files['image']
         filename = secure_filename(image.filename)
         image.save(os.path.join("static/uploads/", filename))
-        media = db.Media(type="image", url="/static/uploads/"+filename, timestamp=datetime.utcnow(), **kvargs)
+        media = db.Media(type="image", url="/static/uploads/"+filename, timestamp=datetime.now(), **kvargs)
         db.session.add(media)
         print(media)
         flash("Obrázek nahrán.")
@@ -491,7 +505,7 @@ def new_article():
     if request.method == 'POST' and form.validate():    
         article = db.Article(title=form.title.data, text=form.text.data,
             author_id=session['user'].id, 
-            timestamp=datetime.utcnow(), published=True)
+            timestamp=datetime.now(), published=True)
         media = upload_image(title=form.image_title.data, author_id=session['user'].id,
             article=article)
         article.media = media

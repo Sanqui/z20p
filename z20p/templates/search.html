@@ -45,7 +45,7 @@
             <p>
                 {%- for p in range(1, (count//5)+1) -%}
                     {%- if p == page -%}
-                        <strong>{{p}}</strong>,{{"," if not loop.last else ""}}
+                        <strong>{{p}}</strong>{{"," if not loop.last else ""}}
                     {% else -%}
                         <a href='{{url_for("search", page=p, **url_args)}}'>{{p}}</a>{{"," if not loop.last else ""}}
                     {% endif %}

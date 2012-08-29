@@ -1,6 +1,7 @@
 from datetime import datetime
 import time
 import os.path
+import urlparse # urllib.parse in py3k
 
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
@@ -65,6 +66,23 @@ class Media(Base):
     url = Column(Unicode(256), nullable=False)
     type = Column(Enum("image", "video"))
     value = Column(Integer) # Enum('featured', 'good', 'regular), but then we'd get no ordering
+    
+    @property
+    def thumb_url(self):
+        if self.type == "video":
+            vidid = None
+            # I really ought to learn some regexes.
+            url = urlparse.urlparse(self.url)
+            if "youtube" in url.netloc:
+                for f in url.query.split("&"):
+                    if f.startswith("v="):
+                        vidid = f[2:]
+            elif "youtu.be" in url.netloc:
+                vidid = url.path
+            if vidid:
+                return "https://img.youtube.com/vi/{0}/0.jpg".format(vidid)
+            else: return "about:blank" # herp herp
+                    
 
 # Reference for the following (and previous):
 # http://docs.sqlalchemy.org/en/latest/orm/relationships.html#rows-that-point-to-themselves-mutually-dependent-rows

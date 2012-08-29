@@ -4,24 +4,43 @@
 
 {% block content %}
     {{ display_article(article) }}
-    <div class="mediagallery">
-        {%- for media in article.all_media -%}
-            {%- if media.type == 'image' -%}
-                <div class="mediabox" id="media-{{media.id}}">
-                    <div><a href="{{media.url}}"><img src="{{media.url}}" class="image" alt="Obrázek"></a></div>
-                    <div title="{{media.author.name}}, {{media.timestamp|datetime}}">{{media.title}}
-                        {% if session.user.admin or (session.user == media.author and not session.user.guest) %}
-                            <a href="/media/{{media.id}}/edit">{{icon("pencil", "Edit")}}</a>
-                        {% endif %}
-                    </div>
+    <a class="mediatab selectedtab" id="tab-images">Obrázky ({{images|length}})</a><a class="mediatab" id="tab-videos">Videa ({{videos|length}})</a>
+    <div class="mediagallery" id="gallery-images">
+        {%- for media in images -%}
+            <div class="mediabox" id="media-{{media.id}}">
+                <div><a href="{{media.url}}"><img src="{{media.url}}" class="image" alt="Obrázek"></a></div>
+                <div title="{{media.author.name}}, {{media.timestamp|datetime}}">{{media.title}}
+                    {% if session.user.admin or (session.user == media.author and not session.user.guest) %}
+                        <a href="/media/{{media.id}}/edit">{{icon("pencil", "Edit")}}</a>
+                    {% endif %}
                 </div>
-            {%- endif -%}
+            </div>
         {%- endfor -%}<div class="mediabox">
             <form method="POST" action="{{article.url}}" enctype="multipart/form-data">
               <dl>
                 {{ render_field(upload_form.image) }}
                 {{ render_field(upload_form.title) }}
                 {{ render_field(upload_form.submit) }}
+              </dl>
+            </form>
+        </div></div>
+    <div class="mediagallery" id="gallery-videos">
+        {%- for media in videos -%}
+            <div class="mediabox" id="media-{{media.id}}">
+<!--TODO stick a large red right arrow over the image to signify it's a VIDEO.-->
+                <div><a href="{{media.url}}"><img src="{{media.thumb_url}}" class="image" alt="Video"></a></div>
+                <div title="{{media.author.name}}, {{media.timestamp|datetime}}">{{media.title}}
+                    {% if session.user.admin or (session.user == media.author and not session.user.guest) %}
+                        <a href="/media/{{media.id}}/edit">{{icon("pencil", "Edit")}}</a>
+                    {% endif %}
+                </div>
+            </div>
+        {%- endfor -%}<div class="mediabox">
+            <form method="POST" action="{{article.url}}#gallery-videos">
+              <dl>
+                {{ render_field(video_form.url) }}
+                {{ render_field(video_form.video_title) }}
+                {{ render_field(video_form.submit) }}
               </dl>
             </form>
         </div></div>

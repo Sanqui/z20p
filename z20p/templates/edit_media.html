@@ -1,16 +1,23 @@
 {% extends "_base.html" %}
 
-{% block title %}Úprava obrázku {{media.title}}{% endblock %}
+{% block title %}Úprava {{media.title}}{% endblock %}
 
 {% block content %}
-    <h2>Úprava obrázku {{media.title}}</h2>
-    <img src="{{media.url}}" class="largeimage">
+    <h2>Úprava {{{'image':"obrázku", 'video':'videa'}[media.type]}} {{media.title}}</h2>
+    {% if media.type == "image" %}
+        <img src="{{media.url}}" class="largeimage">
+    {% else %}
+        <a href="{{media.url}}"><img src="{{media.thumb_url}}" class="image" alt="Video"  class="largeimage"></a>
+    {% endif %}
     <form method="POST" action="/media/{{media.id}}/edit">
       <dl>
+        {% if session.user.admin %}
+            {{ render_field(form.url) }}
+        {% endif %}
         {{ render_field(form.title) }}
         {{ render_field(form.submit) }}
       </dl>
     </form>
-    Obrázek nahrál{{g(media.author.gender)}} {{media.author.name}} dne {{media.timestamp}}
+    Přidal{{g(media.author.gender)}} <a href="/users/{{media.author.id}}">{{media.author.name}}</a> dne {{media.timestamp}}
     
 {% endblock %}

@@ -183,7 +183,7 @@ def search():
         matched_articles = matched_articles[(page-1)*5:(page)*5]
         
     url_args = request.args.copy()
-    del url_args["page"]
+    if page in url_args: del url_args["page"]
     return render_template("search.html", form=form, searched=searched, matched_articles=matched_articles, matched_labels=matched_labels, count=count, page=page, url_args=url_args)
 
 # TODO all these POSTs should go elsewhere with a redirect.  Better for refreshing.
@@ -201,6 +201,25 @@ def article(article_id):
         media = upload_image(title=upload_form.title.data, author=session['user'],
             article=article)
         db.session.commit() # Gotta commit here 'cause we're reading media ids later
+    
+    class VideoForm(Form):
+        url = TextField('URL videa', [validators.required()])
+        video_title = TextField('Titulek videa', [validators.required()])
+        submit = SubmitField('Přidat video')
+        
+        def validate_url(self, url):
+            if url.data.startswith("http") and ("youtube" in url.data or "youtu.be/" in url.data):
+                pass
+            else:
+                raise ValidationError("Musí být Youtube URL.")
+    
+    video_form = VideoForm(request.form)
+    
+    if request.method == 'POST' and request.form['submit'] == video_form.submit.label.text and video_form.validate():
+        media = db.Media(type="video", url=video_form.url.data, timestamp=datetime.now(), article=article, author=session['user'], title=video_form.video_title.data)
+        db.session.add(media)
+        flash("Video přidáno.")
+        db.session.commit()
     
     class RatingForm(Form):
         rating = SelectField('Hodnocení', choices=[(0, '-')]+[(i+1, str(i+1)) for i in range(0,10)], coerce=int)
@@ -260,7 +279,10 @@ def article(article_id):
     
     article.views += 1
     db.session.commit()
-    return render_template("article.html", article=article, upload_form=upload_form, reaction_form=reaction_form, rating_form=rating_form)
+    # TODO make these @properties of the article?
+    images = db.session.query(db.Media).filter(db.Media.article==article).filter(db.Media.type=="image").all()
+    videos = db.session.query(db.Media).filter(db.Media.article==article).filter(db.Media.type=="video").all()
+    return render_template("article.html", article=article, upload_form=upload_form, reaction_form=reaction_form, rating_form=rating_form, video_form=video_form, images=images, videos=videos)
 
 # TODO /reactions/id redirect to article#id
 
@@ -316,14 +338,25 @@ def edit_media(media_id):
     # TODO image rank
     class EditMediaForm(Form):
         title = TextField('Titulek', [validators.required()])
-        submit = SubmitField('Upravit obrázek')
+        submit = SubmitField('Upravit')
     
-    form = EditMediaForm(request.form, media)
+    class AdminEditMediaForm(EditMediaForm):
+        url = TextField('URL (u obrázků jen pokud víš co děláš)', [validators.required()])
+    
+    if not session['user'].admin:
+        form = EditMediaForm(request.form, media)
+    else:
+        form = AdminEditMediaForm(request.form, media)
     
     if request.method == 'POST' and form.validate():
+        if session['user'].admin:
+            media.url = form.url.data
         media.title = form.title.data
         db.session.commit()
-        flash("Obrázek upraven.")
+        if media.type == "image":
+            flash("Obrázek upraven.")
+        else:
+            flash("Video upraveno.")
         return redirect(media.article.url+"#media-"+str(media.id))
     
     return render_template("edit_media.html", media=media, form=form)

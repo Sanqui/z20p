@@ -84,11 +84,15 @@ author {font-weight:bold;}
 .adminline {float:left; clear:left;}
 article.crop .adminline {display:none;}
 
+.mediatab {display:inline-block; padding:3px 6px 2px 6px; margin-right:4px; border: 1px solid #aaa; border-width:1px 1px 0 1px;
+    text-decoration:none; color:inherit; background:white; border-radius:4px 4px 0 0;}
+.mediatab:hover, .selectedtab {background-color:rgb(187, 20, 26); color:white;}
+
 .mediagallery {width:100%; max-height:200px; overflow-x:scroll; overflow-y:hidden; white-space: nowrap;}
 .mediabox .image { 
     max-width:166px; max-height:133px;
     border: 1px solid black;}
-.mediabox {max-width:168px; display:inline-block; text-align:center;}
+.mediabox {max-width:168px; display:inline-block; text-align:center; white-space: normal;}
 .mediabox dd {margin-left:0;}
 
 .largeimage {margin:auto; max-width:250px; max-height:200px; border:1px solid black;}

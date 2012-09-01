@@ -4,31 +4,36 @@
 
 {% block content %}
 
-    <h2>Vyhledávání {{' "'+form.text.data+'"' if form.text.data else ""}}</h2>
-    <form method="GET" action="/search">
-        {{ render_field(form.text) }}
-        {{ render_field(form.within_labels) }}
-        {{ render_field(form.sort) }}
-        {{ render_field(form.order) }}
-        {{ render_field(form.submit) }}
-      {% if False %}
-      <dl>
-        {{ render_field(form.text) }}
-        <dd>Štítky
+    <h2>Vyhledávání
+        {%- if stype == "text" and form.text.data -%}
+            {{' "'+form.text.data+'"'}}
+        {%- elif stype == "labels" and form.operator.data -%}{{": "-}}
+            {%- for label in matched_labels -%}
+                {{label.name}}{{{'and':' a ','or':' nebo '}[form.operator.data] if not loop.last}}
+            {%- endfor -%}
+        {%- endif -%}
+            </h2>
+    {% if stype == "text" %}
+        <a href="/search?labels">Vyhledávat podle štítků</a>
+    {% else %}
+        <a href="/search">Vyhledávat dle textu</a>
+    {% endif %}
+    <form method="GET" action="/search" class="searchform">
+        {% if stype == "text" %}
+            {{ render_field(form.text) }}
+            {{ render_field(form.within_labels) }}
+        {% elif stype == "labels" %}
             <div class="labelbox"><h3>Platformy</h3>{{ form.platform_labels() }}</div>
             <div class="labelbox"><h3>Žánry</h3>{{ form.genre_labels() }}</div>
             <div class="labelbox"><h3>Jiné</h3>{{ form.other_labels() }}</div>
-        {{ render_field(form.label_operator) }}
-        {{ render_field(form.authors) }}
-        {{ render_field(form.author_operator) }}
-        {{ render_field(form.sort) }}
-        {{ render_field(form.sort_order) }}
-        {{ render_field(form.submit) }}
-      </dl>
-      {% endif %}
+            {{ render_field(form.operator) }}
+            {{ form.labels() }}
+        {% endif %}
+        Řadit dle {{ form.sort() }}, {{ form.order() }}
+        <input type="submit" value="Hledat">
     </form>
     {% if searched %}
-        {% if matched_labels %}
+        {% if matched_labels and stype == "text" %}
             Matchující štítky:
                 <ul>
                     {% for label in matched_labels %}

@@ -3,7 +3,7 @@ from __future__ import absolute_import, unicode_literals, print_function
 
 #from z20p import db
 import db
-from sqlalchemy import or_, asc, desc
+from sqlalchemy import or_, and_, asc, desc
 
 from datetime import datetime
 import time
@@ -21,7 +21,7 @@ app = Flask('z20p')
 app.secret_key = b"superuniqueandsecret"
 
 # TODO split this into file
-from wtforms import Form, BooleanField, TextField, TextAreaField, PasswordField, RadioField, SelectField, SelectMultipleField, BooleanField, SubmitField, validators, ValidationError, widgets
+from wtforms import Form, BooleanField, TextField, TextAreaField, PasswordField, RadioField, SelectField, SelectMultipleField, BooleanField, HiddenField, SubmitField, validators, ValidationError, widgets
 from flask.ext.wtf import FileField, file_allowed, file_required
 from flask.ext.wtf.html5 import IntegerField
 from flask.ext.uploads import UploadSet, IMAGES
@@ -92,7 +92,7 @@ def minrights(minrights):
 def before_request():
     if request.script_root != "/static": # Yeah no.
         if 'user_id' in session:
-            user = db.session.query(db.User).filter_by(id=session['user_id']).scalar()
+            user = db.session.query(db.User).get(session['user_id'])
             if not user: # We could've reset the database.  Let's not have to delete cookies.
                 logout()
                 session['user'] = get_guest()
@@ -130,72 +130,91 @@ def get_page():
     except ValueError:
         abort(400)
     url_args = request.args.copy()
-    if page in url_args: del url_args["page"]
+    if "page" in url_args: del url_args["page"]
     return page, url_args
 
 @app.route("/search")
 def search():
     # Oh boy.
-    # TODO this could use some ACTUAL FULLTEXT or whatever that is!  Match pokemon to pokémon for one!
-    class SimplifiedSearchForm(Form):
+    class SearchForm(Form):
+        sort = SelectField("Řazení", choices=[("timestamp", "data publikace"), ("rating", "hodnocení"), ("views", "počtu shlédnutí")], default="timestamp")
+        order = SelectField("Typ řazení", choices=[("desc", "sestupně"), ("asc", "vzestupně")], default="desc")
+        # No submit so it doesn't get struck in the URL
+    
+    # TODO this could use some ACTUAL FULLTEXT or whatever that is!  Match pokemon to pokémon for one!    
+    class TextSearchForm(SearchForm):
         text = TextField("Text", [validators.required()])
         within_labels = BooleanField("Včetně štítků", default=True)
-        sort = SelectField("Řazení", choices=[("timestamp", "Datum publikace"), ("rating", "Hodnocení")], default="pubdate")
-        order = SelectField("Typ řazení", choices=[("desc", "Sestupně"), ("asc", "Vzestupně")], default="desc")
-        submit = SubmitField("Hledat")
     
-    class SearchForm(SimplifiedSearchForm):
-        platform_label = SelectField('Platforma', choices=[], coerce=int)
-        genre_label = SelectField('Žánr', choices=[], coerce=int)
-        other_label = SelectField('Štítek', choices=[], coerce=int)
-        #label_operator = SelectField("Operátor", choices=[("", " "), ("and", "a"), ("or", "nebo"), ("nor", "ani")])
-        #authors = MultiCheckboxField('Autoři', choices=[], coerce=int)
-        #author_operator = SelectField("Operátor", choices=[("", " "), ("and", "a"), ("or", "nebo"), ("nor", "ani")])
-    if False:
+    class LabelSearchForm(SearchForm):
+        platform_labels = MultiCheckboxField('Platforma', choices=[], coerce=int)
+        genre_labels = MultiCheckboxField('Žánr', choices=[], coerce=int)
+        other_labels = MultiCheckboxField('Štítek', choices=[], coerce=int)
+        operator = SelectField("Operátor", choices=[("or", "nebo"), ("and", "a")], default="or")
+        labels = HiddenField("labels", default="y")
+    
+    if 'labels' in request.args:
+        stype = 'labels'
+        form = LabelSearchForm(request.args)
+        
         labels = db.session.query(db.Label) \
             .order_by(db.Label.name.asc()).all()
         for label in labels:
-            if label.category == 'platform': f = form.platform_label
-            if label.category == 'genre': f = form.genre_label
-            if label.category == 'other': f = form.other_label
+            if label.category == 'platform': f = form.platform_labels
+            if label.category == 'genre': f = form.genre_labels
+            if label.category == 'other': f = form.other_labels
             f.choices.append((label.id, label.name))
+    else:
+        stype = 'text'
+        form = TextSearchForm(request.args)
         
         #users = db.session.query(db.User).filter(db.User.rights >= 2) \
         #    .order_by(db.User.name.asc()).all()
         #form.authors.choices = [(u.id, u.name) for u in users]
     
     
-    form = SimplifiedSearchForm(request.args)
     page, url_args = get_page()
-    
     searched = False
     matched_labels = []
     matched_articles = []
     count = None
-    if "submit" in request.args and form.validate():
+    if ("text" in request.args or "operator" in request.args) and form.validate():
         searched = True
         or_conditions = []
-        if form.within_labels.data:
-            matched_labels = db.session.query(db.Label).filter(db.Label.name.like('%'+form.text.data+'%')).all()
-            if matched_labels:
-                or_conditions += [db.Article.labels.contains(l) for l in matched_labels]
-        or_conditions += [db.Article.title.like('%'+form.text.data+'%'),
-                         db.Article.text.like('%'+form.text.data+'%')]
+        and_conditions = []
+        label_or = [] # see the note below
+        if stype == 'text':
+            if form.within_labels.data:
+                matched_labels = db.session.query(db.Label).filter(db.Label.name.like('%'+form.text.data+'%')).all()
+                if matched_labels:
+                    or_conditions += [db.Article.labels.contains(l) for l in matched_labels]
+            or_conditions += [db.Article.title.like('%'+form.text.data+'%'),
+                             db.Article.text.like('%'+form.text.data+'%')]
+        elif stype == 'labels':
+            for label_id in form.platform_labels.data+form.genre_labels.data+form.other_labels.data:
+                matched_labels.append(db.session.query(db.Label).get(label_id))
+            for label in matched_labels:
+                if form.operator.data == "or":
+                    label_or.append(label.id) # This is for speed.  Using or_conditions proved horribly slow.
+                elif form.operator.data == "and":
+                    and_conditions.append(db.Article.labels.contains(label))
         
-        order_by = {"timestamp": db.Article.timestamp, "rating": db.Rating.rating}[form.sort.data]
+        order_by = {"timestamp": db.Article.timestamp, "rating": db.Rating.rating, "views": db.Article.views}[form.sort.data]
         order = {'asc': asc, 'desc': desc}[form.order.data]
         
-        articles = db.session.query(db.Article).join(db.Article.rating).filter(or_(*or_conditions)).order_by(order(order_by)) 
-        matched_articles = articles.all() # Nope, this won't work without the all.  It'll just regard everything which matched, including dupes (which get nuked when /read/ but that's about it).  :(
+        articles = db.session.query(db.Article).join(db.Article.rating).filter(and_(*and_conditions)).filter(or_(*or_conditions))
+        if label_or:
+            articles = articles.filter(db.Article.labels.any(db.Label.id.in_(label_or)))
+        matched_articles = articles.order_by(order(order_by)).all() # Nope, this won't work without the all.  It'll just regard everything which matched, including dupes (which get nuked when /read/ but that's about it).  :(
         count = len(matched_articles)
         matched_articles = matched_articles[(page-1)*5:(page)*5]
         
-    return render_template("search.html", form=form, searched=searched, matched_articles=matched_articles, matched_labels=matched_labels, count=count, page=page, url_args=url_args)
+    return render_template("search.html", form=form, searched=searched, matched_articles=matched_articles, matched_labels=matched_labels, count=count, page=page, url_args=url_args, stype=stype)
 
 # TODO all these POSTs should go elsewhere with a redirect.  Better for refreshing.
 @app.route("/articles/<int:article_id>", methods=['GET', 'POST'])
 def article(article_id):
-    article = db.session.query(db.Article).filter_by(id=article_id).scalar()
+    article = db.session.query(db.Article).get(article_id)
     if not article: abort(404)
     class UploadForm(Form):
         image = FileField('Obrázek', [file_allowed(uploads, "Jen obrázky")])
@@ -292,14 +311,14 @@ def article(article_id):
 
 @app.route("/reactions/<int:reaction_id>", methods=['GET'])
 def reaction(reaction_id):
-    reaction = db.session.query(db.Reaction).filter_by(id=reaction_id).scalar()
+    reaction = db.session.query(db.Reaction).get(reaction_id)
     if not reaction: abort(404)
     return redirect(reaction.article.url+"#reaction-"+str(reaction.id))
 
 @app.route("/reactions/<int:reaction_id>/edit", methods=['GET', 'POST'])
 @minrights(1)
 def edit_reaction(reaction_id):
-    reaction = db.session.query(db.Reaction).filter_by(id=reaction_id).scalar()
+    reaction = db.session.query(db.Reaction).get(reaction_id)
     if not reaction: abort(404)
     if not session['user'].admin and (session['user'] != reaction.author): abort(403)
     class EditReactionForm(Form):
@@ -342,7 +361,7 @@ def edit_reaction(reaction_id):
 @app.route("/reactions/<int:reaction_id>/delete", methods=['POST'])
 @minrights(3) # Only admins can delete reactions.
 def delete_reaction(reaction_id):
-    reaction = db.session.query(db.Reaction).filter_by(id=reaction_id).scalar()
+    reaction = db.session.query(db.Reaction).get(reaction_id)
     if not reaction: abort(404)
     if request.method == 'POST':
         print("Reaction id "+str(reaction.id)+" DELETED")
@@ -356,7 +375,7 @@ def delete_reaction(reaction_id):
 @app.route("/media/<int:media_id>/edit", methods=['GET', 'POST'])
 @minrights(1)
 def edit_media(media_id):
-    media = db.session.query(db.Media).filter_by(id=media_id).scalar()
+    media = db.session.query(db.Media).get(media_id)
     if not media: abort(404)
     if not session['user'].admin and (session['user'] != media.author): abort(403)
     # TODO image rank
@@ -388,7 +407,7 @@ def edit_media(media_id):
 @app.route("/media/<int:media_id>/delete", methods=['POST'])
 @minrights(1)
 def delete_media(media_id):
-    media = db.session.query(db.Media).filter_by(id=media_id).scalar()
+    media = db.session.query(db.Media).get(media_id)
     if not media: abort(404)
     if not session['user'].admin and (session['user'] != media.author): abort(403)
     if request.method == 'POST':
@@ -473,7 +492,7 @@ def users():
 
 @app.route("/users/<int:user_id>", methods=['GET'])
 def user(user_id):
-    user = db.session.query(db.User).filter_by(id=user_id).scalar()
+    user = db.session.query(db.User).get(user_id)
     if not user: abort(404)
     page, url_args = get_page()
     return render_template('user.html', user=user, page=page, url_args=url_args)
@@ -481,7 +500,7 @@ def user(user_id):
 @app.route("/users/<int:user_id>/edit", methods=['GET', 'POST'])
 @minrights(1)
 def edit_user(user_id):
-    user = db.session.query(db.User).filter_by(id=user_id).scalar()
+    user = db.session.query(db.User).get(user_id)
     if not user: abort(404)
     class EditUserForm(Form):
         email = TextField('Email', [validators.optional()])
@@ -540,7 +559,7 @@ def labels(edit_id=None):
             flash('Štítek přidán')
     
     if edit_id:
-        editlabel = db.session.query(db.Label).filter_by(id=edit_id).scalar()
+        editlabel = db.session.query(db.Label).get(edit_id)
         form = LabelForm(request.form, editlabel)
         if request.method == 'POST' and form.validate():
             editlabel.name = form.name.data
@@ -555,15 +574,17 @@ def labels(edit_id=None):
     return render_template("labels.html", form=form, labels=labels, edit_id=edit_id)
 
 def upload_image(**kvargs):
-    # TODO check for duplicate filenames
     media = None
     if 'image' in request.files and request.files['image'].filename != "":
+        # TODO check for duplicate filenames
+        if "." not in request.files['image'] or request.files['image'].split(".")[-1].lower() not in ('png', 'jpg', 'jpeg', 'gif'):
+            flash("Nahraný soubor není obrázek.", 'error')
+            return None
         image = request.files['image']
         filename = secure_filename(image.filename)
         image.save(os.path.join("static/uploads/", filename))
         media = db.Media(type="image", url="/static/uploads/"+filename, timestamp=datetime.now(), **kvargs)
         db.session.add(media)
-        print(media)
         flash("Obrázek nahrán.")
     return media
 
@@ -596,7 +617,7 @@ def new_article():
 @app.route("/articles/<int:edit_id>/edit", methods=['GET', 'POST'])
 @minrights(1)
 def edit_article(edit_id):
-    article = db.session.query(db.Article).filter_by(id=edit_id).scalar()
+    article = db.session.query(db.Article).get(edit_id)
     if not article: abort(404)
     if not session['user'].admin and (session['user'] != article.author): abort(403)
     class EditArticleForm(ArticleForm):

@@ -15,7 +15,7 @@ def pwhash(string):
     return hashlib.sha224(string+"***REMOVED***").hexdigest()
     
 from werkzeug import secure_filename
-from flask import Flask, render_template, request, flash, redirect, session, abort
+from flask import Flask, render_template, request, flash, redirect, session, abort, url_for, make_response
 
 app = Flask('z20p')
 app.secret_key = b"superuniqueandsecret"
@@ -118,7 +118,20 @@ def datetime_format(value, format='%d. %m. %Y  %H:%M'): # TODO add 2 hours
 def main():
     articles = db.session.query(db.Article) \
         .order_by(db.Article.timestamp.desc()).limit(4).all()
-    return render_template("main.html", articles=articles)
+    images = db.session.query(db.Media).filter(db.Media.type=="image") \
+        .order_by(db.Media.timestamp.desc()).limit(4).all()
+    return render_template("main.html", articles=articles, images=images)
+
+def get_page():
+    try: # This needs more magic...
+        page = int(request.args.get("page"))
+    except TypeError:
+        page = 1
+    except ValueError:
+        abort(400)
+    url_args = request.args.copy()
+    if page in url_args: del url_args["page"]
+    return page, url_args
 
 @app.route("/search")
 def search():
@@ -153,12 +166,7 @@ def search():
     
     
     form = SimplifiedSearchForm(request.args)
-    try: # This needs more magic...
-        page = int(request.args.get("page"))
-    except TypeError:
-        page = 1
-    except ValueError:
-        abort(400)
+    page, url_args = get_page()
     
     searched = False
     matched_labels = []
@@ -182,8 +190,6 @@ def search():
         count = len(matched_articles)
         matched_articles = matched_articles[(page-1)*5:(page)*5]
         
-    url_args = request.args.copy()
-    if page in url_args: del url_args["page"]
     return render_template("search.html", form=form, searched=searched, matched_articles=matched_articles, matched_labels=matched_labels, count=count, page=page, url_args=url_args)
 
 # TODO all these POSTs should go elsewhere with a redirect.  Better for refreshing.
@@ -437,7 +443,8 @@ def users():
 def user(user_id):
     user = db.session.query(db.User).filter_by(id=user_id).scalar()
     if not user: abort(404)
-    return render_template('user.html', user=user)
+    page, url_args = get_page()
+    return render_template('user.html', user=user, page=page, url_args=url_args)
 
 @app.route("/users/<int:user_id>/edit", methods=['GET', 'POST'])
 @minrights(1)
@@ -603,6 +610,15 @@ def edit_article(edit_id):
             form.rating.data = article.rating.rating
     
     return render_template("edit_article.html", form=form, article=article)
-    
+   
+@app.route("/rss")
+def rss():
+    articles = db.session.query(db.Article) \
+        .order_by(db.Article.timestamp.desc()).limit(10).all()
+    now = datetime.now()
+    response = make_response(render_template("rss.xml", articles=articles, now=now))
+    response.headers['Content-type'] = "application/rss+xml"
+    return response
+
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", debug=True)
+    app.run(host="", debug=True)

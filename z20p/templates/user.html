@@ -24,8 +24,9 @@
     {{user.profile|safe if user.profile else '-'}}
     {% if user.articles %}
         <h3>Články</h3>
-        {% for article in user.articles %}
+        {% for article in user.articles[(page-1)*5:page*5] %}
             {{ display_article(article, crop=True) }}
         {% endfor %}
+        {{ render_pages(page, user.articles|count, url_args) }}
     {% endif %}
 {% endblock %}

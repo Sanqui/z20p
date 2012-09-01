@@ -1,0 +1,34 @@
+<?xml version="1.0"?>
+    <rss version="2.0">
+        <channel>
+            <title>Zabij 10 prasat RSS</title>
+            <link>http://www.zabij10prasat.cz/</link>
+            <description>RSS české herní stránky Zabij 10 prasat</description>
+            <language>cs</language>
+            <pubDate>{{now|datetime("%a, %d %b %Y %H:%M:%S %z +2000")}}</pubDate>
+            <lastBuildDate>{{now|datetime("%a, %d %b %Y %H:%M:%S +2000")}}</lastBuildDate>
+{% for article in articles %}
+    <item>
+	    <title>{{article.title}}</title>
+	    <link>http://www.zabij10prasat.cz{{article.url}}</link>
+	    <guid>
+        {%- if 258 >= article.id -%}
+            http://www.zabij10prasat.cz/index.php?page=single&amp;id={{article.id}}
+        {%- else -%}
+            {{article.id}}
+        {%- endif -%}
+        </guid>
+	    <description>
+	        {% if article.media %}
+	            &lt;img src="{{article.media.url}}" style="width:166px; max-height:133px; border:1px solid black;	float:left;	margin:0px 5px 5px 0px;" alt="Obrázek" title="{{article.media.title}}" width=166 height=133&gt;&lt;br&gt;
+            {% endif %}
+            {{ article.text }}
+            </description>
+	    <pubDate>{{article.timestamp|datetime("%a, %d %b %Y %H:%M:%S +2000")}}</pubDate>
+	    {% for label in article.labels %}
+    	    <category>{{label.name}}</category>
+	    {% endfor %}
+    </item>
+{% endfor %}
+</channel>
+</rss>

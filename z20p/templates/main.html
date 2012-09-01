@@ -9,7 +9,19 @@
         {% else %}
             <div>Nemáme žádné články!  D:</div>
         {% endfor %}
-    screenshoty, videa
+    <h2>Nejnovější screenshoty</h2>
+    <div class="mediagallery" id="gallery-images">
+        {%- for media in images -%}
+            <div class="mediabox" id="media-{{media.id}}">
+                <div><a href="{{media.url}}"><img src="{{media.url}}" class="image" alt="Obrázek"></a></div>
+                <div title="{{media.author.name}}, {{media.timestamp|datetime}}">
+                    <a href="{{media.article.url}}">{{media.title}}</a>
+                    {% if session.user.admin or (session.user == media.author and not session.user.guest) %}
+                        <a href="/media/{{media.id}}/edit">{{icon("pencil", "Edit")}}</a>
+                    {% endif %}
+                </div>
+            </div>
+        {%- endfor -%}</div>
     <!--<h2>Nejnovější sloupky</h2>
         <article>recenze</article>
         <article>recenze</article>

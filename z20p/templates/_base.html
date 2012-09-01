@@ -22,6 +22,17 @@ $(document).ready(function(){
     $('#tab-videos').click(function(){switchtab('videos')})
     if (window.location.hash == "#gallery-videos") switchtab("videos")
     console.log(window.location.hash)
+    
+    $('.confirm').click(function(){
+        if ($(this).data("confirmed")){
+            return true
+        }
+        else{
+            $(this).attr('value', 'Opravdu?')
+            $(this).data("confirmed", true)
+            return false
+        }
+    })
 });
         </script>
     </head>

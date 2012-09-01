@@ -12,6 +12,10 @@
       </dl>
       <p><input type="submit" value="Upravit">
     </form>
-    
+    {% if user.admin %}
+        <form method="POST" action="/reactions/{{reaction.id}}/delete">
+            <input type="submit" value="Odstranit" class="confirm">
+        </form>
+    {% endif %}
     
 {% endblock %}

@@ -290,7 +290,11 @@ def article(article_id):
     videos = db.session.query(db.Media).filter(db.Media.article==article).filter(db.Media.type=="video").all()
     return render_template("article.html", article=article, upload_form=upload_form, reaction_form=reaction_form, rating_form=rating_form, video_form=video_form, images=images, videos=videos)
 
-# TODO /reactions/id redirect to article#id
+@app.route("/reactions/<int:reaction_id>", methods=['GET'])
+def reaction(reaction_id):
+    reaction = db.session.query(db.Reaction).filter_by(id=reaction_id).scalar()
+    if not reaction: abort(404)
+    return redirect(reaction.article.url+"#reaction-"+str(reaction.id))
 
 @app.route("/reactions/<int:reaction_id>/edit", methods=['GET', 'POST'])
 @minrights(1)
@@ -335,8 +339,22 @@ def edit_reaction(reaction_id):
     
     return render_template("edit_reaction.html", reaction=reaction, form=form)
 
+@app.route("/reactions/<int:reaction_id>/delete", methods=['POST'])
+@minrights(3) # Only admins can delete reactions.
+def delete_reaction(reaction_id):
+    reaction = db.session.query(db.Reaction).filter_by(id=reaction_id).scalar()
+    if not reaction: abort(404)
+    if request.method == 'POST':
+        print("Reaction id "+str(reaction.id)+" DELETED")
+        print(reaction.id, reaction.author.id, reaction.author.name, reaction.text)
+        db.session.delete(reaction)
+        db.session.commit()
+        flash("Reakce odstraněna")
+        return redirect(reaction.article.url)
+
 # TODO /media/id redirect to image itself
 @app.route("/media/<int:media_id>/edit", methods=['GET', 'POST'])
+@minrights(1)
 def edit_media(media_id):
     media = db.session.query(db.Media).filter_by(id=media_id).scalar()
     if not media: abort(404)
@@ -367,6 +385,20 @@ def edit_media(media_id):
     
     return render_template("edit_media.html", media=media, form=form)
 
+@app.route("/media/<int:media_id>/delete", methods=['POST'])
+@minrights(1)
+def delete_media(media_id):
+    media = db.session.query(db.Media).filter_by(id=media_id).scalar()
+    if not media: abort(404)
+    if not session['user'].admin and (session['user'] != media.author): abort(403)
+    if request.method == 'POST':
+        db.session.delete(media)
+        db.session.commit()
+        if media.type == "image": flash("Obrázek odstraněn")
+        else: flash("Video odstraněno")
+        return redirect(media.article.url)
+    
+
 @app.route("/login", methods=['GET', 'POST'])
 def login():
     class LoginForm(Form):
@@ -389,7 +421,7 @@ def login():
                 session['user_id'] = user.id
                 session['user'] = user
                 session['user'].ip = request.remote_addr
-                session.commit()
+                db.session.commit()
                 flash("Byli jste přihlášeni, ale z důvodu masivních změn v systému nemáte heslo.  Prosím, nastavte si nové heslo pokud možno hned.")
                 return redirect("/users/"+str(user.id)+"/edit")
             else:

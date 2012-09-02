@@ -48,8 +48,39 @@ class Label(Base):
     user_id = Column(Integer, ForeignKey('users.id'))
     user = relationship("User", backref='labels')
     category = Column(Enum('platform', 'genre', 'column', 'other'))
+    
+    @property
+    def url(self):
+        return "/search?labels&{0}_labels={1}".format(self.category, self.id)
 
-articles_labels = Table('article_labels', Base.metadata,
+class ButtonLabel(Base):
+    __tablename__ = 'buttons_labels'
+    id = Column(Integer, primary_key=True)
+    button_id = Column(Integer, ForeignKey('buttons.id'), nullable=False)
+    button = relationship("Button", backref="labels")
+    label_id = Column(Integer, ForeignKey('labels.id'), nullable=False)
+    label = relationship("Label", backref="buttons")
+    position = Column(Integer, nullable=False)
+
+class Button(Base):
+    __tablename__ = 'buttons'
+    
+    id = Column(Integer, primary_key=True, nullable=False)
+    location = Column(Enum("left", "right"), nullable=False)
+    position = Column(Integer, nullable=False)
+    name = Column(Unicode(256), nullable=False)
+    icon = Column(Unicode(256))
+    url = Column(Unicode(256))
+    
+    @property
+    def search_url(self):
+        url = "/search?labels"
+        for label in self.labels:
+            url += "&"+label.label.category+"_labels="+str(label.label.id)
+        print(url)
+        return url
+
+articles_labels = Table('article_labels', Base.metadata, # XXX wrong table name, but whatever.
     Column('article_id', Integer, ForeignKey('articles.id')),
     Column('label_id', Integer, ForeignKey('labels.id'))
 )
@@ -102,10 +133,10 @@ class Article(Base):
     author_id = Column(Integer, ForeignKey('users.id'))
     author = relationship("User", backref='articles')
     media_id = Column(Integer, ForeignKey('media.id', use_alter=True, name="fk_media"))
-    media = relationship("Media", backref='assigned_article', primaryjoin=media_id==Media.id, post_update=True)
+    media = relationship("Media", backref='assigned_article', primaryjoin=media_id==Media.id, post_update=True, uselist=False)
     all_media = relationship("Media", primaryjoin=id==Media.article_id, backref="article")
     rating_id = Column(Integer, ForeignKey('ratings.id', use_alter=True, name="fk_rating"))
-    rating = relationship("Rating", backref='assigned_article', primaryjoin=rating_id==Rating.id, post_update=True)
+    rating = relationship("Rating", backref='assigned_article', primaryjoin=rating_id==Rating.id, post_update=True, uselist=False)
     ratings = relationship("Rating", primaryjoin=id==Rating.article_id, backref="article")
     timestamp = Column(DateTime, nullable=False, index=True)
     published = Column(Boolean, nullable=False)

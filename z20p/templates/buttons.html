@@ -1,0 +1,32 @@
+{% extends "_base.html" %}
+
+{% block title %}Tlačítka{% endblock %}
+
+{% block content %}
+    <h2>Tlačítka</h2>
+    {% for side, buttons in (('left', g.left_buttons), ('right', g.right_buttons))%}
+        <div class="{{side}}column">
+            <table><thead><tr><td>pos</td><td>^</td><td>v</td><td>i</td><td>tlačítko</td><td>štítků</td></tr></thead>
+                {% for button in buttons %}
+                    <tr>
+                        <td>{{button.position}}</td>
+                        <td>{% if not loop.first %}<a href="/buttons?move=up&id={{button.id}}">^</a>{%endif %}</td>
+                        <td>{% if not loop.last  %}<a href="/buttons?move=down&id={{button.id}}">v</a>{%endif %}</td>
+                        <td>{{icon(button.icon, button.name) if button.icon}}</td>
+                        <td><a href="/buttons/{{button.id}}/edit">{{button.name}}</a></td>
+                        <td>{{button.labels|length}}</td>
+                {% endfor %}
+            </table>
+        </div>
+    {% endfor %}
+    <form method="POST" action="/buttons" class="clear">
+      <dl>
+        {{ render_field(form.name) }}
+        {{ render_field(form.url) }}
+        {{ render_field(form.icon) }}
+        {{ render_field(form.location) }}
+        {{ render_field(form.submit) }}
+      </dl>
+    </form>
+    
+{% endblock %}

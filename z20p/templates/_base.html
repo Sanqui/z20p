@@ -1,4 +1,4 @@
-{% from '_macros.html' import render_field, td_field, display_article, render_pages, icon, g with context -%}
+{% from '_macros.html' import render_field, td_field, display_article, render_pages, icon, gr with context -%}
 <!DOCTYPE html>
 <html lang="cs">
     <head>
@@ -45,22 +45,18 @@ $(document).ready(function(){
                 {% endfor %}
             {% endwith %}
             {% if not session.user.guest %}
-                Jste přihlášen{{g()}} za {{session.user.name}}, práva {{session.user.rights}}, IP {{session.user.ip}}
+                Jste přihlášen{{gr()}} za {{session.user.name}}, práva {{session.user.rights}}, IP {{session.user.ip}}
             {% endif %}
             <!-- move me -->
             <div class="linkbar"><a href="/new_article">Nový článek</a>  • <a href="/labels">Štítky</a> • <a href="/users">Uživatelé</a> • <a href="/login">Login</a>  • <a href="/logout">Logout</a>  • <a href="/register">Registrovat</a></div>
             <menu id="leftmenu">
             <div class="categories">
-                <li><a href="#">Kategorie<span class="down">▽</span></a>
-                <li><a href="#">Kategorie<span class="down">▽</span></a>
-                <li><a href="#">Kategorie<span class="down">▽</span></a>
-                <li><a href="#">Kategorie<span class="down">▽</span></a>
-                <li><a href="#">Kategorie<span class="down">▽</span></a>
-                <li><a href="#">Kategorie<span class="down">▽</span></a>
-                <li><a href="#">Kategorie<span class="down">▽</span></a>
-                
-            {% for item, link in (('Vyhledávání', 'search'), ('Pro čtenáře', 'info'), ("Videa a 5 nej.", "columns"), ("Všechny články", "all_articles")) %}
-                <li><a href="/{{link}}">{{item}}</a>
+            {% for button in g.left_buttons %}
+                {% if button.labels %}
+                    <li><a href="{{button.search_url}}">{{button.name}}<span class="down">▽</span></a>
+                {% else %}
+                    <li><a href="{{button.url}}">{{icon(button.icon, button.name)+" " if button.icon}}{{button.name}}</a>
+                {% endif %}
             {% endfor %}
             </menu>
             <menu id="rightmenu">

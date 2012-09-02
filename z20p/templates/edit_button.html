@@ -1,0 +1,44 @@
+{% extends "_base.html" %}
+
+{% block title %}Úprava mačkátka{% endblock %}
+
+{% block content %}
+    <a href="/buttons">&lt;- všechny tlačítka</a>
+    <h2>Úprava tlačítka "{{button.name}}"</h2>
+        {% if not button.url %}
+            <table><thead><tr><td>^</td><td>v</td><td>x</td><td>štítek</td><td></td></tr></thead>
+                {% for label in button.labels %}
+                    <tr>
+                        <td>{% if not loop.first %}<a href="/buttons/{{button.id}}/edit?move=up&id={{label.id}}">^</a>{%endif %}</td>
+                        <td>{% if not loop.last  %}<a href="/buttons/{{button.id}}/edit?move=down&id={{label.id}}">v</a>{%endif %}</td>
+                        <td><a href="/buttons/{{button.id}}/edit?move=delete&id={{label.id}}">x</a></td>
+                        <td>{{label.label.name}}</td>
+                        <td></td>
+                    </tr>
+                {% endfor %}
+                <form method="POST" action="/buttons/{{button.id}}/edit">
+                    <tr>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        {{ td_field(label_form.label) }}
+                        {{ td_field(label_form.submit) }}
+                    </tr>
+                </form>
+            </table>
+        {% else %}
+            Tlačítko má URL, tudíž nemá podštítky.
+        {% endif %}
+    <form method="POST" action="/buttons/{{button.id}}/edit">
+      <dl>
+        {{ render_field(form.name) }}
+        {{ render_field(form.url) }}
+        {{ render_field(form.icon) }}
+        {{ render_field(form.submit) }}
+      </dl>
+    </form>
+    <form method="POST" action="/buttons/{{button.id}}/delete">
+        <input type="submit" class="confirm" value="Odstranit tlačítko">
+    </form>
+    
+{% endblock %}

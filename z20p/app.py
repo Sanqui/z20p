@@ -15,7 +15,7 @@ def pwhash(string):
     return hashlib.sha224(string+"***REMOVED***").hexdigest()
     
 from werkzeug import secure_filename
-from flask import Flask, render_template, request, flash, redirect, session, abort, url_for, make_response
+from flask import Flask, render_template, request, flash, redirect, session, abort, url_for, make_response, g
 
 app = Flask('z20p')
 app.secret_key = b"superuniqueandsecret"
@@ -104,6 +104,9 @@ def before_request():
             # Let's use a temporary dummy user.
             # session['user'] = db.session.query(db.User).filter_by(id=1).one() # This ought to be the guest...
             session['user'] = get_guest()
+    # Templating stuff.
+    g.left_buttons = db.session.query(db.Button).filter(db.Button.location=="left").order_by(db.Button.position).all()
+    g.right_buttons = db.session.query(db.Button).filter(db.Button.location=="right").order_by(db.Button.position).all()
 
 @app.teardown_request
 def shutdown_session(exception=None):
@@ -164,6 +167,9 @@ def search():
             if label.category == 'genre': f = form.genre_labels
             if label.category == 'other': f = form.other_labels
             f.choices.append((label.id, label.name))
+    elif "all" in request.args:
+        stype = 'all'
+        form = SearchForm(request.args)
     else:
         stype = 'text'
         form = TextSearchForm(request.args)
@@ -178,7 +184,7 @@ def search():
     matched_labels = []
     matched_articles = []
     count = None
-    if ("text" in request.args or "operator" in request.args) and form.validate():
+    if ("text" in request.args or "all" in request.args or "platform_labels" in request.args or "genre_labels" in request.args or "other_labels" in request.args) and form.validate(): # Yep.
         searched = True
         or_conditions = []
         and_conditions = []
@@ -198,7 +204,8 @@ def search():
                     label_or.append(label.id) # This is for speed.  Using or_conditions proved horribly slow.
                 elif form.operator.data == "and":
                     and_conditions.append(db.Article.labels.contains(label))
-        
+        elif stype == 'all':
+            and_conditions = [db.Article.published == True]
         order_by = {"timestamp": db.Article.timestamp, "rating": db.Rating.rating, "views": db.Article.views}[form.sort.data]
         order = {'asc': asc, 'desc': desc}[form.order.data]
         
@@ -577,7 +584,7 @@ def upload_image(**kvargs):
     media = None
     if 'image' in request.files and request.files['image'].filename != "":
         # TODO check for duplicate filenames
-        if "." not in request.files['image'] or request.files['image'].split(".")[-1].lower() not in ('png', 'jpg', 'jpeg', 'gif'):
+        if "." not in request.files['image'].filename or request.files['image'].filename.split(".")[-1].lower() not in ('png', 'jpg', 'jpeg', 'gif'):
             flash("Nahraný soubor není obrázek.", 'error')
             return None
         image = request.files['image']
@@ -663,7 +670,104 @@ def edit_article(edit_id):
             form.rating.data = article.rating.rating
     
     return render_template("edit_article.html", form=form, article=article)
-   
+
+@app.route("/buttons", methods=['GET', 'POST'])
+@minrights(3)
+def buttons(): # QUICK 'N DIRTY OKAY.
+    class ButtonForm(Form):
+        icon = TextField('Ikonka (např. user nebo image)')
+        name = TextField('Jméno', [validators.required()])
+        url = TextField('URL (ne pokud bude mít štítky)')
+        location = SelectField('Umístění', choices=[("left","vlevo"),("right","vpravo")], default="left")
+        submit = SubmitField('Přidat tlačítko')
+    form = ButtonForm(request.form)
+    if request.method == 'POST' and form.validate():
+        if form.location.data == "left": count=len(g.left_buttons)
+        else: count = len(g.right_buttons)
+        button = db.Button(icon=form.icon.data or None, name=form.name.data, url=form.url.data or None, location=form.location.data, position=count)
+        db.session.add(button)
+        flash('Tlačítko "'+button.name+'" přidáno', "success")
+    
+    if "move" in request.args: # XXX UGLY HACK WARNING
+        move = request.args['move']
+        id = request.args['id']
+        button = db.session.query(db.Button).get(int(id))
+        thisside = {'left':g.left_buttons, 'right':g.right_buttons}[button.location] # WOW.
+        if move == "up":
+            thisside[button.position-1].position += 1
+            button.position -= 1
+        elif move == "down":
+            thisside[button.position+1].position -= 1
+            button.position += 1
+    
+    db.session.commit()
+    
+    g.left_buttons = db.session.query(db.Button).filter(db.Button.location=="left").order_by(db.Button.position).all()
+    g.right_buttons = db.session.query(db.Button).filter(db.Button.location=="right").order_by(db.Button.position).all()
+    
+    return render_template("buttons.html", form=form)
+
+@app.route("/buttons/<int:button_id>/edit", methods=['GET', 'POST'])
+@minrights(3)
+def edit_button(button_id): # quick and dirty 2: electric boogaloo
+    button = db.session.query(db.Button).get(button_id)
+    if not button: abort(404)
+    class ButtonForm(Form): # WOW!!  IT'S FREAKING NOTHING!!
+        icon = TextField('Ikonka (např. user nebo image)')
+        name = TextField('Jméno', [validators.required()])
+        url = TextField('URL (ne pokud bude mít štítky)')
+        submit = SubmitField('UPRAVIT tlačítko')
+    form = ButtonForm(request.form, button)
+    
+    class LabelForm(Form):
+        label = SelectField("Štítek", coerce=int)
+        submit = SubmitField("Přidat")
+    label_form = LabelForm(request.form)
+    labels = db.session.query(db.Label) \
+        .order_by(db.Label.category.asc(), db.Label.name.asc()).all()
+    label_form.label.choices = [(l.id, l.category[0]+": "+l.name) for l in labels]
+    
+    if request.method == 'POST' and request.form['submit'] == form.submit.label.text and form.validate():
+        button.icon, button.name, button.url = form.icon.data or None, form.name.data, form.url.data or None
+        flash("Tlačítko upraveno.")
+        db.session.commit()
+        return redirect("/buttons")
+
+    if request.method == 'POST' and request.form['submit'] == label_form.submit.label.text and label_form.validate():
+        button.labels.append(db.ButtonLabel(button=button, label_id=int(label_form.label.data), position=len(button.labels)))
+        db.session.commit()
+    
+    if "move" in request.args: # XXX UGLY HACK WARNING
+        move = request.args['move']
+        id = request.args['id']
+        button_label = db.session.query(db.ButtonLabel).get(int(id))
+        if move == "up":
+            button.labels[button_label.position-1].position += 1
+            button_label.position -= 1
+        elif move == "down":
+            button.labels[button_label.position+1].position -= 1
+            button_label.position += 1
+        elif move == "delete":
+            for i in range(button_label.position, len(button.labels)):
+                button.labels[i].position -= 1
+            db.session.delete(button_label)
+        db.session.commit()
+    
+    return render_template("edit_button.html", form=form, label_form=label_form, button=button)
+
+@app.route("/buttons/<int:button_id>/delete", methods=['POST'])
+@minrights(3)
+def delete_button(button_id): # quick and dirty 3: dark dawn
+    button = db.session.query(db.Button).get(button_id)
+    if not button: abort(404)
+    thisside = {'left':g.left_buttons, 'right':g.right_buttons}[button.location]
+    for i in range(button.position, len(thisside)):
+        thisside[i].position -= 1
+    db.session.delete(button)
+    db.session.commit()
+    flash('Tlačítko "'+button.name+'" odstraněno')
+    return redirect("/buttons")
+
 @app.route("/rss")
 def rss():
     articles = db.session.query(db.Article) \

@@ -10,9 +10,9 @@
     <dl>
         <dt>Email</dt>
             <dd>{{user.email if user.email else '-'}}</dd>
-        <dt>Zaregistrován{{g(user.gender)}} dne</dt>
+        <dt>Zaregistrován{{gr(user.gender)}} dne</dt>
             <dd>{{user.timestamp|datetime}}</dd>
-        <dt>Naposledy viděn{{g(user.gender)}}</dt>
+        <dt>Naposledy viděn{{gr(user.gender)}}</dt>
             <dd>{{user.laststamp|datetime}}</dd>
         {% if session.user.rights >= 3 or session.user == user%}
             <dt>IP</dt>

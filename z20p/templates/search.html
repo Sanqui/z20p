@@ -16,20 +16,20 @@
     {% else %}
         <h2>Všechny články</h2>
     {% endif %}
-        {% if stype == "text" %}
+        {% if stype == "text" and "noform" not in url_args %}
             <a href="/search?labels">Vyhledávat podle štítků</a>
-        {% elif stype == "labels" %}
+        {% elif stype == "labels" and "noform" not in url_args %}
             <a href="/search">Vyhledávat dle textu</a>
         {% endif %}
-        <form method="GET" action="/search" class="searchform">
-            {% if stype == "text" %}
+        <form method="GET" action="/search" class="searchform {{'noform' if 'noform' in url_args}}">
+            {% if stype == "text" and "noform" not in url_args %}
                 {{ render_field(form.text) }}
                 {{ render_field(form.within_labels) }}
             {% elif stype == "labels" %}
                 <div class="labelbox"><h3>Platformy</h3>{{ form.platform_labels() }}</div>
                 <div class="labelbox"><h3>Žánry</h3>{{ form.genre_labels() }}</div>
                 <div class="labelbox"><h3>Jiné</h3>{{ form.other_labels() }}</div>
-                {{ render_field(form.operator) }}
+                <div class="onlyifform">{{ render_field(form.operator) }}</div>
                 {{ form.labels() }}
             {% elif stype == "all" %}
                 <input type="hidden" name="all">

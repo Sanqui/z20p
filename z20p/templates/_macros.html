@@ -78,6 +78,15 @@
             {% endif %}
         {% endfor %}
 {% endmacro %}
+{% macro render_buttons(buttons) %}
+    {% for button in buttons %}
+        {% if button.labels %}
+            <li><a href="{{button.search_url}}">{{button.name}}<span class="down">▽</span></a>
+        {% else %}
+            <li><a href="{{button.url}}">{{icon(button.icon, button.name)+" " if button.icon}}{{button.name}}</a>
+        {% endif %}
+    {% endfor %}
+{% endmacro %}
 {% macro icon(name, alt, title="") -%}
 <img src="/static/icons/{{name}}.png" alt="{{alt}}" title="{{alt if title=='' else title}}" width=16 height=16>
 {%- endmacro %}

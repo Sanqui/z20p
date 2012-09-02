@@ -7,7 +7,7 @@
     <h2>Úprava tlačítka "{{button.name}}"</h2>
         {% if not button.url %}
             <table><thead><tr><td>^</td><td>v</td><td>x</td><td>štítek</td><td></td></tr></thead>
-                {% for label in button.labels %}
+                {% for label in labels %}
                     <tr>
                         <td>{% if not loop.first %}<a href="/buttons/{{button.id}}/edit?move=up&id={{label.id}}">^</a>{%endif %}</td>
                         <td>{% if not loop.last  %}<a href="/buttons/{{button.id}}/edit?move=down&id={{label.id}}">v</a>{%endif %}</td>
@@ -37,6 +37,7 @@
         {{ render_field(form.submit) }}
       </dl>
     </form>
+    <p><a href="http://p.yusukekamiyamane.com/icons/preview/fugue.png">Všechny ikonky</a>
     <form method="POST" action="/buttons/{{button.id}}/delete">
         <input type="submit" class="confirm" value="Odstranit tlačítko">
     </form>

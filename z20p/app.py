@@ -675,7 +675,7 @@ def edit_article(edit_id):
 @minrights(3)
 def buttons(): # QUICK 'N DIRTY OKAY.
     class ButtonForm(Form):
-        icon = TextField('Ikonka (např. user nebo image)')
+        icon = TextField('Ikonka')
         name = TextField('Jméno', [validators.required()])
         url = TextField('URL (ne pokud bude mít štítky)')
         location = SelectField('Umístění', choices=[("left","vlevo"),("right","vpravo")], default="left")
@@ -713,7 +713,7 @@ def edit_button(button_id): # quick and dirty 2: electric boogaloo
     button = db.session.query(db.Button).get(button_id)
     if not button: abort(404)
     class ButtonForm(Form): # WOW!!  IT'S FREAKING NOTHING!!
-        icon = TextField('Ikonka (např. user nebo image)')
+        icon = TextField('Ikonka')
         name = TextField('Jméno', [validators.required()])
         url = TextField('URL (ne pokud bude mít štítky)')
         submit = SubmitField('UPRAVIT tlačítko')
@@ -741,19 +741,23 @@ def edit_button(button_id): # quick and dirty 2: electric boogaloo
         move = request.args['move']
         id = request.args['id']
         button_label = db.session.query(db.ButtonLabel).get(int(id))
+        labels = db.session.query(db.ButtonLabel).filter(db.ButtonLabel.button == button).order_by(db.ButtonLabel.position).all()
+        print(labels, button_label.position)
         if move == "up":
-            button.labels[button_label.position-1].position += 1
+            labels[button_label.position-1].position += 1
             button_label.position -= 1
         elif move == "down":
-            button.labels[button_label.position+1].position -= 1
+            labels[button_label.position+1].position -= 1
             button_label.position += 1
         elif move == "delete":
             for i in range(button_label.position, len(button.labels)):
-                button.labels[i].position -= 1
+                labels[i].position -= 1
             db.session.delete(button_label)
         db.session.commit()
     
-    return render_template("edit_button.html", form=form, label_form=label_form, button=button)
+    labels = db.session.query(db.ButtonLabel).filter(db.ButtonLabel.button == button).order_by(db.ButtonLabel.position).all()
+    
+    return render_template("edit_button.html", form=form, labels=labels, label_form=label_form, button=button)
 
 @app.route("/buttons/<int:button_id>/delete", methods=['POST'])
 @minrights(3)
@@ -778,4 +782,4 @@ def rss():
     return response
 
 if __name__ == "__main__":
-    app.run(host="", debug=True)
+    app.run(host="", debug=True, threaded=True)

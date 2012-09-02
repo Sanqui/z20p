@@ -74,10 +74,9 @@ class Button(Base):
     
     @property
     def search_url(self):
-        url = "/search?labels"
+        url = "/search?labels&noform"
         for label in self.labels:
             url += "&"+label.label.category+"_labels="+str(label.label.id)
-        print(url)
         return url
 
 articles_labels = Table('article_labels', Base.metadata, # XXX wrong table name, but whatever.

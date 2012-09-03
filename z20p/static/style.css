@@ -1,4 +1,5 @@
-body {background-color: #f0f0f8; font-family:Ubuntu, Verdana, sans-serif; color:#414a5b; font-size:88%;}
+body {background-color: #f0f0f8; color:#414a5b; font-size:88%;}
+* {font-family:Ubuntu, Verdana, sans-serif; }
 ul, ul * {list-style:none;}
 .clear {clear:both;}
 header, #content {width: 55%; margin: auto;}
@@ -6,16 +7,19 @@ header, #content {width: 55%; margin: auto;}
 #leftmenu, #rightmenu {position: fixed; top: 135px;  width: 17.5%; margin:0; padding:0; list-style:none;}
 #leftmenu {left: 2.5%;}
 #rightmenu {right: 2.5%;}
+#leftmenu li, #rightmenu li {width:100%; position:relative;}
 #leftmenu a, #rightmenu a {position: relative; border:1px solid #aaa; padding:3px; width:100%; display:block; background:white;
-    color:black; text-decoration:none;
-    border-radius:4px;
+    color:#414a5b; text-decoration:none;
+    font-size:14px;
+    border-radius:6px;
     -moz-box-shadow: inset 0px -5px 5px #ddd;
     -webkit-box-shadow: inset 0px -5px 5px #ddd;
     box-shadow: inset 0px -5px 5px #ddd;}
 #leftmenu a:hover, #rightmenu a:hover {background-color:rgb(187, 20, 26); color:white;
     box-shadow:none;}
-.down {position:absolute; right:4px; background-color: rgb(187, 20, 26); color:white;}
-menu li { padding: 1px; width:100%; }
+.down {position:absolute; right:0; background-color: rgb(187, 20, 26); color:white; z-index:1; height:90%;
+    display:block; border:1px solid rgb(187, 20, 26); font-weight:bold;}
+menu li { margin: 2px; width:100%; }
 
 .linkbar {background-color: rgb(187, 20, 26); text-align:right;}
 .linkbar, .linkbar a {color:white; text-decoration:none;}

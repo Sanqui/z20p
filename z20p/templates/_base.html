@@ -44,17 +44,17 @@ $(document).ready(function(){
                   <div class="flash">{{ message }}</div>
                 {% endfor %}
             {% endwith %}
-            {% if not session.user.guest %}
-                Jste přihlášen{{gr()}} za {{session.user.name}}, práva {{session.user.rights}}, IP {{session.user.ip}}
+            {% if not g.user.guest %}
+                Jste přihlášen{{gr()}} za {{g.user.name}}, práva {{g.user.rights}}, IP {{g.user.ip}}
             {% endif %}
             <!-- move me -->
             <div class="linkbar">
-                {% if session.user.admin %}
+                {% if g.user.admin %}
                     <a href="/new_article">Nový článek</a>  • 
                     <a href="/buttons">Tlačítka</a>  • 
                     <a href="/labels">Štítky</a> • 
                 {% endif %}
-                {% if not session.user.guest %}
+                {% if not g.user.guest %}
                     <a href="/users">Uživatelé</a> • 
                     <a href="/logout">Logout</a>
                 {% else %}

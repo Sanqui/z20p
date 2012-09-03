@@ -148,8 +148,8 @@ class Article(Base):
                 secondary=articles_labels, backref="articles")
     is_article=True
     @property
-    def url(self): # TODO title in url like on z10p
-        return "/articles/"+str(self.id)
+    def url(self):
+        return "/articles/"+str(self.id)+"-"+self.title.replace(" ", "_")
 
 class Reaction(Base):
     __tablename__ = 'reactions'
@@ -169,6 +169,7 @@ class Reaction(Base):
     def url(self):
         return "/reactions/"+str(self.id)
 
+class ShoutboxPost:pass
 
 if __name__ == "__main__":
     if raw_input('Drop all? ').strip().lower().startswith('y'):

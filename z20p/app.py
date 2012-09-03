@@ -81,29 +81,31 @@ def minrights(minrights):
         @wraps(function)
         def f(*args, **kvargs):     
             if 'user' in session:
-                if session['user'].rights >= minrights:
+                if g.user.rights >= minrights:
                     return function(*args, **kvargs)
-                return abort(403) #"soft 403 (nedostatecna prava: {0} < {1})".format(session['user'].rights, minrights)
+                return abort(403) #"soft 403 (nedostatecna prava: {0} < {1})".format(g.user.rights, minrights)
             return abort(403) # "soft 403 (prihlas se)" # TODO use something
         return f
     return decorator
 
 @app.before_request
 def before_request():
+    # TODO XXX use g.user instead of g.user!!
     if request.script_root != "/static": # Yeah no.
         if 'user_id' in session:
             user = db.session.query(db.User).get(session['user_id'])
             if not user: # We could've reset the database.  Let's not have to delete cookies.
                 logout()
-                session['user'] = get_guest()
+                g.user = get_guest()
                 return
+            session.permanent = True
             user.laststamp = datetime.now()
-            session['user'] = user
+            g.user = user
             db.session.commit()
         else:
             # Let's use a temporary dummy user.
-            # session['user'] = db.session.query(db.User).filter_by(id=1).one() # This ought to be the guest...
-            session['user'] = get_guest()
+            # g.user = db.session.query(db.User).filter_by(id=1).one() # This ought to be the guest...
+            g.user = get_guest()
     # Templating stuff.
     g.left_buttons = db.session.query(db.Button).filter(db.Button.location=="left").order_by(db.Button.position).all()
     g.right_buttons = db.session.query(db.Button).filter(db.Button.location=="right").order_by(db.Button.position).all()
@@ -209,7 +211,7 @@ def search():
         order_by = {"timestamp": db.Article.timestamp, "rating": db.Rating.rating, "views": db.Article.views}[form.sort.data]
         order = {'asc': asc, 'desc': desc}[form.order.data]
         
-        articles = db.session.query(db.Article).join(db.Article.rating).filter(and_(*and_conditions)).filter(or_(*or_conditions))
+        articles = db.session.query(db.Article).outerjoin(db.Article.rating).filter(and_(*and_conditions)).filter(or_(*or_conditions))
         if label_or:
             articles = articles.filter(db.Article.labels.any(db.Label.id.in_(label_or)))
         matched_articles = articles.order_by(order(order_by)).all() # Nope, this won't work without the all.  It'll just regard everything which matched, including dupes (which get nuked when /read/ but that's about it).  :(
@@ -220,7 +222,8 @@ def search():
 
 # TODO all these POSTs should go elsewhere with a redirect.  Better for refreshing.
 @app.route("/articles/<int:article_id>", methods=['GET', 'POST'])
-def article(article_id):
+@app.route("/articles/<int:article_id>-<title>", methods=['GET', 'POST'])
+def article(article_id, title):
     article = db.session.query(db.Article).get(article_id)
     if not article: abort(404)
     class UploadForm(Form):
@@ -230,7 +233,7 @@ def article(article_id):
     
     upload_form = UploadForm(request.form)
     if request.method == 'POST' and request.form['submit'] == upload_form.submit.label.text and upload_form.validate():
-        media = upload_image(title=upload_form.title.data, author=session['user'],
+        media = upload_image(title=upload_form.title.data, author=g.user,
             article=article)
         db.session.commit() # Gotta commit here 'cause we're reading media ids later
     
@@ -248,7 +251,7 @@ def article(article_id):
     video_form = VideoForm(request.form)
     
     if request.method == 'POST' and request.form['submit'] == video_form.submit.label.text and video_form.validate():
-        media = db.Media(type="video", url=video_form.url.data, timestamp=datetime.now(), article=article, author=session['user'], title=video_form.video_title.data)
+        media = db.Media(type="video", url=video_form.url.data, timestamp=datetime.now(), article=article, author=g.user, title=video_form.video_title.data)
         db.session.add(media)
         flash("Video přidáno.")
         db.session.commit()
@@ -258,7 +261,7 @@ def article(article_id):
         submit = SubmitField('Přidat hodnocení')
     
     rating = db.session.query(db.Rating).filter(db.Rating.article == article) \
-         .filter(db.Rating.user == session['user']).scalar()
+         .filter(db.Rating.user == g.user).scalar()
     rating_form = RatingForm(request.form, rating=rating.rating if rating else 0)
     
     if request.method == 'POST' and request.form['submit'] == rating_form.submit.label.text and rating_form.validate(): # XXX
@@ -270,14 +273,14 @@ def article(article_id):
                 db.session.delete(rating)
                 msg = "Hodnocení odebráno."
         else:
-            rating = db.Rating(rating=rating_form.rating.data, user_id=session['user'].id, article=article)
-            if article.author == session['user']: # If the author removes then adds an rating using this form
+            rating = db.Rating(rating=rating_form.rating.data, user_id=g.user.id, article=article)
+            if article.author == g.user: # If the author removes then adds an rating using this form
                 article.rating = rating
             db.session.add(rating)
             msg = "Ohodnoceno."
         flash(msg)
     
-    if session['user'].guest:
+    if g.user.guest:
         name_validators = [validators.required()]
     else:
         name_validators = [validators.optional()]
@@ -288,15 +291,15 @@ def article(article_id):
         image = SelectField('Obrázek', choices=[(-1, '-')], coerce=int, default=-1)
         submit = SubmitField('Přidat reakci')
     
-    reaction_form = ReactionForm(request.form, rating=rating.rating if (rating and article.author != session['user']) else 0)
+    reaction_form = ReactionForm(request.form, rating=rating.rating if (rating and article.author != g.user) else 0)
     for media in article.all_media:
-        if media.author == session['user'] and not media.assigned_article and not media.assigned_reaction:
+        if media.author == g.user and not media.assigned_article and not media.assigned_reaction:
             reaction_form.image.choices.append((media.id, media.title))
     if request.method == 'POST' and request.form['submit'] == reaction_form.submit.label.text and reaction_form.validate():
         if reaction_form.name.data: # This technically allows logged-in users to post as guests if they hack the input in.
             user = get_guest(reaction_form.name.data)
         else:
-            user = session['user']
+            user = g.user
         rating = None
         if user != article.author:
             if rating and rating_form.rating.data:
@@ -327,7 +330,7 @@ def reaction(reaction_id):
 def edit_reaction(reaction_id):
     reaction = db.session.query(db.Reaction).get(reaction_id)
     if not reaction: abort(404)
-    if not session['user'].admin and (session['user'] != reaction.author): abort(403)
+    if not g.user.admin and (g.user != reaction.author): abort(403)
     class EditReactionForm(Form):
         text = TextAreaField('Text', [validators.required()])
         rating = SelectField('Hodnocení', choices=[(0, '-')]+[(i+1, str(i+1)) for i in range(0,10)], coerce=int)
@@ -339,7 +342,7 @@ def edit_reaction(reaction_id):
     form = EditReactionForm(request.form, reaction)
     if form.rating.data == None: form.rating.data = rating.rating if (rating and rating.rating) else 0
     for media in reaction.article.all_media:
-        if media.author == session['user'] and not media.assigned_article and not media.assigned_reaction:
+        if media.author == g.user and not media.assigned_article and not media.assigned_reaction:
             form.image.choices.append((media.id, media.title))
         elif media == reaction.media:
             form.image.choices.append((media.id, media.title))
@@ -384,7 +387,7 @@ def delete_reaction(reaction_id):
 def edit_media(media_id):
     media = db.session.query(db.Media).get(media_id)
     if not media: abort(404)
-    if not session['user'].admin and (session['user'] != media.author): abort(403)
+    if not g.user.admin and (g.user != media.author): abort(403)
     # TODO image rank
     class EditMediaForm(Form):
         title = TextField('Titulek', [validators.required()])
@@ -393,13 +396,13 @@ def edit_media(media_id):
     class AdminEditMediaForm(EditMediaForm):
         url = TextField('URL (u obrázků jen pokud víš co děláš)', [validators.required()])
     
-    if not session['user'].admin:
+    if not g.user.admin:
         form = EditMediaForm(request.form, media)
     else:
         form = AdminEditMediaForm(request.form, media)
     
     if request.method == 'POST' and form.validate():
-        if session['user'].admin:
+        if g.user.admin:
             media.url = form.url.data
         media.title = form.title.data
         db.session.commit()
@@ -416,7 +419,7 @@ def edit_media(media_id):
 def delete_media(media_id):
     media = db.session.query(db.Media).get(media_id)
     if not media: abort(404)
-    if not session['user'].admin and (session['user'] != media.author): abort(403)
+    if not g.user.admin and (g.user != media.author): abort(403)
     if request.method == 'POST':
         db.session.delete(media)
         db.session.commit()
@@ -436,8 +439,8 @@ def login():
         user = db.session.query(db.User).filter_by(name=form.name.data).filter_by(password=pwhash(form.password.data)).scalar()
         if user:
             session['user_id'] = user.id
-            session['user'] = user
-            session['user'].ip = request.remote_addr
+            g.user = user
+            g.user.ip = request.remote_addr
             db.session.commit()
             flash("Jste přihlášeni.")
             return redirect("/")
@@ -445,8 +448,8 @@ def login():
             user = db.session.query(db.User).filter_by(name=form.name.data).filter_by(password="FIXME").scalar()
             if user:
                 session['user_id'] = user.id
-                session['user'] = user
-                session['user'].ip = request.remote_addr
+                g.user = user
+                g.user.ip = request.remote_addr
                 db.session.commit()
                 flash("Byli jste přihlášeni, ale z důvodu masivních změn v systému nemáte heslo.  Prosím, nastavte si nové heslo pokud možno hned.")
                 return redirect("/users/"+str(user.id)+"/edit")
@@ -483,7 +486,7 @@ def register():
             laststamp=datetime.now())
         db.session.add(user)
         db.session.commit()
-        session['user'] = db.session.query(db.User).filter_by(name=form.name.data).filter_by(password=pwhash(form.password.data)).scalar()
+        g.user = db.session.query(db.User).filter_by(name=form.name.data).filter_by(password=pwhash(form.password.data)).scalar()
         flash("Jste zaregistrováni.")
         return redirect("/login")
     
@@ -524,10 +527,10 @@ def edit_user(user_id):
         rights = IntegerField('Práva')
     
     admin = False
-    if session['user'].rights >= 3:
+    if g.user.rights >= 3:
         form = AdminEditUserForm(request.form, user)
         admin = True
-    elif user == session['user']:
+    elif user == g.user:
         form = EditUserForm(request.form, user)
     else:
         abort(403) # No editing other users!
@@ -560,7 +563,7 @@ def labels(edit_id=None):
         form = LabelForm(request.form)
         if request.method == 'POST' and form.validate():
             label = db.Label(name=form.name.data, category=form.category.data,
-                user_id=session['user'].id)
+                user_id=g.user.id)
             db.session.add(label)
             db.session.commit()
             flash('Štítek přidán')
@@ -604,14 +607,14 @@ def new_article():
     form.labels.choices = [(l.id, l.category[0]+": "+l.name) for l in labels]
     if request.method == 'POST' and form.validate():    
         article = db.Article(title=form.title.data, text=form.text.data,
-            author_id=session['user'].id, 
+            author_id=g.user.id, 
             timestamp=datetime.now(), published=True)
-        media = upload_image(title=form.image_title.data, author_id=session['user'].id,
+        media = upload_image(title=form.image_title.data, author_id=g.user.id,
             article=article)
         article.media = media
         article.f2p = form.f2p.data
         if form.rating.data:
-            article.rating = db.Rating(rating=form.rating.data, user_id=session['user'].id, article=article)
+            article.rating = db.Rating(rating=form.rating.data, user_id=g.user.id, article=article)
         article.labels = []
         for label_id in form.labels.data:
             article.labels.append(db.session.query(db.Label).filter_by(id=label_id).scalar())
@@ -622,16 +625,17 @@ def new_article():
     return render_template("new_article.html", form=form)
     
 @app.route("/articles/<int:edit_id>/edit", methods=['GET', 'POST'])
+@app.route("/articles/<int:edit_id>-<title>/edit", methods=['GET', 'POST'])
 @minrights(1)
-def edit_article(edit_id):
+def edit_article(edit_id, title=None):
     article = db.session.query(db.Article).get(edit_id)
     if not article: abort(404)
-    if not session['user'].admin and (session['user'] != article.author): abort(403)
+    if not g.user.admin and (g.user != article.author): abort(403)
     class EditArticleForm(ArticleForm):
         image = SelectField('Obrázek', choices=[(-1, '-')], coerce=int)
     form = EditArticleForm(request.form, article)
     for media in article.all_media:
-        if media.author == session['user'] and not media.assigned_article and not media.assigned_reaction:
+        if media.author == g.user and not media.assigned_article and not media.assigned_reaction:
             form.image.choices.append((media.id, media.title))
         elif media == article.media:
             print(article.media, form.image.data)
@@ -656,7 +660,7 @@ def edit_article(edit_id):
             else:
                 article.rating.rating = form.rating.data
         else:
-            article.rating = db.Rating(rating=form.rating.data, user_id=session['user'].id, article=article)
+            article.rating = db.Rating(rating=form.rating.data, user_id=g.user.id, article=article)
         article.published = form.published.data
         article.labels = []
         for label_id in form.labels.data:
@@ -773,6 +777,7 @@ def delete_button(button_id): # quick and dirty 3: dark dawn
     return redirect("/buttons")
 
 @app.route("/rss")
+@app.route("/rss/")
 def rss():
     articles = db.session.query(db.Article) \
         .order_by(db.Article.timestamp.desc()).limit(10).all()

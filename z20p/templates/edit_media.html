@@ -11,7 +11,7 @@
     {% endif %}
     <form method="POST" action="/media/{{media.id}}/edit">
       <dl>
-        {% if session.user.admin %}
+        {% if g.user.admin %}
             {{ render_field(form.url) }}
         {% endif %}
         {{ render_field(form.title) }}
@@ -21,6 +21,6 @@
     <form method="POST" action="/media/{{media.id}}/delete">
         <input type="submit" value="Odstranit" class="confirm">
     </form>
-    Přidal{{g(media.author.gender)}} <a href="/users/{{media.author.id}}">{{media.author.name}}</a> dne {{media.timestamp}}
+    Přidal{{gr(media.author.gender)}} <a href="/users/{{media.author.id}}">{{media.author.name}}</a> dne {{media.timestamp}}
     
 {% endblock %}

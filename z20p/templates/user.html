@@ -3,7 +3,7 @@
 {% block title %}{{user.name}}{% endblock %}
 
 {% block content %}
-    {% if session.user.rights >= 3 or session.user == user%}
+    {% if g.user.rights >= 3 or g.user == user%}
         <a href="/users/{{user.id}}/edit"><img src="/static/icons/pencil.png" alt="Edit"> Upravit profil</a>
     {% endif%}
     <h2>{{user.name}}</h2>
@@ -14,7 +14,7 @@
             <dd>{{user.timestamp|datetime}}</dd>
         <dt>Naposledy viděn{{gr(user.gender)}}</dt>
             <dd>{{user.laststamp|datetime}}</dd>
-        {% if session.user.rights >= 3 or session.user == user%}
+        {% if g.user.rights >= 3 or g.user == user%}
             <dt>IP</dt>
                 <dd>{{user.ip}}</dd>
             <dt>Práva</dt>

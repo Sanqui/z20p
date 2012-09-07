@@ -16,7 +16,7 @@
                 </div>
             </div>
         {%- endfor -%}<div class="mediabox">
-            <form method="POST" action="{{article.url}}" enctype="multipart/form-data">
+            <form method="POST" action="{{article.url}}/post" enctype="multipart/form-data">
               <dl>
                 {{ render_field(upload_form.image) }}
                 {{ render_field(upload_form.title) }}
@@ -36,7 +36,7 @@
                 </div>
             </div>
         {%- endfor -%}<div class="mediabox">
-            <form method="POST" action="{{article.url}}#gallery-videos">
+            <form method="POST" action="{{article.url}}/post">
               <dl>
                 {{ render_field(video_form.url) }}
                 {{ render_field(video_form.video_title) }}
@@ -50,7 +50,7 @@
     {% endfor %}
     <div class="rightcolumn">
         <h2>Ohodnotit</h2>
-        <form method="POST" action="{{article.url}}">
+        <form method="POST" action="{{article.url}}/post">
           <dl>
             {{ render_field(rating_form.rating) }}
             {{ render_field(rating_form.submit) }}
@@ -59,7 +59,7 @@
     </div>
     <div class="leftcolumn">
         <h2>Napsat reakci</h2>
-        <form method="POST" action="{{article.url}}">
+        <form method="POST" action="{{article.url}}/post">
           <dl>
             {% if g.user.guest %} {{ render_field(reaction_form.name) }} {% endif %}
             {{ render_field(reaction_form.text) }}

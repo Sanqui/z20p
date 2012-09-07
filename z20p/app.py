@@ -68,7 +68,7 @@ def get_guest(name=None):
         guest.last_url = request.path
         db.session.commit()
     else:
-        guest = db.session.query(db.User).filter(db.User.ip == request.remote_addr).filter(db.User.password == None).scalar()
+        guest = db.session.query(db.User).filter(db.User.ip == request.remote_addr).filter(db.User.password == None).filter(db.User.name == None).scalar()
         if not guest:
             guest = db.User(name=None, timestamp=datetime.now(), laststamp=datetime.now(), ip=request.remote_addr)
             db.session.add(guest)
@@ -92,8 +92,7 @@ def minrights(minrights):
 
 @app.before_request
 def before_request():
-    # TODO XXX use g.user instead of g.user!!
-    if request.script_root != "/static": # Yeah no.
+    if not request.path.startswith("/static"): # Yeah no.
         if 'user_id' in session:
             user = db.session.query(db.User).get(session['user_id'])
             if not user: # We could've reset the database.  Let's not have to delete cookies.
@@ -109,9 +108,15 @@ def before_request():
             # Let's use a temporary dummy user.
             # g.user = db.session.query(db.User).filter_by(id=1).one() # This ought to be the guest...
             g.user = get_guest()
+        # I'm not sure if I'm okay with this being here, but I don't want logic and cruft in templates.
+        # This could also be done in a single query; I'm just too stupid with SQL.
+        if not g.user.guest:
+            latest = db.session.query(db.ShoutboxPost.id).order_by(db.ShoutboxPost.timestamp.desc()).first().id
+            g.unread = latest - g.user.last_post_read_id
     # Templating stuff.
     g.left_buttons = db.session.query(db.Button).filter(db.Button.location=="left").order_by(db.Button.position).all()
     g.right_buttons = db.session.query(db.Button).filter(db.Button.location=="right").order_by(db.Button.position).all()
+    #g.unread_posts = latest - g.user.last_post_read.id
 
 @app.teardown_request
 def shutdown_session(exception=None):
@@ -240,7 +245,8 @@ def article(article_id, title=None):
     if request.method == 'POST' and request.form['submit'] == upload_form.submit.label.text and upload_form.validate():
         media = upload_image(title=upload_form.title.data, author=g.user,
             article=article)
-        db.session.commit() # Gotta commit here 'cause we're reading media ids later
+        db.session.commit() # Gotta commit here 'cause we're REDIRECTING THE USER
+        return redirect(article.url)
     
     class VideoForm(Form):
         url = TextField('URL videa', [validators.required()])
@@ -260,6 +266,7 @@ def article(article_id, title=None):
         db.session.add(media)
         flash("Video přidáno.")
         db.session.commit()
+        return redirect(article.url)
     
     class RatingForm(Form):
         rating = SelectField('Hodnocení', choices=[(0, '-')]+[(i+1, str(i+1)) for i in range(0,10)], coerce=int)
@@ -284,6 +291,8 @@ def article(article_id, title=None):
             db.session.add(rating)
             msg = "Ohodnoceno."
         flash(msg)
+        db.session.commit()
+        return redirect(article.url)
     
     if g.user.guest:
         name_validators = [validators.required()]
@@ -316,6 +325,8 @@ def article(article_id, title=None):
         reaction = db.Reaction(text=reaction_form.text.data, rating=rating, article=article, timestamp=datetime.now(), author=user, media_id=media)
         db.session.add(reaction)
         flash("Reakce přidána.")
+        db.session.commit()
+        return redirect(article.url)
     
     article.views += 1
     db.session.commit()
@@ -685,7 +696,8 @@ def edit_article(edit_id, title=None):
     return render_template("edit_article.html", form=form, article=article)
 
 class ShoutboxPostForm(Form):
-    text = TextAreaField('Text', [validators.required()])
+    text = TextField('Text', [validators.required()])
+    submit = SubmitField('Odeslat')
 
 class GuestShoutboxPostForm(ShoutboxPostForm):
     name = TextField("Jméno", [validators.required()])
@@ -693,15 +705,27 @@ class GuestShoutboxPostForm(ShoutboxPostForm):
 @app.route("/shoutbox", methods=['GET'])
 @app.route("/shoutbox/post", methods=['POST'])
 def shoutbox():
-    posts = db.session.query(db.ShoutboxPost).order_by(db.ShoutboxPost.timestamp.desc()).all()
+    posts = db.session.query(db.ShoutboxPost).order_by(db.ShoutboxPost.timestamp.desc()).limit(30).all()
     if g.user.guest:
         form = GuestShoutboxPostForm(request.form)
     else:
         form = ShoutboxPostForm(request.form)
     
+    
     if request.method == 'POST' and form.validate():
+        if g.user.guest:
+            user = get_guest(form.name.data)
+        else: user = g.user
+        post = db.ShoutboxPost(author=user, text=form.text.data, timestamp=datetime.now(), )
+        db.session.add(post)
+        db.session.commit()
+        flash("Příspěvek přidán.")
+        return redirect("/shoutbox")
         
-        
+    g.user.last_post_read = posts[0]
+    g.unread = 0
+    db.session.commit()
+    
     return render_template("shoutbox.html", posts=posts, form=form)
     
 

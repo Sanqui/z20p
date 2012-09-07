@@ -41,6 +41,10 @@ class User(Base):
     @property
     def admin(self):
         return self.rights >= 3
+    
+    @property
+    def url(self):
+        return "/users/"+str(self.id)
 
 class Label(Base):
     __tablename__ = 'labels'

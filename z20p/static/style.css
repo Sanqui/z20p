@@ -122,6 +122,15 @@ td {border: 1px solid #444;}
 .labelbox ul {padding:0; margin:0;}
 .noform .labelbox, .noform .onlyifform {display:none;}
 
+.errors {color:red;}
+
+.shoutbox {width:70%; border:1px solid #aaa; margin:auto; padding:6px; overflow:auto; word-wrap: break-word;}
+.post a {text-decoration:none;}
+.post.odd {background-color:#f0f0f8;}
+.post.even {background-color:#e0e0e8;}
+.dateright {float:right; color:#999;}
+
+
 textarea {width:80%;}
 
 footer {clear:both; text-align:right;}

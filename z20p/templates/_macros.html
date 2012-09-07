@@ -61,7 +61,7 @@
                     <li><a href="{{label.url}}">{{label.name}}</a>
                 {% endfor %}
             </ul>
-            <div class="authorline">Napsal{{gr(article.author.gender)}}: <author>{{icon(article.author.minipic, article.author.name)+" " if article.author.minipic}}<a href="/users/{{article.author.id}}">{{article.author.name}}</a></author>{{'★' if article.author.rights >= 1}}</div>       
+            <div class="authorline">Napsal{{gr(article.author.gender)}}: {{author(article.author)}}</div>       
             {% if g.user.admin or g.user == article.author %}<div class="adminline"><a href="{{article.url}}/edit">{{icon("pencil", "Editovat")}}</a></div>{% endif %}
             <div style="clear:both;"></div>  
         </footer>        
@@ -83,12 +83,15 @@
         {% if button.labels %}
             <li><span class="down">▼</span><a href="{{button.search_url}}">{{button.name}}</a>
         {% else %}
-            <li><a href="{{button.url}}">{{icon(button.icon, button.name)+" " if button.icon}}{{button.name}}</a>
+            <li><a href="{{button.url}}">{{icon(button.icon, button.name)+" " if button.icon}}{{button.name}}{{" <strong>({0})</strong>".format(g.unread)|safe if g.unread and button.name == "Shoutbox"}}</a>
         {% endif %}
     {% endfor %}
 {% endmacro %}
 {% macro icon(name, alt, title="") -%}
 <img src="{{'/static/icons/'+name+'.png' if '/' not in name else name}}" alt="{{alt}}" title="{{alt if title=='' else title}}" class="icon" width=16 height=16>
+{%- endmacro %}
+{% macro author(user) -%}
+<author>{{icon(user.minipic, user.name)+" " if user.minipic}}<a href="{{user.url}}">{{user.name}}</a></author>{{'★' if not user.guest}}
 {%- endmacro %}
 ## This really needs some more thinking through... # Also crap g is the global variable.
 {% macro gr(gender=None) -%}

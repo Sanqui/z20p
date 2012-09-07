@@ -1,0 +1,21 @@
+{% extends "_base.html" %}
+
+{% block title %}Shoutbox{% endblock %}
+
+{% block content %}
+    <h2>Shoutbox</h2>
+    <div class="shoutbox">
+    <form method="POST" action="/shoutbox/post">
+        {% if g.user.guest %}
+            (Jméno: {{ form.name() }})
+        {% endif %}
+        {{ form.text() }}
+        {{ form.submit() }}
+    </form>
+        {% for post in posts %}
+            <div class="post {{ loop.cycle('odd', 'even') }}" title="{{post.timestamp|datetime}}">{{author(post.author)}}: {{post.text}}<div class="dateright">{{post.timestamp|datetime("%H:%M:%S")}}</div><div class="clear"></div></div>
+        {% endfor %}
+    </div>
+
+    
+{% endblock %}

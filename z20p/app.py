@@ -65,6 +65,7 @@ def get_guest(name=None):
             guest = db.User(name=name, timestamp=datetime.now(), laststamp=datetime.now(), ip=request.remote_addr)
             db.session.add(guest)
         guest.laststamp = datetime.now()
+        guest.last_url = request.path
         db.session.commit()
     else:
         guest = db.session.query(db.User).filter(db.User.ip == request.remote_addr).filter(db.User.password == None).scalar()
@@ -72,6 +73,7 @@ def get_guest(name=None):
             guest = db.User(name=None, timestamp=datetime.now(), laststamp=datetime.now(), ip=request.remote_addr)
             db.session.add(guest)
         guest.laststamp = datetime.now()
+        guest.last_url = request.path
         db.session.commit()
     return guest
 
@@ -80,7 +82,7 @@ def minrights(minrights):
     def decorator(function):
         @wraps(function)
         def f(*args, **kvargs):     
-            if 'user' in session:
+            if 'user_id' in session:
                 if g.user.rights >= minrights:
                     return function(*args, **kvargs)
                 return abort(403) #"soft 403 (nedostatecna prava: {0} < {1})".format(g.user.rights, minrights)
@@ -100,6 +102,7 @@ def before_request():
                 return
             session.permanent = True
             user.laststamp = datetime.now()
+            user.last_url = request.path
             g.user = user
             db.session.commit()
         else:
@@ -124,7 +127,7 @@ def main():
     articles = db.session.query(db.Article) \
         .order_by(db.Article.timestamp.desc()).limit(4).all()
     images = db.session.query(db.Media).filter(db.Media.type=="image") \
-        .order_by(db.Media.timestamp.desc()).limit(4).all()
+        .order_by(db.Media.timestamp.desc()).limit(8).all()
     return render_template("main.html", articles=articles, images=images)
 
 def get_page():
@@ -221,9 +224,11 @@ def search():
     return render_template("search.html", form=form, searched=searched, matched_articles=matched_articles, matched_labels=matched_labels, count=count, page=page, url_args=url_args, stype=stype)
 
 # TODO all these POSTs should go elsewhere with a redirect.  Better for refreshing.
-@app.route("/articles/<int:article_id>", methods=['GET', 'POST'])
-@app.route("/articles/<int:article_id>-<title>", methods=['GET', 'POST'])
-def article(article_id, title):
+@app.route("/articles/<int:article_id>", methods=['GET'])
+@app.route("/articles/<int:article_id>-<path:title>", methods=['GET'])
+@app.route("/articles/<int:article_id>/post", methods=['POST'])
+@app.route("/articles/<int:article_id>-<path:title>/post", methods=['POST'])
+def article(article_id, title=None):
     article = db.session.query(db.Article).get(article_id)
     if not article: abort(404)
     class UploadForm(Form):
@@ -483,7 +488,7 @@ def register():
         # TODO confirm that username is unique
         user = db.User(name=form.name.data, gender=form.gender.data, 
             rights=1, password=pwhash(form.password.data), timestamp=datetime.now(),
-            laststamp=datetime.now())
+            laststamp=datetime.now(), last_post_read_id=0)
         db.session.add(user)
         db.session.commit()
         g.user = db.session.query(db.User).filter_by(name=form.name.data).filter_by(password=pwhash(form.password.data)).scalar()
@@ -497,7 +502,7 @@ def users():
     users = db.session.query(db.User) \
         .order_by(db.User.name.asc()).filter(db.User.password != None).all()
     anons = db.session.query(db.User) \
-        .order_by(db.User.name.asc()).filter(db.User.password == None).all()
+        .order_by(db.User.laststamp.desc()).filter(db.User.password == None).all()
     return render_template("users.html", users=users, anons=anons)
 
 @app.route("/users/<int:user_id>", methods=['GET'])
@@ -592,6 +597,10 @@ def upload_image(**kvargs):
             return None
         image = request.files['image']
         filename = secure_filename(image.filename)
+        if os.path.exists(os.path.join("static/uploads/", filename)): # Lazy
+            filename = filename.split(".")
+            filename[0] += "_"
+            filename = ".".join(filename)
         image.save(os.path.join("static/uploads/", filename))
         media = db.Media(type="image", url="/static/uploads/"+filename, timestamp=datetime.now(), **kvargs)
         db.session.add(media)
@@ -674,6 +683,27 @@ def edit_article(edit_id, title=None):
             form.rating.data = article.rating.rating
     
     return render_template("edit_article.html", form=form, article=article)
+
+class ShoutboxPostForm(Form):
+    text = TextAreaField('Text', [validators.required()])
+
+class GuestShoutboxPostForm(ShoutboxPostForm):
+    name = TextField("Jméno", [validators.required()])
+
+@app.route("/shoutbox", methods=['GET'])
+@app.route("/shoutbox/post", methods=['POST'])
+def shoutbox():
+    posts = db.session.query(db.ShoutboxPost).order_by(db.ShoutboxPost.timestamp.desc()).all()
+    if g.user.guest:
+        form = GuestShoutboxPostForm(request.form)
+    else:
+        form = ShoutboxPostForm(request.form)
+    
+    if request.method == 'POST' and form.validate():
+        
+        
+    return render_template("shoutbox.html", posts=posts, form=form)
+    
 
 @app.route("/buttons", methods=['GET', 'POST'])
 @minrights(3)
@@ -787,4 +817,4 @@ def rss():
     return response
 
 if __name__ == "__main__":
-    app.run(host="", debug=True, threaded=True)
+    app.run(host="", port=5631, debug=True, threaded=True)

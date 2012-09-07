@@ -8,9 +8,9 @@
     <div class="mediagallery" id="gallery-images">
         {%- for media in images -%}
             <div class="mediabox" id="media-{{media.id}}">
-                <div><a href="{{media.url}}"><img src="{{media.url}}" class="image" alt="Obrázek"></a></div>
+                <div><a href="{{media.url}}" rel="prettyPhoto[media]" title="{{media.title}}<p><small>{{media.author.name}}, {{media.timestamp|datetime}}</small>"><img src="{{media.url}}" class="image" alt="{{media.title}}"></a></div>
                 <div title="{{media.author.name}}, {{media.timestamp|datetime}}">{{media.title}}
-                    {% if session.user.admin or (session.user == media.author and not session.user.guest) %}
+                    {% if g.user.admin or (g.user == media.author and not g.user.guest) %}
                         <a href="/media/{{media.id}}/edit">{{icon("pencil", "Edit")}}</a>
                     {% endif %}
                 </div>
@@ -30,7 +30,7 @@
 <!--TODO stick a large red right arrow over the image to signify it's a VIDEO.-->
                 <div><a href="{{media.url}}"><img src="{{media.thumb_url}}" class="image" alt="Video"></a></div>
                 <div title="{{media.author.name}}, {{media.timestamp|datetime}}">{{media.title}}
-                    {% if session.user.admin or (session.user == media.author and not session.user.guest) %}
+                    {% if g.user.admin or (g.user == media.author and not g.user.guest) %}
                         <a href="/media/{{media.id}}/edit">{{icon("pencil", "Edit")}}</a>
                     {% endif %}
                 </div>
@@ -61,9 +61,9 @@
         <h2>Napsat reakci</h2>
         <form method="POST" action="{{article.url}}">
           <dl>
-            {% if session.user.guest %} {{ render_field(reaction_form.name) }} {% endif %}
+            {% if g.user.guest %} {{ render_field(reaction_form.name) }} {% endif %}
             {{ render_field(reaction_form.text) }}
-            {% if session.user != article.author %} {{ render_field(reaction_form.rating) }} {% endif %}
+            {% if g.user != article.author %} {{ render_field(reaction_form.rating) }} {% endif %}
             {% if reaction_form.image.choices|length > 1 %} {{ render_field(reaction_form.image) }} {% endif %}
             {{ render_field(reaction_form.submit) }}
           </dl>

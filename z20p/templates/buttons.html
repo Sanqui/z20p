@@ -10,8 +10,8 @@
                 {% for button in buttons %}
                     <tr>
                         <td>{{button.position}}</td>
-                        <td>{% if not loop.first %}<a href="/buttons?move=up&id={{button.id}}">^</a>{%endif %}</td>
-                        <td>{% if not loop.last  %}<a href="/buttons?move=down&id={{button.id}}">v</a>{%endif %}</td>
+                        <td>{% if not loop.first %}<a href="/buttons?move=up&id={{button.id}}">{{icon("arrow-090-medium")}}</a>{%endif %}</td>
+                        <td>{% if not loop.last  %}<a href="/buttons?move=down&id={{button.id}}">{{icon("arrow-270-medium")}}</a>{%endif %}</td>
                         <td>{{icon(button.icon, button.name) if button.icon}}</td>
                         <td><a href="/buttons/{{button.id}}/edit">{{button.name}}</a></td>
                         <td>{{button.labels|length}}</td>
@@ -24,10 +24,11 @@
         {{ render_field(form.name) }}
         {{ render_field(form.url) }}
         {{ render_field(form.icon) }}
+        <dd> <a href="http://p.yusukekamiyamane.com/icons/preview/fugue.png">Všechny ikonky</a> (možno použít jméno ikonky, nebo plné URL)</dd>
         {{ render_field(form.location) }}
         {{ render_field(form.submit) }}
       </dl>
     </form>
-    <p><a href="http://p.yusukekamiyamane.com/icons/preview/fugue.png">Všechny ikonky</a>
+    <p>
     
 {% endblock %}

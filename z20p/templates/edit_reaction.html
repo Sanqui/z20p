@@ -12,7 +12,7 @@
       </dl>
       <p><input type="submit" value="Upravit">
     </form>
-    {% if session.user.admin %}
+    {% if g.user.admin %}
         <form method="POST" action="/reactions/{{reaction.id}}/delete">
             <input type="submit" value="Odstranit" class="confirm">
         </form>

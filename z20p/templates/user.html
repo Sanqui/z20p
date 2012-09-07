@@ -19,6 +19,8 @@
                 <dd>{{user.ip}}</dd>
             <dt>Práva</dt>
                 <dd>{{user.rights}}</dd>
+            <dt>Poslední URL (stalk stalk stalk)</dt>
+                <dd><a href={{user.last_url}}>{{user.last_url or "?"}}</a></dd>
         {% endif %}
     </dl>
     {{user.profile|safe if user.profile else '-'}}

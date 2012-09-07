@@ -27,8 +27,8 @@
     <article class="{{'crop' if crop else 'regular'}}" id="{{'article' if article.is_article else 'reaction'}}-{{article.id}}">
         {% if article.media %}
             {% if crop %} <a href="{{article.url}}">
-            {% else %} <a href="{{article.media.url}}">{% endif %}
-            <img src="{{article.media.url}}" title="{{article.media.title}}" alt="{{article.title}} - obrázek" class="image">
+            {% else %} <a href="{{article.media.url}}" rel="prettyPhoto" title="{{article.media.title}}">{% endif %}
+            <img src="{{article.media.url}}" title="{{article.media.title}}" alt="{{article.title}}" class="image">
             </a>
         {% endif %}
         {% if article.rating %}
@@ -61,7 +61,7 @@
                     <li><a href="{{label.url}}">{{label.name}}</a>
                 {% endfor %}
             </ul>
-            <div class="authorline">Napsal{{gr(article.author.gender)}}: <author><a href="/users/{{article.author.id}}">{{article.author.name}}</a></author>{{'★' if article.author.rights >= 1}}</div>       
+            <div class="authorline">Napsal{{gr(article.author.gender)}}: <author>{{icon(article.author.minipic, article.author.name)+" " if article.author.minipic}}<a href="/users/{{article.author.id}}">{{article.author.name}}</a></author>{{'★' if article.author.rights >= 1}}</div>       
             {% if g.user.admin or g.user == article.author %}<div class="adminline"><a href="{{article.url}}/edit">{{icon("pencil", "Editovat")}}</a></div>{% endif %}
             <div style="clear:both;"></div>  
         </footer>        
@@ -88,7 +88,7 @@
     {% endfor %}
 {% endmacro %}
 {% macro icon(name, alt, title="") -%}
-<img src="/static/icons/{{name}}.png" alt="{{alt}}" title="{{alt if title=='' else title}}" width=16 height=16>
+<img src="{{'/static/icons/'+name+'.png' if '/' not in name else name}}" alt="{{alt}}" title="{{alt if title=='' else title}}" class="icon" width=16 height=16>
 {%- endmacro %}
 ## This really needs some more thinking through... # Also crap g is the global variable.
 {% macro gr(gender=None) -%}

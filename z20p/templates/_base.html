@@ -4,12 +4,27 @@
     <head>
         <meta charset="utf-8">
         <title>Z20P > {% block title %}{% endblock %}</title>
+        <link rel="shortcut icon" href="/static/favicon.ico">
         <link href="/static/style.css" rel="stylesheet" type="text/css">
+        <!--[if IE]>
+            <style>
+                article {border-width:2px !important; padding:6px;}
+                img {border:none;}
+            </style>
+        <![endif]-->
+
         <script src="/static/js/modernizr-2.5.3.min.js"></script>
         <script src="//ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+        <link rel="stylesheet" href="/static/prettyphoto/prettyPhoto.css">
+        <script src="/static/js/jquery.prettyPhoto.js"></script>
         <script>window.jQuery || document.write('<script src="/static/js/jquery-1.7.1.min.js"><\/script>')</script>
         <script>
 $(document).ready(function(){
+    $("a[rel^='prettyPhoto']").prettyPhoto({
+        "horizontal_padding": 50,
+        "default_width": 600,
+        "default_height": 400
+    });
     $('#gallery-videos').hide()
     function switchtab(newtab){
         console.log(newtab)
@@ -50,16 +65,16 @@ $(document).ready(function(){
             <!-- move me -->
             <div class="linkbar">
                 {% if g.user.admin %}
-                    <a href="/new_article">Nový článek</a>  • 
-                    <a href="/buttons">Tlačítka</a>  • 
-                    <a href="/labels">Štítky</a> • 
+                    <a href="/new_article">{{icon("blog--pencil", "Štítky")}} Nový článek</a>  • 
+                    <a href="/buttons">{{icon("ui-buttons", "Štítky")}} Tlačítka</a>  • 
+                    <a href="/labels">{{icon("tags-label", "Štítky")}} Štítky</a> • 
                 {% endif %}
                 {% if not g.user.guest %}
-                    <a href="/users">Uživatelé</a> • 
-                    <a href="/logout">Logout</a>
+                    <a href="/users">{{icon("users", "Uživatelé")}} Uživatelé</a> • 
+                    <a href="/logout">{{icon("user--minus", "Logout")}} Logout</a>
                 {% else %}
-                    <a href="/login">Login</a>  • 
-                    <a href="/register">Registrovat</a>
+                    <a href="/login">{{icon("user--arrow", "Login")}} Login</a>  • 
+                    <a href="/register">{{icon("user--pencil", "Regirstovat")}} Registrovat</a>
                 {% endif %}
             </div>
             <menu id="leftmenu">

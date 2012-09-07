@@ -13,13 +13,13 @@
     <div class="mediagallery" id="gallery-images">
         {%- for media in images -%}
             <div class="mediabox" id="media-{{media.id}}">
-                <div><a href="{{media.url}}"><img src="{{media.url}}" class="image" alt="Obrázek"></a></div>
-                <div title="{{media.author.name}}, {{media.timestamp|datetime}}">
+                <div><a href="{{media.url}}" rel="prettyPhoto[media]" title="{{media.title}} - <a href='{{media.article.url or '#'}}'>{{media.article.title or '(bez článku)'}}</a><p><small>{{media.author.name}}, {{media.timestamp|datetime}}</small>"><img src="{{media.url}}" class="image" alt="{{media.title}}"></a></div>
+                <!--{{media.article.url}}#media-{{media.id}} <div >
                     <a href="{{media.article.url}}">{{media.title}}</a>
                     {% if g.user.admin or (g.user == media.author and not g.user.guest) %}
                         <a href="/media/{{media.id}}/edit">{{icon("pencil", "Edit")}}</a>
                     {% endif %}
-                </div>
+                </div>-->
             </div>
         {%- endfor -%}</div>
     <!--<h2>Nejnovější sloupky</h2>

@@ -31,6 +31,8 @@ class User(Base):
     email = Column(Unicode(128))
     minipic = Column(Unicode(256))
     profile = Column(UnicodeText)
+    last_url = Column(Unicode(256))
+    last_post_read_id = Column(Integer, ForeignKey('shoutbox_posts.id'))
     
     @property
     def guest(self):
@@ -71,6 +73,7 @@ class Button(Base):
     name = Column(Unicode(256), nullable=False)
     icon = Column(Unicode(256))
     url = Column(Unicode(256))
+    #title = Column(Unicode(256))
     
     @property
     def search_url(self):
@@ -149,7 +152,7 @@ class Article(Base):
     is_article=True
     @property
     def url(self):
-        return "/articles/"+str(self.id)+"-"+self.title.replace(" ", "_")
+        return "/articles/"+str(self.id)+"-"+self.title.replace(" ", "_")#.replace("/", "_")
 
 class Reaction(Base):
     __tablename__ = 'reactions'
@@ -169,7 +172,14 @@ class Reaction(Base):
     def url(self):
         return "/reactions/"+str(self.id)
 
-class ShoutboxPost:pass
+class ShoutboxPost(Base):
+    __tablename__ = 'shoutbox_posts'
+    id = Column(Integer, primary_key=True, nullable=False)
+    author_id = Column(Integer, ForeignKey('users.id', use_alter=True, name="fk_author"))
+    author = relationship("User", backref='shoutbox_posts', primaryjoin=author_id==User.id, post_update=True)
+    last_read_by = relationship("User", primaryjoin=id==User.last_post_read_id, backref="last_post_read")
+    timestamp = Column(DateTime, nullable=False, index=True)
+    text = Column(UnicodeText, nullable=False)
 
 if __name__ == "__main__":
     if raw_input('Drop all? ').strip().lower().startswith('y'):
@@ -178,7 +188,7 @@ if __name__ == "__main__":
         # It would be REALLY nice if we could use some sane ids here..  but we
         # must reserve ids 1 through 4 for old z10p authors, and MySQL
         # won't allow id=0.  Yay.
-        root = User(id=5, name=u"Root", password=u"df515bb71d7cc77e1287d9b94110aded391e5d202bfb98baba10b7ad", rights=9, gender="-", timestamp=datetime.utcnow(), laststamp=datetime.utcnow())
+        root = User(id=5, name=u"Root", password=u"df515bb71d7cc77e1287d9b94110aded391e5d202bfb98baba10b7ad", rights=9, gender="-", timestamp=datetime.utcnow(), laststamp=datetime.utcnow()) # The password is "root"
         session.add(root)
     Base.metadata.create_all(bind=engine)
     

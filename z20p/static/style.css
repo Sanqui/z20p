@@ -4,6 +4,7 @@ ul, ul * {list-style:none;}
 .clear {clear:both;}
 header, #content {width: 55%; margin: auto;}
 #logo {margin:auto; width:650px;}
+#logo img {width:650px; height:115px;}
 #leftmenu, #rightmenu {position: fixed; top: 135px;  width: 17.5%; margin:0; padding:0; list-style:none;}
 #leftmenu {left: 2.5%;}
 #rightmenu {right: 2.5%;}
@@ -15,7 +16,8 @@ header, #content {width: 55%; margin: auto;}
     -moz-box-shadow: inset 0px -5px 5px #ddd;
     -webkit-box-shadow: inset 0px -5px 5px #ddd;
     box-shadow: inset 0px -5px 5px #ddd;}
-#leftmenu a:hover, #rightmenu a:hover {background-color:rgb(187, 20, 26); color:white;
+#leftmenu a:hover, #rightmenu a:hover {background-color:rgb(187, 20, 26);
+    border-color: rgb(187, 20, 26); color:white;
     box-shadow:none;}
 .down {position:absolute; right:0; background-color: rgb(187, 20, 26); color:white; z-index:1; height:90%;
     display:block; border:1px solid rgb(187, 20, 26); font-weight:bold;}
@@ -33,11 +35,17 @@ p {text-indent:18px; margin: 5px 0 0 0; padding:0;}
 a{	color: #862025;
     -webkit-transition: all 0.2s ease-in-out;
        -moz-transition: all 0.2s ease-in-out;
-         -o-transition: all 0.2s ease-in-out;
+         /*-o-transition: all 0.2s ease-in-out;*/
             transition: all 0.2s ease-in-out;
   text-decoration:underline;
 }
 a:hover {color:#c2252c;}
+.pp_pic_holder a {    -webkit-transition: all 0;
+       -moz-transition: all 0;
+         /*-o-transition: all 0.2s ease-in-out;*/
+            transition: all 0;}
+
+.icon {vertical-align:middle;}
 
 article { display:block;
     border: 1px solid #777;

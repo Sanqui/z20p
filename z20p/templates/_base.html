@@ -48,12 +48,33 @@ $(document).ready(function(){
             return false
         }
     })
+    button_ids = [{{ g.button_ids|join(",") }}] // Yay metaprogramming
+    function hide_all_buttons(){
+        $.each(button_ids, function(i, id){
+            $('#button-'+id+'-labels').animate({'height': '0'})
+        })
+    }
+    last = 0
+    $.each(button_ids, function(i, id){
+        $('#button-'+id+'-labels').css({'display':'block'})
+        $('#button-'+id+'-labels').data('realh', $('#button-'+id+'-labels').height())
+        $('#button-'+id+'-labels').css({'height':0})
+        $('#down-'+id).click(function(){
+            console.log(id)
+            hide_all_buttons()
+            if (id != last){
+                $('#button-'+id+'-labels').css({'height': '1px'})
+                $('#button-'+id+'-labels').animate({'height': $('#button-'+id+'-labels').data('realh')}, 500)
+                last = id
+            }else {last = 0}
+        })
+    })
 });
         </script>
     </head>
     <body>
         <h1 id="logo"><a href="/"><img src="http://www.zabij10prasat.cz/img/prasarny.png" alt="Zabij 10 prasat"></a></h1>
-        <header>>
+        <header>
             {% with messages = get_flashed_messages() %}
                 {% for message in messages %}
                   <div class="flash">{{ message }}</div>

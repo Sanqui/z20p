@@ -5,7 +5,7 @@ import urlparse # urllib.parse in py3k
 
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import scoped_session, sessionmaker, relationship
+from sqlalchemy.orm import scoped_session, sessionmaker, relationship, backref
 from sqlalchemy.schema import Column, ForeignKey, Table
 from sqlalchemy.types import DateTime, Integer, Unicode, Enum, UnicodeText, Boolean
 
@@ -63,9 +63,9 @@ class ButtonLabel(Base):
     __tablename__ = 'buttons_labels'
     id = Column(Integer, primary_key=True)
     button_id = Column(Integer, ForeignKey('buttons.id'), nullable=False)
-    button = relationship("Button", backref="labels")
+    #button = relationship("Button", backref=backref("labels", lazy="joined", ))
     label_id = Column(Integer, ForeignKey('labels.id'), nullable=False)
-    label = relationship("Label", backref="buttons")
+    label = relationship("Label", backref="buttons", lazy="joined")
     position = Column(Integer, nullable=False)
 
 class Button(Base):
@@ -77,6 +77,8 @@ class Button(Base):
     name = Column(Unicode(256), nullable=False)
     icon = Column(Unicode(256))
     url = Column(Unicode(256))
+    
+    labels = relationship(ButtonLabel, lazy="joined", order_by=ButtonLabel.position.asc(), backref="button")
     #title = Column(Unicode(256))
     
     @property

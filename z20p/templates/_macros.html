@@ -81,7 +81,12 @@
 {% macro render_buttons(buttons) %}
     {% for button in buttons %}
         {% if button.labels %}
-            <li><span class="down">▼</span><a href="{{button.search_url}}">{{button.name}}</a>
+            <li><span class="down" id="down-{{button.id}}">▼</span><a href="{{button.search_url}}">{{button.name}}</a>
+                <ul class="button-labels" style="display: none;" id="button-{{button.id}}-labels">
+                    {% for label in button.labels %}
+                        <li><a href="{{label.label.url}}">{{label.label.name}}</a>
+                    {% endfor %}
+                </ul>
         {% else %}
             <li><a href="{{button.url}}">{{icon(button.icon, button.name)+" " if button.icon}}{{button.name}}{{" <strong>({0})</strong>".format(g.unread)|safe if g.unread and button.name == "Shoutbox"}}</a>
         {% endif %}
@@ -91,7 +96,7 @@
 <img src="{{'/static/icons/'+name+'.png' if '/' not in name else name}}" alt="{{alt}}" title="{{alt if title=='' else title}}" class="icon" width=16 height=16>
 {%- endmacro %}
 {% macro author(user) -%}
-<author>{{icon(user.minipic, user.name)+" " if user.minipic}}<a href="{{user.url}}">{{user.name}}</a></author>{{'★' if not user.guest}}
+<author><a href="{{user.url if (not user.guest or g.user.admin) else '#'}}" class="iconlink">{{icon(user.minipic, user.name)+" " if user.minipic}}</a><a href="{{user.url if (not user.guest or g.user.admin) else '#'}}">{{user.name}}</a>{{'★' if not user.guest}}</author>
 {%- endmacro %}
 ## This really needs some more thinking through... # Also crap g is the global variable.
 {% macro gr(gender=None) -%}

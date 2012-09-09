@@ -19,8 +19,12 @@ header, #content {width: 55%; margin: auto;}
 #leftmenu a:hover, #rightmenu a:hover {background-color:rgb(187, 20, 26);
     border-color: rgb(187, 20, 26); color:white;
     box-shadow:none;}
-.down {position:absolute; right:0; background-color: rgb(187, 20, 26); color:white; z-index:1; height:90%;
-    display:block; border:1px solid rgb(187, 20, 26); font-weight:bold;}
+.down {position:absolute; right:0; background-color: rgb(187, 20, 26); color:white; z-index:1; height:99%;
+    display:block; border:1px solid rgb(187, 20, 26); font-weight:bold; cursor:pointer;}
+.button-labels {margin:0; padding:0; overflow:hidden;}
+#leftmenu .button-labels a, #rightmenu .button-labels a /* wordy to prevent having to important */
+    {font-size:8px ; padding:0 0 0 6px; margin:0 0 0 6px; width:70%;
+    float:right;} 
 menu li { margin: 2px; width:100%; }
 
 .linkbar {background-color: rgb(187, 20, 26); text-align:right;}
@@ -93,6 +97,7 @@ article.crop .labels {display:none;}
 }
 .authorline {float:right;  clear:right;}
 author {font-weight:bold;}
+author .iconlink {text-decoration:none;}
 .dateline {float:left;}
 .adminline {float:left; clear:left;}
 article.crop .adminline {display:none;}
@@ -125,9 +130,13 @@ td {border: 1px solid #444;}
 .errors {color:red;}
 
 .shoutbox {width:70%; border:1px solid #aaa; margin:auto; padding:6px; overflow:auto; word-wrap: break-word;}
+.shoutbox #text {width:76.5%;}
+.shoutbox #submit {width:20%; float:right;}
 .post a {text-decoration:none;}
 .post.odd {background-color:#f0f0f8;}
 .post.even {background-color:#e0e0e8;}
+.post author {margin-right:6px;}
+.post .last {opacity:0.5;}
 .dateright {float:right; color:#999;}
 
 

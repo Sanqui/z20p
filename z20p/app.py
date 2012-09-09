@@ -113,10 +113,11 @@ def before_request():
         if not g.user.guest:
             latest = db.session.query(db.ShoutboxPost.id).order_by(db.ShoutboxPost.timestamp.desc()).first().id
             g.unread = latest - g.user.last_post_read_id
-    # Templating stuff.
-    g.left_buttons = db.session.query(db.Button).filter(db.Button.location=="left").order_by(db.Button.position).all()
-    g.right_buttons = db.session.query(db.Button).filter(db.Button.location=="right").order_by(db.Button.position).all()
-    #g.unread_posts = latest - g.user.last_post_read.id
+        # Templating stuff.
+        g.left_buttons = db.session.query(db.Button).filter(db.Button.location=="left").order_by(db.Button.position).all()
+        g.right_buttons = db.session.query(db.Button).filter(db.Button.location=="right").order_by(db.Button.position).all()
+        g.button_ids = [button.id for button in g.left_buttons+g.right_buttons] # blargh
+        #g.unread_posts = latest - g.user.last_post_read.id
 
 @app.teardown_request
 def shutdown_session(exception=None):
@@ -707,7 +708,11 @@ class GuestShoutboxPostForm(ShoutboxPostForm):
 def shoutbox():
     posts = db.session.query(db.ShoutboxPost).order_by(db.ShoutboxPost.timestamp.desc()).limit(30).all()
     if g.user.guest:
-        form = GuestShoutboxPostForm(request.form)
+        guest = db.session.query(db.User).filter(db.User.name != None).filter(db.User.password == None).filter(db.User.ip == g.user.ip).order_by(db.User.laststamp.desc()).limit(1).scalar()
+        name = None
+        if guest:
+            name = guest.name
+        form = GuestShoutboxPostForm(request.form, name=name)
     else:
         form = ShoutboxPostForm(request.form)
     
@@ -719,7 +724,7 @@ def shoutbox():
         post = db.ShoutboxPost(author=user, text=form.text.data, timestamp=datetime.now(), )
         db.session.add(post)
         db.session.commit()
-        flash("Příspěvek přidán.")
+        #flash("Příspěvek přidán.")
         return redirect("/shoutbox")
         
     g.user.last_post_read = posts[0]

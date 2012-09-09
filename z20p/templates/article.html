@@ -18,7 +18,7 @@
         {%- endfor -%}<div class="mediabox">
             <form method="POST" action="{{article.url}}/post" enctype="multipart/form-data">
               <dl>
-                {{ render_field(upload_form.image) }}
+                {{ render_field(upload_form.image, accept="image/*") }}
                 {{ render_field(upload_form.title) }}
                 {{ render_field(upload_form.submit) }}
               </dl>

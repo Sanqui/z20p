@@ -10,6 +10,7 @@ import time
 from functools import wraps # We need this to make Flask understand decorated routes.
 import hashlib
 import os
+import random
 
 def pwhash(string):
     return hashlib.sha224(string+"***REMOVED***").hexdigest()
@@ -117,6 +118,11 @@ def before_request():
         g.left_buttons = db.session.query(db.Button).filter(db.Button.location=="left").order_by(db.Button.position).all()
         g.right_buttons = db.session.query(db.Button).filter(db.Button.location=="right").order_by(db.Button.position).all()
         g.button_ids = [button.id for button in g.left_buttons+g.right_buttons] # blargh
+        g.kip = random.randint(0, 4) == 0
+        if g.kip:
+            g.kipleft = random.randint(0, 100)
+            g.kiptop = random.randint(0, 100)
+            g.kiptype = random.randint(1,2)
         #g.unread_posts = latest - g.user.last_post_read.id
 
 @app.teardown_request
@@ -127,6 +133,15 @@ def shutdown_session(exception=None):
 def datetime_format(value, format='%d. %m. %Y  %H:%M'): # TODO add 2 hours
     if not value: return "-"
     return value.strftime(format)
+
+# Stonlen and edited: https://gist.github.com/3091909
+def url_for_here(**changed_args):
+    args = request.args.to_dict() # to_dict lets us get rid of duplicate arguments.
+    args.update(request.view_args)
+    args.update(changed_args)
+    return url_for(request.endpoint, **args)
+
+app.jinja_env.globals['url_for_here'] = url_for_here
 
 @app.route("/")
 def main():
@@ -143,9 +158,8 @@ def get_page():
         page = 1
     except ValueError:
         abort(400)
-    url_args = request.args.copy()
-    if "page" in url_args: del url_args["page"]
-    return page, url_args
+    if page == 0: abort(400)
+    return page
 
 @app.route("/search")
 def search():
@@ -190,7 +204,7 @@ def search():
         #form.authors.choices = [(u.id, u.name) for u in users]
     
     
-    page, url_args = get_page()
+    page = get_page()
     searched = False
     matched_labels = []
     matched_articles = []
@@ -227,7 +241,7 @@ def search():
         count = len(matched_articles)
         matched_articles = matched_articles[(page-1)*5:(page)*5]
         
-    return render_template("search.html", form=form, searched=searched, matched_articles=matched_articles, matched_labels=matched_labels, count=count, page=page, url_args=url_args, stype=stype)
+    return render_template("search.html", form=form, searched=searched, matched_articles=matched_articles, matched_labels=matched_labels, count=count, page=page, stype=stype)
 
 # TODO all these POSTs should go elsewhere with a redirect.  Better for refreshing.
 @app.route("/articles/<int:article_id>", methods=['GET'])
@@ -521,8 +535,8 @@ def users():
 def user(user_id):
     user = db.session.query(db.User).get(user_id)
     if not user: abort(404)
-    page, url_args = get_page()
-    return render_template('user.html', user=user, page=page, url_args=url_args)
+    page = get_page()
+    return render_template('user.html', user=user, page=page)
 
 @app.route("/users/<int:user_id>/edit", methods=['GET', 'POST'])
 @minrights(1)
@@ -599,6 +613,18 @@ def labels(edit_id=None):
     labels = db.session.query(db.Label) \
         .order_by(db.Label.category.desc(), db.Label.name.asc()).all()
     return render_template("labels.html", form=form, labels=labels, edit_id=edit_id)
+
+@app.route("/labels/<int:label_id>/mass", methods=['GET', 'POST'])
+@minrights(2)
+def mass_label(label_id):
+    label = db.session.query(db.Label).get(label_id)
+    class MassLabelForm(Form):
+        labels = MultiCheckboxField('Štítky', coerce=int)
+        submit = SubmitField("Oštítkovat")
+    articles = db.session.query(db.Article).order_by(db.Article.timestamp.asc).all()
+    form.articles.choices = [(a.id, a.title) for a in labels]
+    return render_template("mass_label")
+    
 
 def upload_image(**kvargs):
     media = None
@@ -706,7 +732,10 @@ class GuestShoutboxPostForm(ShoutboxPostForm):
 @app.route("/shoutbox", methods=['GET'])
 @app.route("/shoutbox/post", methods=['POST'])
 def shoutbox():
-    posts = db.session.query(db.ShoutboxPost).order_by(db.ShoutboxPost.timestamp.desc()).limit(30).all()
+    page = get_page()
+    posts = db.session.query(db.ShoutboxPost).order_by(db.ShoutboxPost.timestamp.desc())[(page-1)*30:page*30]
+    count =  db.session.query(db.ShoutboxPost).count()
+    if not posts: abort(404)
     if g.user.guest:
         guest = db.session.query(db.User).filter(db.User.name != None).filter(db.User.password == None).filter(db.User.ip == g.user.ip).order_by(db.User.laststamp.desc()).limit(1).scalar()
         name = None
@@ -731,7 +760,7 @@ def shoutbox():
     g.unread = 0
     db.session.commit()
     
-    return render_template("shoutbox.html", posts=posts, form=form)
+    return render_template("shoutbox.html", posts=posts, form=form, count=count, page=page)
     
 
 @app.route("/buttons", methods=['GET', 'POST'])

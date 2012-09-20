@@ -9,7 +9,7 @@
     <h2>{{user.name}}</h2>
     <dl>
         <dt>Email</dt>
-            <dd>{{user.email if user.email else '-'}}</dd>
+            <dd>{{user.email.replace("@", " zavináč ") if user.email else '-'}}</dd>
         <dt>Zaregistrován{{gr(user.gender)}} dne</dt>
             <dd>{{user.timestamp|datetime}}</dd>
         <dt>Naposledy viděn{{gr(user.gender)}}</dt>
@@ -23,7 +23,7 @@
                 <dd><a href={{user.last_url}}>{{user.last_url or "?"}}</a></dd>
         {% endif %}
     </dl>
-    {{user.profile|safe if user.profile else '-'}}
+    <p class="clear">{{user.profile|safe if user.profile else '-'}}
     {% if user.articles %}
         <h3>Články</h3>
         {% for article in user.articles[(page-1)*5:page*5] %}

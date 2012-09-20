@@ -23,7 +23,7 @@
   </td>
 {% endmacro %}
 ## TODO rename to render_article
-{% macro display_article(article, crop=False) -%}
+{% macro display_article(article, crop=False, cut=False) -%}
     <article class="{{'crop' if crop else 'regular'}}" id="{{'article' if article.is_article else 'reaction'}}-{{article.id}}">
         {% if article.media %}
             {% if crop %} <a href="{{article.url}}">
@@ -52,8 +52,10 @@
                 {% endif %}
             {% endfor %}
             </ul>
-            {{icon("images-stack", "Obrázků")}}×{{ article.all_media|count }} {{icon("blogs-stack", "Reakcí")}}×{{ article.reactions|count }}
         {% endif %}
+            {% if cut or crop %}
+                {{icon("images-stack", "Obrázků")}}×{{ article.all_media|count }} {{icon("blogs-stack", "Reakcí")}}×{{ article.reactions|count }}
+            {% endif %}
         <footer>
             <div class="dateline">{{icon("calendar-blue", "Datum publikace:")}} {{article.timestamp|datetime}}</div> 
             <ul class="labels">
@@ -67,14 +69,15 @@
         </footer>        
     </article>
 {%- endmacro %}
-{% macro render_pages(page, count, url_args) %}
-    <p>Stránka {{ page }} z {{ (count//5)+1 }}
+## This isn't very pretty!  We should get url_args and url elsewhere.
+{% macro render_pages(page, count, url_args, per_page=5) %}
+    <p>Stránka {{ page }} z {{ (count//per_page)+1 }}
     <p>
-        {%- for p in range(1, (count//5)+2) -%}
+        {%- for p in range(1, (count//per_page)+2) -%}
             {%- if p == page -%}
                 <strong>{{p}}</strong>{{"," if not loop.last else ""}}
             {% else -%}
-                <a href='{{url_for("search", page=p, **url_args)}}'>{{p}}</a>{{"," if not loop.last else ""}}
+                <a href='{{url_for_here(page=p)}}'>{{p}}</a>{{"," if not loop.last else ""}}
             {% endif %}
         {% endfor %}
 {% endmacro %}

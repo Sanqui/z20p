@@ -1,16 +1,16 @@
-body {background-color: #f0f0f8; color:#414a5b; font-size:88%;}
+body {background-color: #f0f0f8; color:#414a5b; font-size:100%;}
 * {font-family:Ubuntu, Verdana, sans-serif; }
 ul, ul * {list-style:none;}
 .clear {clear:both;}
 header, #content {width: 55%; margin: auto;}
 #logo {margin:auto; width:650px;}
 #logo img {width:650px; height:115px;}
-#leftmenu, #rightmenu {position: fixed; top: 135px;  width: 17.5%; margin:0; padding:0; list-style:none;}
-#leftmenu {left: 2.5%;}
-#rightmenu {right: 2.5%;}
+#leftmenu, #rightmenu {position: fixed; top: 135px;  width: 12.5%; margin:0; padding:0; list-style:none;}
+#leftmenu {left: 5.5%;}
+#rightmenu {right: 9.5%;}
 #leftmenu li, #rightmenu li {width:100%; position:relative;}
 #leftmenu a, #rightmenu a {position: relative; border:1px solid #aaa; padding:3px; width:100%; display:block; background:white;
-    color:#414a5b; text-decoration:none;
+    color:#414a5b; text-decoration:none; padding-right:30px;
     font-size:14px;
     border-radius:6px;
     -moz-box-shadow: inset 0px -5px 5px #ddd;
@@ -18,23 +18,32 @@ header, #content {width: 55%; margin: auto;}
     box-shadow: inset 0px -5px 5px #ddd;}
 #leftmenu a:hover, #rightmenu a:hover {background-color:rgb(187, 20, 26);
     border-color: rgb(187, 20, 26); color:white;
-    box-shadow:none;}
-.down {position:absolute; right:0; background-color: rgb(187, 20, 26); color:white; z-index:1; height:99%;
-    display:block; border:1px solid rgb(187, 20, 26); font-weight:bold; cursor:pointer;}
+    -moz-box-shadow: inset 0px -5px 5px #A20E14;
+    -webkit-box-shadow: inset 0px -5px 5px ##A20E14;
+    box-shadow: inset 0px -5px 5px #A20E14;}
+.down {position:absolute; right:-35px; background-color: rgb(187, 20, 26); border:1px solid #5F0B0E; color:white; z-index:1; height:99%; border-radius:0 6px 6px 0;
+    display:block;  font-weight:bold; cursor:pointer; width:24px; text-align:center; font-size:14px;
+    -moz-box-shadow: inset 0px -5px 5px #A20E14;
+    -webkit-box-shadow: inset 0px -5px 5px ##A20E14;
+    box-shadow: inset 0px -5px 5px #A20E14;}
+.down:hover { border-color:white;}
 .button-labels {margin:0; padding:0; overflow:hidden;}
 #leftmenu .button-labels a, #rightmenu .button-labels a /* wordy to prevent having to important */
-    {font-size:8px ; padding:0 0 0 6px; margin:0 0 0 6px; width:70%;
-    float:right;} 
+    {font-size:8px ; padding:0 0 0 6px; margin:0 4px 0 6px; width:70%;
+    float:right; } 
 menu li { margin: 2px; width:100%; }
 
-.linkbar {background-color: rgb(187, 20, 26); text-align:right;}
+.linkbar {background-color: rgb(187, 20, 26); text-align:right; font-size:12px;}
 .linkbar, .linkbar a {color:white; text-decoration:none;}
 .linkbar a {font-weight:bold;}
 .linkbar a:hover {color:white; text-decoration:underline;}
+.linkbar .logged {float:left;}
 
 .flash {padding:6px; background-color:yellow; margin: 2px 10% 2px 10%;}
 
-p {text-indent:18px; margin: 5px 0 0 0; padding:0;}
+p {text-indent:18px; margin: 5px 0 0 0; padding:0; font-size:12px;}
+
+dt {font-weight:bold; float:left; width:30%; clear:left;}
 
 a{	color: #862025;
     -webkit-transition: all 0.2s ease-in-out;
@@ -146,3 +155,5 @@ footer {clear:both; text-align:right;}
 
 .labelfloat {position:fixed; right:0; top:0; width:20%; background:white; height:100%; overflow-y:scroll;}
 .labelfloat dd, .labelfloat ul, .labelfloat li {margin:0; padding:0; list-style:none; line-height:0.9;}
+
+.kip {z-index:256;}

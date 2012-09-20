@@ -158,7 +158,7 @@ class Article(Base):
     is_article=True
     @property
     def url(self):
-        return "/articles/"+str(self.id)+"-"+self.title.replace(" ", "_")#.replace("/", "_")
+        return "/articles/"+str(self.id)+"-"+self.title.replace(" ", "_").lstrip("/")#.replace("/", "_")
 
 class Reaction(Base):
     __tablename__ = 'reactions'

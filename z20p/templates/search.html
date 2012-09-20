@@ -49,7 +49,7 @@
         {% if count != None and count > 0 %}
             Nalezeno {{ count }} článků.
             {% for article in matched_articles %}
-                {{ display_article(article, crop=True) }}
+                {{ display_article(article, cut=True) }}
             {% endfor %}
             {{ render_pages(page, count, url_args) }}
         {% elif count == 0 %}

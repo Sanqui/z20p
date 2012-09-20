@@ -3,7 +3,7 @@
 <html lang="cs">
     <head>
         <meta charset="utf-8">
-        <title>Z20P > {% block title %}{% endblock %}</title>
+        <title>Zabij 10 prasat » {% block title %}{% endblock %}</title>
         <link rel="shortcut icon" href="/static/favicon.ico">
         <link href="/static/style.css" rel="stylesheet" type="text/css">
         <!--[if IE]>
@@ -49,9 +49,10 @@ $(document).ready(function(){
         }
     })
     button_ids = [{{ g.button_ids|join(",") }}] // Yay metaprogramming
-    function hide_all_buttons(){
+    function hide_all_buttons(except){
         $.each(button_ids, function(i, id){
-            $('#button-'+id+'-labels').animate({'height': '0'})
+            if (id != except)
+                $('#button-'+id+'-labels').animate({'height': '0'})
         })
     }
     last = 0
@@ -61,18 +62,30 @@ $(document).ready(function(){
         $('#button-'+id+'-labels').css({'height':0})
         $('#down-'+id).click(function(){
             console.log(id)
-            hide_all_buttons()
             if (id != last){
+                hide_all_buttons(id)
                 $('#button-'+id+'-labels').css({'height': '1px'})
                 $('#button-'+id+'-labels').animate({'height': $('#button-'+id+'-labels').data('realh')}, 500)
                 last = id
-            }else {last = 0}
+            }else {
+                hide_all_buttons()
+                last = 0}
+        })
+    })
+    $('.kip').click(function(){
+        $('.kip').animate({'width':'50%', 'height':'50%', 'left':'25%', 'top':'25%'}, 1700,
+            function(){$('.kip').animate({'opacity':'0', 'width':'200%', 'height':'200%', 'top':'-50%', 'left':'-50%'}, function(){
+                $('.kip').hide()
+            })
         })
     })
 });
         </script>
     </head>
     <body>
+        {%- if g.kip -%}
+            <img src="/static/kip{{g.kiptype}}.png" title="kip" alt="kip" class="kip" style="position:fixed; top:{{g.kiptop}}%; left:{{g.kipleft}}%;">
+        {%- endif -%}
         <h1 id="logo"><a href="/"><img src="http://www.zabij10prasat.cz/img/prasarny.png" alt="Zabij 10 prasat"></a></h1>
         <header>
             {% with messages = get_flashed_messages() %}
@@ -80,11 +93,11 @@ $(document).ready(function(){
                   <div class="flash">{{ message }}</div>
                 {% endfor %}
             {% endwith %}
-            {% if not g.user.guest %}
-                Jste přihlášen{{gr()}} za {{g.user.name}}, práva {{g.user.rights}}, IP {{g.user.ip}}
-            {% endif %}
             <!-- move me -->
             <div class="linkbar">
+                {% if not g.user.guest %}
+                    <div class="logged">{{icon(g.user.minipic) if g.user.minipic}}<a href="{{g.user.url}}">{{g.user.name}}</a></div>
+                {% endif %}
                 {% if g.user.admin %}
                     <a href="/new_article">{{icon("blog--pencil", "Štítky")}} Nový článek</a>  • 
                     <a href="/buttons">{{icon("ui-buttons", "Štítky")}} Tlačítka</a>  • 
@@ -111,7 +124,9 @@ $(document).ready(function(){
             {% endblock %}
         </section>
         <footer>
-            z20p.  © Zabij 10 prasat.  Fugue icon set © <a href="http://p.yusukekamiyamane.com/">Yusuke Kamiyamane</a> <a href="http://creativecommons.org/licenses/by/3.0/deed.cs"><img src="/static/icons/creative-commons.png" alt="CC" title="pod Creative Commons licencí"></a> 
+            <p>Všechen psaný obsah je, není-li stanoveno jinak, © redakční tým Zabij 10 prasat.
+            <p>Fugue icon set © <a href="http://p.yusukekamiyamane.com/">Yusuke Kamiyamane</a> <a href="http://creativecommons.org/licenses/by/3.0/deed.cs">{{icon("creative-commons", "pod Creative Commons licencí")}}</a>
+            <p>Zabij 10 prasat běží na redakčním systému z20p psaném pomocí <a href="http://flask.pocoo.org/">Flask</a>.
         </footer>
     </body>
 </html>

@@ -35,7 +35,10 @@ $(document).ready(function(){
     }
     $('#tab-images').click(function(){switchtab('images')})
     $('#tab-videos').click(function(){switchtab('videos')})
+    $('#tab-upload').click(function(){switchtab('upload')})
+    switchtab("images")
     if (window.location.hash == "#gallery-videos") switchtab("videos")
+    if (window.location.hash == "#upload") switchtab("upload")
     console.log(window.location.hash)
     
     $('.confirm').click(function(){
@@ -96,7 +99,7 @@ $(document).ready(function(){
             <!-- move me -->
             <div class="linkbar">
                 {% if not g.user.guest %}
-                    <div class="logged">{{icon(g.user.minipic) if g.user.minipic}}<a href="{{g.user.url}}">{{g.user.name}}</a></div>
+                    <div class="logged">{{author(g.user)}}</div>
                 {% endif %}
                 {% if g.user.admin %}
                     <a href="/new_article">{{icon("blog--pencil", "Štítky")}} Nový článek</a>  • 

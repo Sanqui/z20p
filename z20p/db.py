@@ -1,7 +1,9 @@
+# encoding: utf-8
 from datetime import datetime
 import time
 import os.path
 import urlparse # urllib.parse in py3k
+import math
 
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
@@ -44,7 +46,26 @@ class User(Base):
     
     @property
     def url(self):
-        return "/users/"+str(self.id)
+        return "/users/"+str(self.id)+("-"+self.name if self.name else "")
+        
+    @property
+    def rank(self):
+        ranks = {0: "Guest",
+                 1: {'m':"Uživatel", 'f':'Uživatelka', "-":"Uživatel"}, 
+                 2: "VIP",
+                 3: {'m':"Redaktor", 'f':'Redaktorka', '-':'Redaktor'},
+                 4: "Admin"}
+        if self.rights not in ranks:
+            rank = "??? ({0})".format(self.rights)
+        else:
+            rank = ranks[self.rights]
+            if type(rank) == dict:
+                rank = rank[self.gender]
+        return rank            
+    
+    @property 
+    def score(self):
+        return round(math.sqrt(len(self.articles))*1.5+math.sqrt(len(self.reactions))*1.2+math.sqrt(len(self.media))*0.7+math.sqrt(len(self.shoutbox_posts))*0.4+math.sqrt(len(self.ratings))*0.3+(self.rights or 0), 1)
 
 class Label(Base):
     __tablename__ = 'labels'
@@ -159,6 +180,14 @@ class Article(Base):
     @property
     def url(self):
         return "/articles/"+str(self.id)+"-"+self.title.replace(" ", "_").lstrip("/")#.replace("/", "_")
+    
+    @property
+    def images(self):
+        return session.query(Media).filter(Media.article == self, Media.type == "image").all()
+        
+    @property
+    def videos(self):
+        return session.query(Media).filter(Media.article == self, Media.type == "video").all()
 
 class Reaction(Base):
     __tablename__ = 'reactions'

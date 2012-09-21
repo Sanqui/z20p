@@ -6,10 +6,14 @@
     {% if g.user.rights >= 3 or g.user == user%}
         <a href="/users/{{user.id}}/edit"><img src="/static/icons/pencil.png" alt="Edit"> Upravit profil</a>
     {% endif%}
-    <h2>{{user.name}}</h2>
+    <h2>{{author(user)}}</h2>
     <dl>
+        <dt>Skóre</dt>
+            <dd>{{user.score}}</dd>
         <dt>Email</dt>
             <dd>{{user.email.replace("@", " zavináč ") if user.email else '-'}}</dd>
+        <dt>Rank</dt>
+            <dd>{{user.rank}}</dd>
         <dt>Zaregistrován{{gr(user.gender)}} dne</dt>
             <dd>{{user.timestamp|datetime}}</dd>
         <dt>Naposledy viděn{{gr(user.gender)}}</dt>
@@ -17,18 +21,16 @@
         {% if g.user.rights >= 3 or g.user == user%}
             <dt>IP</dt>
                 <dd>{{user.ip}}</dd>
-            <dt>Práva</dt>
-                <dd>{{user.rights}}</dd>
             <dt>Poslední URL (stalk stalk stalk)</dt>
                 <dd><a href={{user.last_url}}>{{user.last_url or "?"}}</a></dd>
         {% endif %}
     </dl>
-    <p class="clear">{{user.profile|safe if user.profile else '-'}}
+    <p class="clear">{{user.profile|safe or '-'}}
     {% if user.articles %}
         <h3>Články</h3>
         {% for article in user.articles[(page-1)*5:page*5] %}
             {{ display_article(article, crop=True) }}
         {% endfor %}
-        {{ render_pages(page, user.articles|count, url_args) }}
+        {{ render_pages(page, user.articles|count) }}
     {% endif %}
 {% endblock %}

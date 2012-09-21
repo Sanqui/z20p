@@ -43,7 +43,12 @@
             <h1><a href="{{article.url}}">{{ article.title }}</a></h1>
         {% endif %}
         {% if not crop %}
-            <p>{{article.text|replace("\n", "\n<p>")|safe}}
+            {% if not cut or article.text.split("\n")|length <= 1%}
+                <p>{{article.text|replace("\n", "\n<p>")|safe}}
+            {% else %}
+                <p>{{article.text.split("\n")[0]|safe}}
+                <p>…<a href="{{article.url}}">celý článek</a>
+            {% endif %}
         {% else %}
             <ul class="platforms">
             {% for label in article.labels %}
@@ -53,24 +58,63 @@
             {% endfor %}
             </ul>
         {% endif %}
-            {% if cut or crop %}
-                {{icon("images-stack", "Obrázků")}}×{{ article.all_media|count }} {{icon("blogs-stack", "Reakcí")}}×{{ article.reactions|count }}
-            {% endif %}
         <footer>
-            <div class="dateline">{{icon("calendar-blue", "Datum publikace:")}} {{article.timestamp|datetime}}</div> 
             <ul class="labels">
                 {% for label in article.labels %}
                     <li><a href="{{label.url}}">{{label.name}}</a>
                 {% endfor %}
             </ul>
-            <div class="authorline">Napsal{{gr(article.author.gender)}}: {{author(article.author)}}</div>       
-            {% if g.user.admin or g.user == article.author %}<div class="adminline"><a href="{{article.url}}/edit">{{icon("pencil", "Editovat")}}</a></div>{% endif %}
-            <div style="clear:both;"></div>  
-        </footer>        
+            <div class="lefthings">
+                {% if article.is_article %}
+                    <div class="stats">
+                        {% if g.user.admin or g.user == article.author %}
+                            <a href="{{article.url}}/edit">{{icon("pencil", "Editovat")}}</a>
+                        {% endif %}
+                        {{icon("images-stack", "Obrázků")}}×{{ article.images|count }}
+                        {{icon("films", "Videí")}}×{{ article.videos|count }}
+                        <!--{{icon("blogs-stack", "Reakcí")}}×{{ article.reactions|count }}-->
+                        {{icon("eye", "Shlédnutí")}}×{{ article.views }}
+                    </div>
+                {% else %}
+                    {% if g.user.admin or g.user == article.author %}
+                        <a href="{{article.url}}/edit">{{icon("pencil", "Editovat")}}</a>
+                    {% endif %}
+                {% endif %}
+                <div class="dateline">{{icon("calendar-blue", "Datum publikace:")}} {{article.timestamp|datetime}}</div>
+            </div> 
+            <div class="authorline">Napsal{{gr(article.author.gender)}}: {{author(article.author)}}</div> 
+            <div class="clear"></div>
+        </footer>
+        {% if article.is_article %}
+            {% if article.f2p != None %}
+                <div class="f2p">
+                    {% if article.f2p %}
+                        Lze hrát zdarma
+                    {% else %}
+                        Placená hra
+                    {% endif %}
+                </div>
+            {% endif %}
+            <div class="articlelink">
+                <a href="{{article.url}}#rating">
+                {%- if article.ratings|length >= 2 -%}
+                    Čtenářské hodnocení: <strong>{{round(article.ratings|sum(attribute='rating')/article.ratings|length, 2)}}/10</strong>
+                {%- else -%}
+                    <strong>BUĎTE PRVNÍ, KDO OHODNOTÍ TUTO HRU !!</strong>
+                {%- endif -%}
+                </a> • <a href="{{article.url}}#reactions">
+                {%- if article.reactions|length > 0 -%}
+                    {{article.reactions|length}} {{"reakcí" if article.reactions|length >= 5 else "reakce"}}
+                {%- else -%}
+                    Žádná reakce
+                {%- endif -%}
+                </a>
+            </div>
+        {% endif %}
+        <div class="clear"></div>
     </article>
 {%- endmacro %}
-## This isn't very pretty!  We should get url_args and url elsewhere.
-{% macro render_pages(page, count, url_args, per_page=5) %}
+{% macro render_pages(page, count, per_page=5) %}
     <p>Stránka {{ page }} z {{ (count//per_page)+1 }}
     <p>
         {%- for p in range(1, (count//per_page)+2) -%}

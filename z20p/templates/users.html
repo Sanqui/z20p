@@ -4,12 +4,13 @@
 
 {% block content %}
     <h2>Uživatelé</h2>
-    <table><thead><tr><td>Jméno</td><td>Práva</td><td>Datum registrace</td><td>Naposledy</td></tr></thead>
+    <table><thead><tr><td>Jméno</td><td>Skóre</td><td>Práva</td><td>Datum registrace</td><td>Naposledy</td></tr></thead>
     <tbody>
         {% for user in users %}
             <tr id="user-{{user.id}}">
-                <td><a href="/users/{{user.id}}">{{user.name}}</a></td>
-                <td>{{user.rights}}</td>
+                <td>{{author(user)}}</td>
+                <td>{{user.score}}</td>
+                <td>{{user.rank}}</td>
                 <td>{{user.timestamp|datetime}}</td>
                 <td>{{user.laststamp|datetime}}</td>
             </tr>
@@ -18,11 +19,12 @@
     </table>
     {% if g.user.admin %}
         <h2>Anonymové (vidí jen admini)</h2>
-        <table><thead><tr><td>Jméno</td><td>Naposledy</td></tr></thead>
+        <table><thead><tr><td>Jméno</td><td>Skóre</td><td>Naposledy</td></tr></thead>
         <tbody>
             {% for user in anons %}
                 <tr id="user-{{user.id}}">
                     <td><a href="/users/{{user.id}}">{{user.icon}}{{user.name or "["+user.ip+"]"}}</a></td>
+                    <td>{{user.score}}</td>
                     <td>{{user.laststamp|datetime}}</td>
                 </tr>
             {% endfor %}

@@ -136,12 +136,16 @@ def datetime_format(value, format='%d. %m. %Y  %H:%M'): # TODO add 2 hours
 
 # Stonlen and edited: https://gist.github.com/3091909
 def url_for_here(**changed_args):
-    args = request.args.to_dict() # to_dict lets us get rid of duplicate arguments.
+    args = request.args.to_dict()#.copy() # We do not want to flattern.
     args.update(request.view_args)
-    args.update(changed_args)
+    for arg, value in changed_args.iteritems():
+        if arg in args: del args[arg]
+        args[arg] = value
+    #args.update(changed_args)
     return url_for(request.endpoint, **args)
 
 app.jinja_env.globals['url_for_here'] = url_for_here
+app.jinja_env.globals['round'] = round # useful
 
 @app.route("/")
 def main():
@@ -532,15 +536,17 @@ def users():
     return render_template("users.html", users=users, anons=anons)
 
 @app.route("/users/<int:user_id>", methods=['GET'])
-def user(user_id):
+@app.route("/users/<int:user_id>-<path:name>", methods=['GET'])
+def user(user_id, name=None):
     user = db.session.query(db.User).get(user_id)
     if not user: abort(404)
     page = get_page()
     return render_template('user.html', user=user, page=page)
 
 @app.route("/users/<int:user_id>/edit", methods=['GET', 'POST'])
+@app.route("/users/<int:user_id>-<path:name>/edit", methods=['GET', 'POST'])
 @minrights(1)
-def edit_user(user_id):
+def edit_user(user_id, name=None):
     user = db.session.query(db.User).get(user_id)
     if not user: abort(404)
     class EditUserForm(Form):
@@ -756,7 +762,7 @@ def shoutbox():
         #flash("Příspěvek přidán.")
         return redirect("/shoutbox")
         
-    g.user.last_post_read = posts[0]
+    if page == 1: g.user.last_post_read = posts[0]
     g.unread = 0
     db.session.commit()
     
@@ -863,6 +869,31 @@ def delete_button(button_id): # quick and dirty 3: dark dawn
     db.session.commit()
     flash('Tlačítko "'+button.name+'" odstraněno')
     return redirect("/buttons")
+
+# Redirects for ANCIENT stuff.
+@app.route("/index.php")
+def index_php():
+    page = request.args.get('page')
+    if page == "main": return redirect("/", 301)
+    if page == "info": return redirect("/info", 301)
+    if page == "single":
+        article = db.session.query(db.Article).get(request.args.get('id'))
+        return redirect(article.url, 301)
+    if page == "search":
+        if 'id_labels' in request.args:
+            label = db.session.query(db.Label).get(request.args.get('id_labels'))
+            if not label: return redirect("/search?labels", 301)
+            return redirect(label.url, 301)
+        elif 'id_users' in request.args:
+            user = db.session.query(db.User).get(request.args.get('id_users'))
+            return redirect(user.url, 301)
+        elif 'all' in request.args:
+            return redirect("/search?all", 301)
+        return redirect("/search")
+    if page == "article": return redirect("/new_article", 301)
+    if page == "labels": return redirect("/labels", 301)
+    if page == "login": return redirect("/login", 301)
+    if page == "list": return redirect("/search?all", 301)
 
 @app.route("/rss")
 @app.route("/rss/")

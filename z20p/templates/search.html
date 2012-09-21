@@ -16,16 +16,16 @@
     {% else %}
         <h2>Všechny články</h2>
     {% endif %}
-        {% if stype == "text" and "noform" not in url_args %}
+        {% if stype == "text" and "noform" not in request.args %}
             <a href="/search?labels">Vyhledávat podle štítků</a>
-        {% elif stype == "labels" and "noform" not in url_args %}
+        {% elif stype == "labels" and "noform" not in request.args %}
             <a href="/search">Vyhledávat dle textu</a>
         {% endif %}
-        <form method="GET" action="/search" class="searchform {{'noform' if 'noform' in url_args}}">
-            {% if stype == "text" and "noform" not in url_args %}
+        <form method="GET" action="/search" class="searchform {{'noform' if 'noform' in request.args}}">
+            {% if stype == "text" and "noform" not in request.args %}
                 {{ render_field(form.text) }}
                 {{ render_field(form.within_labels) }}
-            {% elif stype == "labels" %}
+            {% elif stype == "labels"  %}
                 <div class="labelbox"><h3>Platformy</h3>{{ form.platform_labels() }}</div>
                 <div class="labelbox"><h3>Žánry</h3>{{ form.genre_labels() }}</div>
                 <div class="labelbox"><h3>Jiné</h3>{{ form.other_labels() }}</div>
@@ -34,7 +34,12 @@
             {% elif stype == "all" %}
                 <input type="hidden" name="all">
             {% endif %}
-            Řadit dle {{ form.sort() }}, {{ form.order() }}
+            {% if count > 0 %}
+                Nalezeno <strong>{{count}}</strong> článků.
+                            Řazeno dle {{ form.sort() }}, {{ form.order() }}
+            {% else %}
+                Řadit dle {{ form.sort() }}, {{ form.order() }}
+            {% endif %}
             <input type="submit" value="{{'Hledat' if stype!='all' else 'Vypsat'}}">
         </form>
     {% if searched %}
@@ -47,11 +52,10 @@
                 </ul>
         {% endif %}
         {% if count != None and count > 0 %}
-            Nalezeno {{ count }} článků.
             {% for article in matched_articles %}
                 {{ display_article(article, cut=True) }}
             {% endfor %}
-            {{ render_pages(page, count, url_args) }}
+            {{ render_pages(page, count) }}
         {% elif count == 0 %}
             <p>Žádný článek nenalezen.
         {% endif %}

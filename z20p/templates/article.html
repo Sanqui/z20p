@@ -4,7 +4,7 @@
 
 {% block content %}
     {{ display_article(article) }}
-    <a class="mediatab selectedtab" id="tab-images">Obrázky ({{images|length}})</a><a class="mediatab" id="tab-videos">Videa ({{videos|length}})</a>
+    <a class="mediatab selectedtab" id="tab-images">Obrázky ({{images|length}})</a><a class="mediatab" id="tab-videos">Videa ({{videos|length}})</a><a class="mediatab" id="tab-upload">Upload</a>
     <div class="mediagallery" id="gallery-images">
         {%- for media in images -%}
             <div class="mediabox" id="media-{{media.id}}">
@@ -15,15 +15,7 @@
                     {% endif %}
                 </div>
             </div>
-        {%- endfor -%}<div class="mediabox">
-            <form method="POST" action="{{article.url}}/post" enctype="multipart/form-data">
-              <dl>
-                {{ render_field(upload_form.image, accept="image/*") }}
-                {{ render_field(upload_form.title) }}
-                {{ render_field(upload_form.submit) }}
-              </dl>
-            </form>
-        </div></div>
+        {%- endfor -%}</div>
     <div class="mediagallery" id="gallery-videos">
         {%- for media in videos -%}
             <div class="mediabox" id="media-{{media.id}}">
@@ -35,16 +27,28 @@
                     {% endif %}
                 </div>
             </div>
-        {%- endfor -%}<div class="mediabox">
-            <form method="POST" action="{{article.url}}/post">
+        {%- endfor -%}</div>
+    <div class="mediagallery" id="gallery-upload">
+        <div class="leftcolumn">
+            <form method="POST" action="{{article.url}}/post#upload" enctype="multipart/form-data">
+              <dl>
+                {{ render_field(upload_form.image, accept="image/*") }}
+                {{ render_field(upload_form.title) }}
+                {{ render_field(upload_form.submit) }}
+              </dl>
+            </form>
+        </div>
+        <div class="rightcolumn">
+            <form method="POST" action="{{article.url}}/post#upload">
               <dl>
                 {{ render_field(video_form.url) }}
                 {{ render_field(video_form.video_title) }}
                 {{ render_field(video_form.submit) }}
               </dl>
             </form>
-        </div></div>
-    <h2>Reakce</h2>
+        </div>
+    </div>
+    <h2 id="reactions">Reakce</h2>
     {% for reaction in article.reactions %}
         {{ display_article(reaction) }}
     {% endfor %}

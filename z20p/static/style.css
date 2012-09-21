@@ -1,4 +1,4 @@
-body {background-color: #f0f0f8; color:#414a5b; font-size:100%;}
+body {background-color: #f0f0f8; color:#414a5b; font-size:smaller;}
 * {font-family:Ubuntu, Verdana, sans-serif; }
 ul, ul * {list-style:none;}
 .clear {clear:both;}
@@ -39,7 +39,7 @@ menu li { margin: 2px; width:100%; }
 .linkbar a:hover {color:white; text-decoration:underline;}
 .linkbar .logged {float:left;}
 
-.flash {padding:6px; background-color:yellow; margin: 2px 10% 2px 10%;}
+.flash {padding:6px; background-color:yellow; margin: 2px 10% 2px 10%; border:1px solid gold; border-radius:6px;}
 
 p {text-indent:18px; margin: 5px 0 0 0; padding:0; font-size:12px;}
 
@@ -68,14 +68,14 @@ article { display:block;
 	-webkit-border-image: url('/static/img/article_border.png') 14 14 14 14 round round;
 	-o-border-image: url('/static/img/article_border.png') 14 14 14 14 round round;
 }
-article h1 {margin:0; letter-spacing:0.15em; margin:0;}
+article h1 {margin:0; letter-spacing:0.15em; margin:0; font-size:13px;}
 article.regular h1 a {color:inherit; text-decoration:none;}
 article.regular h1 a:hover {text-decoration:underline;}
 article .ratingbox {float:right; padding:8px; 
     background:rgb(187, 20, 26); border-radius:100% 0 100% 100%; color:white;
     width:30px; height:30px;}
-article .rating {font-size:24px; font-weight:bold; padding:0 3px 0 0;}
-article .outof {vertical-align:top; font-size:smaller;}
+article .rating {font-size:24px; font-weight:bold; padding:0 3px 0 3px;}
+article .outof {vertical-align:top; font-size:smaller; position:relative; left:-3px;}
 article .image {
     max-width:166px; max-height:133px;
     border: 1px solid black;
@@ -91,11 +91,13 @@ article footer {display:block;
     border-radius:6px; -moz-border-radius:6px;
     background-color:#dcdee4;
     padding:1px 5px 1px 5px;}
+article.crop footer {clear:right; margin-left: 105px;}
+article.crop footer .stats {clear:none;}
 
 article.crop .labels {display:none;}
-.labels {float:right; text-align:right;}
+.labels {/*float:right; text-align:right;*/}
 .labels, .labels li {margin:0; padding:0; list-style:none;}
-.labels li {display:inline-block; margin:1px 2px 1px 2px;}
+.labels li {float:right;display:inline-block; margin:1px 2px 1px 2px;}
 .labels a {border:1px solid #aaa; background:white; padding:2px; color:black; text-decoration:none;
     border-radius:4px;
     -moz-box-shadow: inset 0px -5px 5px #ddd;
@@ -104,12 +106,18 @@ article.crop .labels {display:none;}
 .labels a:hover {background-color:rgb(187, 20, 26); color:white;
     box-shadow:none;
 }
-.authorline {float:right;  clear:right;}
+.authorline {float:right; clear:right;}
+.lefthings {float:left; text-align:left;}
+.stats {}
+.dateline {}
 author {font-weight:bold;}
 author .iconlink {text-decoration:none;}
-.dateline {float:left;}
-.adminline {float:left; clear:left;}
-article.crop .adminline {display:none;}
+/*.adminline {float:left; clear:left;}
+article.crop .adminline {display:none;}*/
+.f2p {float:left; font-weight:bold;}
+.articlelink {float:right; color:rgb(187, 20, 26);}
+.articlelink a {text-decoration:none;}
+.articlelink a:hover {text-decoration:underline;}
 
 .mediatab {display:inline-block; padding:3px 6px 2px 6px; margin-right:4px; border: 1px solid #aaa; border-width:1px 1px 0 1px;
     text-decoration:none; color:inherit; background:white; border-radius:4px 4px 0 0;
@@ -122,6 +130,8 @@ article.crop .adminline {display:none;}
     border: 1px solid black;}
 .mediabox {max-width:122px; display:inline-block; text-align:center; white-space: normal; vertical-align:top; margin-right:2px;}
 .mediabox dd {margin-left:0;}
+
+#gallery-upload input {max-width:60%;}
 
 .largeimage {margin:auto; max-width:250px; max-height:200px; border:1px solid black;}
 
@@ -149,11 +159,11 @@ td {border: 1px solid #444;}
 .dateright {float:right; color:#999;}
 
 
-textarea {width:80%;}
+textarea {width:90%; min-height:172px;}
 
 footer {clear:both; text-align:right;}
 
-.labelfloat {position:fixed; right:0; top:0; width:20%; background:white; height:100%; overflow-y:scroll;}
-.labelfloat dd, .labelfloat ul, .labelfloat li {margin:0; padding:0; list-style:none; line-height:0.9;}
+.labelfloat {position:fixed; right:0; top:0; width:20%; background:white; height:100%; overflow-y:scroll;  z-index:12;}
+.labelfloat dd, .labelfloat ul, .labelfloat li {margin:0; padding:0; list-style:none; line-height:0.9; clear:left;}
 
 .kip {z-index:256;}

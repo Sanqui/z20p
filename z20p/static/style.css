@@ -33,13 +33,16 @@ header, #content {width: 55%; margin: auto;}
     float:right; } 
 menu li { margin: 2px; width:100%; }
 
-.linkbar {background-color: rgb(187, 20, 26); text-align:right; font-size:12px;}
+.linkbar {background-color: rgb(187, 20, 26); text-align:right; font-size:12px;
+    -moz-box-shadow: inset 0px -5px 5px #A20E14;
+    -webkit-box-shadow: inset 0px -5px 5px ##A20E14;
+    box-shadow: inset 0px -5px 5px #A20E14;}
 .linkbar, .linkbar a {color:white; text-decoration:none;}
 .linkbar a {font-weight:bold;}
 .linkbar a:hover {color:white; text-decoration:underline;}
 .linkbar .logged {float:left;}
 
-.flash {padding:6px; background-color:yellow; margin: 2px 10% 2px 10%; border:1px solid gold; border-radius:6px;}
+.flash {padding:6px; background-color:yellow; margin: 2px 16% 2px 16%; border:1px solid gold; border-radius:12px;}
 
 p {text-indent:18px; margin: 5px 0 0 0; padding:0; font-size:12px;}
 
@@ -63,6 +66,7 @@ a:hover {color:#c2252c;}
 article { display:block;
     border: 1px solid #777;
     border-width: 14px;
+    background-color:white;
 	border-image: url('/static/img/article_border.png') 14 14 14 14 round round;
 	-moz-border-image: url('/static/img/article_border.png') 14 14 14 14 round round;
 	-webkit-border-image: url('/static/img/article_border.png') 14 14 14 14 round round;
@@ -97,14 +101,16 @@ article.crop footer .stats {clear:none;}
 article.crop .labels {display:none;}
 .labels {/*float:right; text-align:right;*/}
 .labels, .labels li {margin:0; padding:0; list-style:none;}
-.labels li {float:right;display:inline-block; margin:1px 2px 1px 2px;}
+.labels li {float:right;display:inline-block; margin:1px 2px 6px 2px;}
 .labels a {border:1px solid #aaa; background:white; padding:2px; color:black; text-decoration:none;
     border-radius:4px;
     -moz-box-shadow: inset 0px -5px 5px #ddd;
     -webkit-box-shadow: inset 0px -5px 5px #ddd;
     box-shadow: inset 0px -5px 5px #ddd;}
-.labels a:hover {background-color:rgb(187, 20, 26); color:white;
-    box-shadow:none;
+.labels a:hover {background-color:rgb(187, 20, 26); color:white; border-color: #5F0B0E;
+    -moz-box-shadow: inset 0px -5px 5px #A20E14;
+    -webkit-box-shadow: inset 0px -5px 5px ##A20E14;
+    box-shadow: inset 0px -5px 5px #A20E14;
 }
 .authorline {float:right; clear:right;}
 .lefthings {float:left; text-align:left;}
@@ -118,11 +124,12 @@ article.crop .adminline {display:none;}*/
 .articlelink {float:right; color:rgb(187, 20, 26);}
 .articlelink a {text-decoration:none;}
 .articlelink a:hover {text-decoration:underline;}
+.unpublished {color:red;}
 
 .mediatab {display:inline-block; padding:3px 6px 2px 6px; margin-right:4px; border: 1px solid #aaa; border-width:1px 1px 0 1px;
     text-decoration:none; color:inherit; background:white; border-radius:4px 4px 0 0;
     margin-bottom:4px;}
-.mediatab:hover, .selectedtab {background-color:rgb(187, 20, 26); color:white; cursor:pointer;}
+.mediatab:hover, .selectedtab {background-color:rgb(187, 20, 26); color:white; cursor:pointer; border-color: #5F0B0E;}
 
 .mediagallery {width:100%; max-height:200px; overflow-x:scroll; overflow-y:hidden; white-space: nowrap;}
 .mediabox .image { 
@@ -137,6 +144,10 @@ article.crop .adminline {display:none;}*/
 
 table {width: 100%; border-collapse:collapse;}
 thead {background-color:rgb(187, 20, 26); text-align:center; color:white;}
+thead td {border-color: #5F0B0E;
+    -moz-box-shadow: inset 0px -5px 5px #A20E14;
+    -webkit-box-shadow: inset 0px -5px 5px ##A20E14;
+    box-shadow: inset 0px -5px 5px #A20E14;}
 td {border: 1px solid #444;}
 
 .leftcolumn {width:47.5%; float:left; border-right:1px solid #aaa;}

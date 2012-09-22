@@ -42,6 +42,10 @@ class User(Base):
         
     @property
     def admin(self):
+        return self.rights >= 4
+    
+    @property
+    def redactor(self):
         return self.rights >= 3
     
     @property
@@ -65,7 +69,7 @@ class User(Base):
     
     @property 
     def score(self):
-        return round(math.sqrt(len(self.articles))*1.5+math.sqrt(len(self.reactions))*1.2+math.sqrt(len(self.media))*0.7+math.sqrt(len(self.shoutbox_posts))*0.4+math.sqrt(len(self.ratings))*0.3+(self.rights or 0), 1)
+        return round(math.sqrt(len(self.articles))*1.5+math.sqrt(len(self.reactions))*1.2+math.sqrt(len(self.media))*0.6+math.sqrt(len(self.shoutbox_posts))*0.1+math.sqrt(len(self.ratings))*0.1+(self.rights or 0), 1)
 
 class Label(Base):
     __tablename__ = 'labels'
@@ -188,6 +192,8 @@ class Article(Base):
     @property
     def videos(self):
         return session.query(Media).filter(Media.article == self, Media.type == "video").all()
+
+article_query = session.query(Article).filter(Article.published == True)
 
 class Reaction(Base):
     __tablename__ = 'reactions'

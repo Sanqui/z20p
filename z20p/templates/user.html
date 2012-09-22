@@ -3,7 +3,7 @@
 {% block title %}{{user.name}}{% endblock %}
 
 {% block content %}
-    {% if g.user.rights >= 3 or g.user == user%}
+    {% if g.admin or g.user == user%}
         <a href="/users/{{user.id}}/edit"><img src="/static/icons/pencil.png" alt="Edit"> Upravit profil</a>
     {% endif%}
     <h2>{{author(user)}}</h2>
@@ -18,7 +18,7 @@
             <dd>{{user.timestamp|datetime}}</dd>
         <dt>Naposledy viděn{{gr(user.gender)}}</dt>
             <dd>{{user.laststamp|datetime}}</dd>
-        {% if g.user.rights >= 3 or g.user == user%}
+        {% if g.user.admin or g.user == user%}
             <dt>IP</dt>
                 <dd>{{user.ip}}</dd>
             <dt>Poslední URL (stalk stalk stalk)</dt>
@@ -26,9 +26,9 @@
         {% endif %}
     </dl>
     <p class="clear">{{user.profile|safe or '-'}}
-    {% if user.articles %}
+    {% if articles %}
         <h3>Články</h3>
-        {% for article in user.articles[(page-1)*5:page*5] %}
+        {% for article in articles[(page-1)*5:page*5] %}
             {{ display_article(article, crop=True) }}
         {% endfor %}
         {{ render_pages(page, user.articles|count) }}

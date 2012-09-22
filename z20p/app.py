@@ -134,14 +134,11 @@ def datetime_format(value, format='%d. %m. %Y  %H:%M'): # TODO add 2 hours
     if not value: return "-"
     return value.strftime(format)
 
-# Stonlen and edited: https://gist.github.com/3091909
+# https://gist.github.com/3765578
 def url_for_here(**changed_args):
-    args = request.args.to_dict()#.copy() # We do not want to flattern.
+    args = request.args.to_dict(flat=False)
     args.update(request.view_args)
-    for arg, value in changed_args.iteritems():
-        if arg in args: del args[arg]
-        args[arg] = value
-    #args.update(changed_args)
+    args.update(changed_args)
     return url_for(request.endpoint, **args)
 
 app.jinja_env.globals['url_for_here'] = url_for_here
@@ -149,8 +146,7 @@ app.jinja_env.globals['round'] = round # useful
 
 @app.route("/")
 def main():
-    articles = db.session.query(db.Article) \
-        .order_by(db.Article.timestamp.desc()).limit(4).all()
+    articles = db.article_query.order_by(db.Article.timestamp.desc()).limit(4).all()
     images = db.session.query(db.Media).filter(db.Media.type=="image") \
         .order_by(db.Media.timestamp.desc()).limit(8).all()
     return render_template("main.html", articles=articles, images=images)
@@ -238,7 +234,7 @@ def search():
         order_by = {"timestamp": db.Article.timestamp, "rating": db.Rating.rating, "views": db.Article.views}[form.sort.data]
         order = {'asc': asc, 'desc': desc}[form.order.data]
         
-        articles = db.session.query(db.Article).outerjoin(db.Article.rating).filter(and_(*and_conditions)).filter(or_(*or_conditions))
+        articles = db.article_query.outerjoin(db.Article.rating).filter(and_(*and_conditions)).filter(or_(*or_conditions))
         if label_or:
             articles = articles.filter(db.Article.labels.any(db.Label.id.in_(label_or)))
         matched_articles = articles.order_by(order(order_by)).all() # Nope, this won't work without the all.  It'll just regard everything which matched, including dupes (which get nuked when /read/ but that's about it).  :(
@@ -255,6 +251,7 @@ def search():
 def article(article_id, title=None):
     article = db.session.query(db.Article).get(article_id)
     if not article: abort(404)
+    if not article.published and not g.user.redactor and article.author != g.user: abort(404)
     class UploadForm(Form):
         image = FileField('Obrázek', [file_allowed(uploads, "Jen obrázky")])
         title = TextField('Titulek obrázku', [validators.required()])
@@ -292,7 +289,7 @@ def article(article_id, title=None):
         submit = SubmitField('Přidat hodnocení')
     
     rating = db.session.query(db.Rating).filter(db.Rating.article == article) \
-         .filter(db.Rating.user == g.user).scalar()
+         .filter(db.Rating.user == g.user).first()
     rating_form = RatingForm(request.form, rating=rating.rating if rating else 0)
     
     if request.method == 'POST' and request.form['submit'] == rating_form.submit.label.text and rating_form.validate(): # XXX
@@ -539,9 +536,10 @@ def users():
 @app.route("/users/<int:user_id>-<path:name>", methods=['GET'])
 def user(user_id, name=None):
     user = db.session.query(db.User).get(user_id)
+    articles = db.article_query.filter(db.Article.author == user)
     if not user: abort(404)
     page = get_page()
-    return render_template('user.html', user=user, page=page)
+    return render_template('user.html', user=user, page=page, articles=articles)
 
 @app.route("/users/<int:user_id>/edit", methods=['GET', 'POST'])
 @app.route("/users/<int:user_id>-<path:name>/edit", methods=['GET', 'POST'])
@@ -564,9 +562,8 @@ def edit_user(user_id, name=None):
         rights = IntegerField('Práva')
     
     admin = False
-    if g.user.rights >= 3:
+    if g.user.admin:
         form = AdminEditUserForm(request.form, user)
-        admin = True
     elif user == g.user:
         form = EditUserForm(request.form, user)
     else:
@@ -586,7 +583,7 @@ def edit_user(user_id, name=None):
         flash("Uživatel upraven!")
         return redirect("/users/"+str(user.id))
     
-    return render_template('edit_user.html', user=user, form=form, admin=admin)
+    return render_template('edit_user.html', user=user, form=form)
 
 @app.route("/labels", methods=['GET', 'POST'])
 @app.route("/labels/<int:edit_id>/edit", methods=['GET', 'POST'])
@@ -627,7 +624,7 @@ def mass_label(label_id):
     class MassLabelForm(Form):
         labels = MultiCheckboxField('Štítky', coerce=int)
         submit = SubmitField("Oštítkovat")
-    articles = db.session.query(db.Article).order_by(db.Article.timestamp.asc).all()
+    articles = db.article_query.order_by(db.Article.timestamp.asc).all()
     form.articles.choices = [(a.id, a.title) for a in labels]
     return render_template("mass_label")
     
@@ -727,6 +724,14 @@ def edit_article(edit_id, title=None):
             form.rating.data = article.rating.rating
     
     return render_template("edit_article.html", form=form, article=article)
+
+@app.route("/unpublished", methods=['GET'])
+@minrights(3)
+def unpublished():
+    mine = db.session.query(db.Article).filter(db.Article.published == False, db.Article.author == g.user).order_by(db.Article.timestamp.desc())
+    unpublished = db.session.query(db.Article).join(db.Article.author).filter(db.Article.published == False, db.User.rights <= 1).order_by(db.Article.timestamp.desc())
+    intentionally_unpublished = db.session.query(db.Article).join(db.Article.author).filter(db.Article.published == False, db.Article.author != g.user, db.User.rights >= 2).order_by(db.Article.timestamp.desc())
+    return render_template("unpublished.html", mine=mine, unpublished=unpublished, intentionally_unpublished=intentionally_unpublished)
 
 class ShoutboxPostForm(Form):
     text = TextField('Text', [validators.required()])
@@ -895,10 +900,14 @@ def index_php():
     if page == "login": return redirect("/login", 301)
     if page == "list": return redirect("/search?all", 301)
 
+@app.route("/article/<path:path>")
+def article_redirect(path):
+    return redirect("/articles/"+path, 301)
+
 @app.route("/rss")
 @app.route("/rss/")
 def rss():
-    articles = db.session.query(db.Article) \
+    articles = db.article_query \
         .order_by(db.Article.timestamp.desc()).limit(10).all()
     now = datetime.now()
     response = make_response(render_template("rss.xml", articles=articles, now=now))

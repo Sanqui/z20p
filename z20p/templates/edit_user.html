@@ -6,7 +6,7 @@
     <h2>Úprava - {{user.name}}</h2>
     <form method="POST" action="/users/{{user.id}}/edit">
       <dl>
-        {% if admin %}
+        {% if g.user.admin %}
             {{ render_field(form.name) }}
             {{ render_field(form.rights) }}
         {% endif %}

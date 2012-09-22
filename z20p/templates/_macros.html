@@ -74,6 +74,9 @@
                         {{icon("films", "Videí")}}×{{ article.videos|count }}
                         <!--{{icon("blogs-stack", "Reakcí")}}×{{ article.reactions|count }}-->
                         {{icon("eye", "Shlédnutí")}}×{{ article.views }}
+                        {% if not article.published %}
+                            <strong class="unpublished">Nepublikovaný článek</strong>
+                        {% endif %}
                     </div>
                 {% else %}
                     {% if g.user.admin or g.user == article.author %}
@@ -98,7 +101,7 @@
             <div class="articlelink">
                 <a href="{{article.url}}#rating">
                 {%- if article.ratings|length >= 2 -%}
-                    Čtenářské hodnocení: <strong>{{round(article.ratings|sum(attribute='rating')/article.ratings|length, 2)}}/10</strong>
+                    Čtenářské hodnocení: <strong>{{round(article.ratings|sum(attribute='rating')/article.ratings|length, 1)}}/10</strong>
                 {%- else -%}
                     <strong>BUĎTE PRVNÍ, KDO OHODNOTÍ TUTO HRU !!</strong>
                 {%- endif -%}

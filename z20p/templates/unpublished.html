@@ -1,0 +1,23 @@
+{% extends "_base.html" %}
+
+{% block title %}Nepublikované články{% endblock %}
+
+{% block content %}
+    {% for title, articles in (("Vlastní", mine), ("Cizí", unpublished), ("Schválně", intentionally_unpublished)) %}
+        <h2>{{title}} nepublikované články</h2>
+        <table><thead><tr><td>Titulek</td><td>Autor</td><td>Datum napsání</td></thead>
+        <tbody>
+            {% for article in articles %}
+                <tr>
+                    <td><a href="{{article.url}}">{{article.title}}</a></td>
+                    <td>{{author(article.author)}}</td>
+                    <td>{{article.timestamp|datetime}}</td>
+                </tr>
+            {% else %}
+                <tr><td colspan="3">Nic tu není.</td></tr>
+            {% endfor %}
+        </tbody>
+        </table>
+    {% endfor %}
+    Schválně nepublikované články jsou články, jejichž autoři mají oprávnění ony články publikovat.
+{% endblock %}

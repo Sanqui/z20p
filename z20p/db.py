@@ -131,6 +131,7 @@ class Media(Base):
     type = Column(Enum("image", "video"))
     value = Column(Integer) # Enum('featured', 'good', 'regular), but then we'd get no ordering
     
+    # TODO merge with thumb()
     @property
     def thumb_url(self):
         if self.type == "video":
@@ -146,6 +147,23 @@ class Media(Base):
             if vidid:
                 return "https://img.youtube.com/vi/{0}/0.jpg".format(vidid)
             else: return "about:blank" # herp herp
+    
+    
+    def thumbdir(self, dir="thumbs"):
+        u = self.url.split("/")
+        u.insert(-1, dir)
+        u = "/".join(u).split(".")
+        u.pop()
+        u.append("png")
+        return '.'.join(u)
+    
+    # This is KIND OF ugly-ish!
+    @property
+    def thumb(self):
+        return self.thumbdir()
+    
+    @property
+    def thumb_article(self): return self.thumbdir("article_thumbs")
                     
 
 # Reference for the following (and previous):
@@ -192,6 +210,9 @@ class Article(Base):
     @property
     def videos(self):
         return session.query(Media).filter(Media.article == self, Media.type == "video").all()
+    
+    @property
+    def rateable(self): return self.rating != None
 
 article_query = session.query(Article).filter(Article.published == True)
 

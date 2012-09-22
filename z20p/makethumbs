@@ -1,0 +1,10 @@
+#!/bin/sh
+mkdir static/uploads/thumbs
+mkdir static/uploads/article_thumbs
+mogrify -layers flatten -format png -path static/uploads/thumbs/ -thumbnail '200x96>'  -strip -quality  100 -unsharp 0x0.5 -colors 256  static/uploads/*.{png,gif,jpg,jpeg,PNG,GIF,JPG,JPEG}
+mogrify -layers flatten -format png -path static/uploads/article_thumbs/ -thumbnail '172x999>'  -strip -quality  100 -unsharp 0x0.5 -colors 256  static/uploads/*.{png,gif,jpg,jpeg,PNG,GIF,JPG,JPEG}
+
+mkdir static/old/thumbs
+mkdir static/old/article_thumbs
+mogrify -layers flatten -format png -path static/old/thumbs/ -thumbnail '200x96>'  -strip -quality  100 -unsharp 0x0.5 -colors 256  static/old/*.{png,gif,jpg,jpeg,PNG,GIF,JPG,JPEG}
+mogrify -layers flatten -format png -path static/old/article_thumbs/ -thumbnail '172x999>'  -strip -quality  100 -unsharp 0x0.5 -colors 256  static/old/*.{png,gif,jpg,jpeg,PNG,GIF,JPG,JPEG}

@@ -28,7 +28,7 @@
         {% if article.media %}
             {% if crop %} <a href="{{article.url}}">
             {% else %} <a href="{{article.media.url}}" rel="prettyPhoto" title="{{article.media.title}}">{% endif %}
-            <img src="{{article.media.url}}" title="{{article.media.title}}" alt="{{article.title}}" class="image">
+            <img src="{{article.media.thumb_article}}" title="{{article.media.title}}" alt="{{article.title}}" class="image">
             </a>
         {% endif %}
         {% if article.rating %}
@@ -99,13 +99,15 @@
                 </div>
             {% endif %}
             <div class="articlelink">
-                <a href="{{article.url}}#rating">
-                {%- if article.ratings|length >= 2 -%}
-                    Čtenářské hodnocení: <strong>{{round(article.ratings|sum(attribute='rating')/article.ratings|length, 1)}}/10</strong>
-                {%- else -%}
-                    <strong>BUĎTE PRVNÍ, KDO OHODNOTÍ TUTO HRU !!</strong>
-                {%- endif -%}
-                </a> • <a href="{{article.url}}#reactions">
+                {% if article.rateable %}
+                    <a href="{{article.url}}#rating">
+                    {%- if article.ratings|length >= 2 -%}
+                        Čtenářské hodnocení: <strong>{{round(article.ratings|sum(attribute='rating')/article.ratings|length, 1)}}/10</strong>
+                    {%- else -%}
+                        <strong>BUĎTE PRVNÍ, KDO OHODNOTÍ TUTO HRU !!</strong>
+                    {%- endif -%}
+                    </a> • 
+                {% endif %}<a href="{{article.url}}#reactions">
                 {%- if article.reactions|length > 0 -%}
                     {{article.reactions|length}} {{"reakcí" if article.reactions|length >= 5 else "reakce"}}
                 {%- else -%}

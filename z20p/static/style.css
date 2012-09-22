@@ -81,7 +81,7 @@ article .ratingbox {float:right; padding:8px;
 article .rating {font-size:24px; font-weight:bold; padding:0 3px 0 3px;}
 article .outof {vertical-align:top; font-size:smaller; position:relative; left:-3px;}
 article .image {
-    max-width:166px; max-height:133px;
+    max-width:172px; max-height:250px;
     border: 1px solid black;
     float:left;
     margin:0px 5px 3px 0px;
@@ -133,9 +133,9 @@ article.crop .adminline {display:none;}*/
 
 .mediagallery {width:100%; max-height:200px; overflow-x:scroll; overflow-y:hidden; white-space: nowrap;}
 .mediabox .image { 
-    max-width:122px; height:90px;
+    max-width:200px; height:96px;
     border: 1px solid black;}
-.mediabox {max-width:122px; display:inline-block; text-align:center; white-space: normal; vertical-align:top; margin-right:2px;}
+.mediabox {max-width:200px; display:inline-block; text-align:center; white-space: normal; vertical-align:top; margin-right:2px;}
 .mediabox dd {margin-left:0;}
 
 #gallery-upload input {max-width:60%;}

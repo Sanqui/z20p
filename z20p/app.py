@@ -10,6 +10,7 @@ import time
 from functools import wraps # We need this to make Flask understand decorated routes.
 import hashlib
 import os
+import subprocess
 import random
 
 def pwhash(string):
@@ -130,7 +131,7 @@ def shutdown_session(exception=None):
     db.session.remove()
 
 @app.template_filter('datetime')
-def datetime_format(value, format='%d. %m. %Y  %H:%M'): # TODO add 2 hours
+def datetime_format(value, format='%d. %m. %Y  %H:%M'):
     if not value: return "-"
     return value.strftime(format)
 
@@ -637,12 +638,14 @@ def upload_image(**kvargs):
             flash("Nahraný soubor není obrázek.", 'error')
             return None
         image = request.files['image']
-        filename = secure_filename(image.filename)
-        if os.path.exists(os.path.join("static/uploads/", filename)): # Lazy
+        filename = secure_filename(image.filename).replace("-", "_")
+        while os.path.exists(os.path.join("static/uploads/", filename)): # Lazy
             filename = filename.split(".")
             filename[0] += "_"
             filename = ".".join(filename)
         image.save(os.path.join("static/uploads/", filename))
+        subprocess.check_call(["mogrify", "-layers", "flatten", "-format", "png", "-path", "static/uploads/thumbs/", "-thumbnail", '200x96>', "-strip", "-quality", "100", "-unsharp", "0x0.5", "-colors", "256", "static/uploads/"+filename], stderr=subprocess.STDOUT)
+        subprocess.check_call(["mogrify", "-layers", "flatten", "-format", "png", "-path", "static/uploads/article_thumbs/", "-thumbnail", '200x96>', "-strip", "-quality", "100", "-unsharp", "0x0.5", "-colors", "256", "static/uploads/"+filename])
         media = db.Media(type="image", url="/static/uploads/"+filename, timestamp=datetime.now(), **kvargs)
         db.session.add(media)
         flash("Obrázek nahrán.")

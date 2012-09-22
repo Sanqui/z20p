@@ -23,7 +23,7 @@
         <tbody>
             {% for user in anons %}
                 <tr id="user-{{user.id}}">
-                    <td><a href="/users/{{user.id}}">{{user.icon}}{{user.name or "["+user.ip+"]"}}</a></td>
+                    <td><a href="{{user.url}}">{{user.icon}}{{user.name or "["+user.ip+"]"}}</a></td>
                     <td>{{user.score}}</td>
                     <td>{{user.laststamp|datetime}}</td>
                 </tr>

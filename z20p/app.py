@@ -147,10 +147,11 @@ app.jinja_env.globals['round'] = round # useful
 
 @app.route("/")
 def main():
-    articles = db.article_query.order_by(db.Article.timestamp.desc()).limit(4).all()
-    images = db.session.query(db.Media).filter(db.Media.type=="image") \
-        .order_by(db.Media.timestamp.desc()).limit(8).all()
-    return render_template("main.html", articles=articles, images=images)
+    page = get_page()
+    articles = db.article_query.order_by(db.Article.timestamp.desc())[(page-1)*4:page*4]
+    images = db.session.query(db.Media).join(db.Media.article).filter(db.Media.type=="image") \
+        .filter(db.Article.published == True).order_by(db.Media.timestamp.desc()).limit(8).all()
+    return render_template("main.html", articles=articles, images=images, page=page)
 
 def get_page():
     try: # This needs more magic...
@@ -319,13 +320,14 @@ def article(article_id, title=None):
         name = TextField('Jméno', name_validators) # Only for guests
         text = TextAreaField('Text', [validators.required()])
         rating = SelectField('Hodnocení', choices=[(0, '-')]+[(i+1, str(i+1)) for i in range(0,10)], coerce=int)
-        image = SelectField('Obrázek', choices=[(-1, '-')], coerce=int, default=-1)
+        image = FileField('Obrázek', [file_allowed(uploads, "Jen obrázky")])
+        title = TextField('Titulek obrázku', [validators.optional()])
         submit = SubmitField('Přidat reakci')
     
     reaction_form = ReactionForm(request.form, rating=rating.rating if (rating and article.author != g.user) else 0)
-    for media in article.all_media:
-        if media.author == g.user and not media.assigned_article and not media.assigned_reaction:
-            reaction_form.image.choices.append((media.id, media.title))
+    #for media in article.all_media:
+    #    if media.author == g.user and not media.assigned_article and not media.assigned_reaction:
+    #        reaction_form.image.choices.append((media.id, media.title))
     if request.method == 'POST' and request.form['submit'] == reaction_form.submit.label.text and reaction_form.validate():
         if reaction_form.name.data: # This technically allows logged-in users to post as guests if they hack the input in.
             user = get_guest(reaction_form.name.data)
@@ -338,8 +340,9 @@ def article(article_id, title=None):
             elif rating_form.rating.data:
                 rating = db.Rating(rating=reaction_form.rating.data, user=user, article=article)
                 db.session.add(rating)
-        media = reaction_form.image.data if reaction_form.image.data != -1 else None
-        reaction = db.Reaction(text=reaction_form.text.data, rating=rating, article=article, timestamp=datetime.now(), author=user, media_id=media)
+        media = upload_image(title=upload_form.title.data, author=user,
+            article=article)
+        reaction = db.Reaction(text=reaction_form.text.data, rating=rating, article=article, timestamp=datetime.now(), author=user, media=media)
         db.session.add(reaction)
         flash("Reakce přidána.")
         db.session.commit()
@@ -414,6 +417,37 @@ def delete_reaction(reaction_id):
         flash("Reakce odstraněna")
         return redirect(reaction.article.url)
 
+@app.route("/media", methods=['GET'])
+@app.route("/media/post", methods=["GET", 'POST'])
+def media():
+    class UploadForm(Form):
+        image = FileField('Obrázek', [file_allowed(uploads, "Jen obrázky")])
+        title = TextField('Titulek obrázku', [validators.required()])
+        submit = SubmitField('Přidat obrázek')
+    
+    upload_form = UploadForm(request.form)
+    if request.method == 'POST' and upload_form.validate():
+        media = upload_image(title=upload_form.title.data, author=g.user,
+            article=None)
+        db.session.commit()
+        return redirect("/media")
+    
+    class SortForm(Form):
+        order = SelectField("Typ řazení", choices=[("desc", "sestupně"), ("asc", "vzestupně")], default="desc")
+        with_article = SelectField("Se články", choices=[(1, "všechny obrázky"), (0, "jen obrázky bez článku")], default=True, coerce=int)
+    
+    form = SortForm(request.args)
+
+    page = get_page()
+    
+    order = {'asc': asc, 'desc': desc}[form.order.data]
+    query = db.session.query(db.Media).filter(db.Media.type == "image").order_by(order(db.Media.timestamp))
+    print(form.with_article.data)
+    if not form.with_article.data: query = query.filter(db.Media.article == None)
+    media = query[(page-1)*30:page*30]
+    count = query.count()
+    return render_template("media.html", upload_form=upload_form, form=form, media=media, page=page, count=count)
+
 # TODO /media/id redirect to image itself
 @app.route("/media/<int:media_id>/edit", methods=['GET', 'POST'])
 @minrights(1)
@@ -425,25 +459,36 @@ def edit_media(media_id):
     class EditMediaForm(Form):
         title = TextField('Titulek', [validators.required()])
         submit = SubmitField('Upravit')
-    
+        
     class AdminEditMediaForm(EditMediaForm):
+        article = SelectField('Článek', choices=[(0, "[Bez článku]")], default=media.article.id if media.article else 0, coerce=int)
         url = TextField('URL (u obrázků jen pokud víš co děláš)', [validators.required()])
     
     if not g.user.admin:
         form = EditMediaForm(request.form, media)
     else:
         form = AdminEditMediaForm(request.form, media)
+        for article in db.session.query(db.Article).order_by(db.Article.timestamp.desc()).all():
+            form.article.choices.append((article.id, article.title))
+            if request.method == 'GET': form.article.data = media.article.id if media.article else 0
     
     if request.method == 'POST' and form.validate():
         if g.user.admin:
             media.url = form.url.data
+            if form.article.data:
+                media.article_id = form.article.data
+            else:
+                media.article = None
         media.title = form.title.data
         db.session.commit()
         if media.type == "image":
             flash("Obrázek upraven.")
         else:
             flash("Video upraveno.")
-        return redirect(media.article.url+"#media-"+str(media.id))
+        if media.article:
+            return redirect(media.article.url+"#media-"+str(media.id))
+        else:
+            return redirect("/media?with_article=0")
     
     return render_template("edit_media.html", media=media, form=form)
 
@@ -644,8 +689,8 @@ def upload_image(**kvargs):
             filename[0] += "_"
             filename = ".".join(filename)
         image.save(os.path.join("static/uploads/", filename))
-        subprocess.check_call(["mogrify", "-layers", "flatten", "-format", "png", "-path", "static/uploads/thumbs/", "-thumbnail", '200x96>', "-strip", "-quality", "100", "-unsharp", "0x0.5", "-colors", "256", "static/uploads/"+filename], stderr=subprocess.STDOUT)
-        subprocess.check_call(["mogrify", "-layers", "flatten", "-format", "png", "-path", "static/uploads/article_thumbs/", "-thumbnail", '200x96>', "-strip", "-quality", "100", "-unsharp", "0x0.5", "-colors", "256", "static/uploads/"+filename])
+        subprocess.check_call(["mogrify", "-layers", "flatten", "-format", "png", "-path", "static/uploads/thumbs/", "-thumbnail", '200x96', "-strip", "-quality", "100", "-unsharp", "0x0.5", "-colors", "256", "static/uploads/"+filename], stderr=subprocess.STDOUT)
+        subprocess.check_call(["mogrify", "-layers", "flatten", "-format", "png", "-path", "static/uploads/article_thumbs/", "-thumbnail", '172x300', "-strip", "-quality", "100", "-unsharp", "0x0.5", "-colors", "256", "static/uploads/"+filename])
         media = db.Media(type="image", url="/static/uploads/"+filename, timestamp=datetime.now(), **kvargs)
         db.session.add(media)
         flash("Obrázek nahrán.")

@@ -27,10 +27,10 @@
     </dl>
     <p class="clear">{{user.profile|safe or '-'}}
     {% if articles %}
-        <h3>Články</h3>
+        <h3 id="articles">Články</h3>
         {% for article in articles[(page-1)*5:page*5] %}
             {{ display_article(article, crop=True) }}
         {% endfor %}
-        {{ render_pages(page, user.articles|count) }}
+        {{ render_pages(page, user.articles|count, anchor="articles") }}
     {% endif %}
 {% endblock %}

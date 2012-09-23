@@ -1,0 +1,31 @@
+{% extends "_base.html" %}
+
+{% block title %}Obrázky{% endblock %}
+
+{% block content %}
+    <h2>Obrázky</h2>
+    <form action="/media" method="GET">
+        Řadit dle data {{form.order()}}, {{form.with_article()}} <input type="submit" value="Vypsat">
+    </form>
+    <article class="mediagrid">
+        {% for image in media %}
+            <div class="media">
+                <a href="{{image.url}}" rel="prettyPhoto[media]" title="{{image.title}} - <a href='{{image.article.url or '#'}}'>{{image.article.title or '(bez článku)'}}</a><p><small>{{image.author.name}}, {{image.timestamp|datetime}}</small>"><img src="{{image.thumb}}" class="gridimage" alt="{{image.title}}"></a>
+                <div title="{{image.author.name}}, {{image.timestamp|datetime}}">
+                    <a href="{{image.article.url or '#'}}">{{image.title}}
+                    {% if g.user.admin or (g.user == image.author and not g.user.guest) %}
+                        <a href="/media/{{image.id}}/edit">{{icon("pencil", "Edit")}}</a>
+                    {% endif %}
+                </div>
+            </div>
+        {% endfor %}
+    </article>
+    {{render_pages(page, count, per_page=30)}}
+    <h2>Nahrát obrázek</h2>
+    <form method="POST" action="/media/post" enctype="multipart/form-data">
+        {{render_field(upload_form.image)}}
+        {{render_field(upload_form.title)}}
+        {{render_field(upload_form.submit)}}
+    </form>
+    Obrázek přidaný tímto formulářem nebude přiřazen k žádnému článku.
+{% endblock %}

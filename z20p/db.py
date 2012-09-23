@@ -124,7 +124,7 @@ class Media(Base):
     id = Column(Integer, primary_key=True, nullable=False)
     author_id = Column(Integer, ForeignKey('users.id'))
     author = relationship("User", backref='media')
-    article_id = Column(Integer, ForeignKey('articles.id'), nullable=False)
+    article_id = Column(Integer, ForeignKey('articles.id'))
     timestamp = Column(DateTime, nullable=False, index=True)
     title = Column(Unicode(256), nullable=False)
     url = Column(Unicode(256), nullable=False)
@@ -153,8 +153,7 @@ class Media(Base):
         u = self.url.split("/")
         u.insert(-1, dir)
         u = "/".join(u).split(".")
-        u.pop()
-        u.append("png")
+        u[-1] = "png"
         return '.'.join(u)
     
     # This is KIND OF ugly-ish!
@@ -201,7 +200,8 @@ class Article(Base):
     is_article=True
     @property
     def url(self):
-        return "/articles/"+str(self.id)+"-"+self.title.replace(" ", "_").lstrip("/")#.replace("/", "_")
+        u = "/articles/"+str(self.id)+"-"+self.title.replace(" ", "_").lstrip("/").replace("/", "_")
+        return u
     
     @property
     def images(self):

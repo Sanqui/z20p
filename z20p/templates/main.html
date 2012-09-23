@@ -9,6 +9,12 @@
         {% else %}
             <div>Nemáme žádné články!  D:</div>
         {% endfor %}
+        <div class="mainarrows">
+            {% if page > 1 %}
+                <a href="{{url_for_here(page=page-1)}}" class="leftarrow">◀</a>
+            {% endif %}
+            <a href="{{url_for_here(page=page+1)}}" class="rightarrow"">▶</a>
+        </div>
     <h2>Nejnovější screenshoty</h2>
     <div class="mediagallery" id="gallery-images">
         {%- for media in images -%}

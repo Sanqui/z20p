@@ -10,8 +10,8 @@
             {% if label.id != edit_id %}
                 <tr id="label-{{label.id}}">
                     <td><a href="/labels/{{label.id}}/edit#label-{{label.id}}">{{icon("pencil", "Edit")}}</a></td>
-                    <td>{{label.name}}</td>
-                    <td>{{label.user.name}}</td>
+                    <td><a href="{{label.url}}">{{label.name}}</a></td>
+                    <td>{{author(label.user)}}</td>
                     <td>{{{"platform":"Platforma", "genre":"Žánr", "other":"Jiné", "column":"Sloupek"}[label.category]}}</td>
                 </tr>
             {% else %}

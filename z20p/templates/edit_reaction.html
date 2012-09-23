@@ -3,6 +3,7 @@
 {% block title %}Úprava reakce{% endblock %}
 
 {% block content %}
+    <a href="{{reaction.article.url}}#reactions">{{icon("arrow-180-medium")}} zpět na článek</a>
     <h2>Úprava reakce na {{reaction.article.title}}</h2>
     <form method="POST" action="{{reaction.url}}/edit">
       <dl>

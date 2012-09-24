@@ -4,7 +4,13 @@
     <head>
         <meta charset="utf-8">
         <title>Zabij 10 prasat » {% block title %}{% endblock %}</title>
+        <meta name="description" content="Zabij 10 prasat, recenze a novinky MMORPG, MMOFPS i offline PC, konzolových her a flashových her">
+        <meta name="keywords" content="recenze,mmorpg,mmofps,zdarma,online,xbox,playstation,minecraft,3DS,NDS,flash,hry">
+        <meta name="author" content="Zabij 10 prasat">
+        <meta name="generator" content="echo">
         <link rel="shortcut icon" href="/static/favicon.ico">
+        <link rel="alternate" type="application/rss+xml" href="/rss" title="Zabij 10 prasat RSS">
+        <link rel='canonical' href="{% block canonical %}{{url_for_here()}}{% endblock %}">
         <link href="/static/style.css" rel="stylesheet" type="text/css">
         <!--[if IE]>
             <style>
@@ -99,16 +105,15 @@ $(document).ready(function(){
             <div class="linkbar">
                 {% if not g.user.guest %}
                     <div class="logged">{{author(g.user)}}</div>
+                    <a href="/new_article">{{icon("blog--pencil", "Nový článek")}} Napsat článek</a>  • 
+                    <a href="/unpublished">{{icon("blogs-stack", "Nepublikované")}} Nepublikované</a>  • 
                 {% endif %}
                 {% if g.user.redactor %}
-                    <a href="/new_article">{{icon("blog--pencil", "Nový článek")}} Nový článek</a>  • 
-                    <a href="/unpublished">{{icon("blogs-stack", "Nepublikované")}} Nepublikované</a>  • 
                     {% if g.user.admin %}
                         <a href="/buttons">{{icon("ui-buttons", "Tlačítka")}} Tlačítka</a>  • 
                         <a href="/labels">{{icon("tags-label", "Štítky")}} Štítky</a> • 
                     {% endif %}
                 {% endif %}
-                <a href="/media">{{icon("images-stack", "Obrázky")}} Obrázky</a> • 
                 {% if not g.user.guest %}
                     <a href="/users">{{icon("users", "Uživatelé")}} Uživatelé</a> • 
                     <a href="/logout">{{icon("user--minus", "Logout")}} Logout</a>

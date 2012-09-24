@@ -3,6 +3,7 @@ body {background-color: #f0f0f8; color:#414a5b; font-size:smaller;}
 ul, ul * {list-style:none;}
 .clear {clear:both;}
 header, #content {width: 55%; margin: auto;}
+#content {min-height:240px;}
 #logo {margin:auto; width:650px;}
 #logo img {width:650px; height:115px;}
 #leftmenu, #rightmenu {position: fixed; top: 135px;  width: 12.5%; margin:0; padding:0; list-style:none;}
@@ -19,12 +20,12 @@ header, #content {width: 55%; margin: auto;}
 #leftmenu a:hover, #rightmenu a:hover {background-color:rgb(187, 20, 26);
     border-color: rgb(187, 20, 26); color:white;
     -moz-box-shadow: inset 0px -5px 5px #A20E14;
-    -webkit-box-shadow: inset 0px -5px 5px ##A20E14;
+    -webkit-box-shadow: inset 0px -5px 5px #A20E14;
     box-shadow: inset 0px -5px 5px #A20E14;}
 .down {position:absolute; right:-35px; background-color: rgb(187, 20, 26); border:1px solid #5F0B0E; color:white; z-index:1; height:99%; border-radius:0 6px 6px 0;
     display:block;  font-weight:bold; cursor:pointer; width:24px; text-align:center; font-size:14px;
     -moz-box-shadow: inset 0px -5px 5px #A20E14;
-    -webkit-box-shadow: inset 0px -5px 5px ##A20E14;
+    -webkit-box-shadow: inset 0px -5px 5px #A20E14;
     box-shadow: inset 0px -5px 5px #A20E14;}
 .down:hover { border-color:white;}
 .button-labels {margin:0; padding:0; overflow:hidden;}
@@ -35,7 +36,7 @@ menu li { margin: 2px; width:100%; }
 
 .linkbar {background-color: rgb(187, 20, 26); text-align:right; font-size:12px;
     -moz-box-shadow: inset 0px -5px 5px #A20E14;
-    -webkit-box-shadow: inset 0px -5px 5px ##A20E14;
+    -webkit-box-shadow: inset 0px -5px 5px #A20E14;
     box-shadow: inset 0px -5px 5px #A20E14;}
 .linkbar, .linkbar a {color:white; text-decoration:none;}
 .linkbar a {font-weight:bold; white-space:nowrap;}
@@ -44,13 +45,23 @@ menu li { margin: 2px; width:100%; }
 
 .flash {padding:6px; background-color:yellow; margin: 2px 16% 2px 16%; border:1px solid gold; border-radius:12px;}
 
-.mainarrows {margin:0 auto; width:64px;}
+.pages {text-align:center;}
+
+.mainarrows {margin:0 auto 0px auto; width:64px; text-align:center;}
 .mainarrows a {background-color: rgb(187, 20, 26); display:inline-block; color:white; text-decoration:none;
     border:1px solid #5F0B0E;
     -moz-box-shadow: inset 0px -5px 5px #A20E14;
-    -webkit-box-shadow: inset 0px -5px 5px ##A20E14;
-    box-shadow: inset 0px -5px 5px #A20E14; font-size:17px; vertical-align:middle; padding:0px 3px 4px 3px; line-height:1;}
-.mainarrows a:hover {border-color:white; color:white;}
+    -webkit-box-shadow: inset 0px -5px 5px #A20E14;
+    box-shadow: inset 0px -5px 5px #A20E14;
+    font-size:17px; vertical-align:middle; padding:0px 3px 4px 3px; line-height:1;
+    margin-bottom:3px;}
+.mainarrows .disabledarrow {background-color:#aaa; box-shadow:none;
+    border:1px solid #222;
+    -moz-box-shadow: inset 0px -5px 5px #888;
+    -webkit-box-shadow: inset 0px -5px 5px #888;
+    box-shadow: inset 0px -5px 5px #888;}
+.mainarrows a:hover {border-color:white; color:white; }
+.mainarrows .disabledarrow:hover {border-color:black; cursor:default;}
 .leftarrow {border-radius:100% 0 0 100%; float:left;}
 .rightarrow {border-radius:0 100% 100% 0; float:right;}
 
@@ -119,7 +130,7 @@ article.crop .labels {display:none;}
     box-shadow: inset 0px -5px 5px #ddd;}
 .labels a:hover {background-color:rgb(187, 20, 26); color:white; border-color: #5F0B0E;
     -moz-box-shadow: inset 0px -5px 5px #A20E14;
-    -webkit-box-shadow: inset 0px -5px 5px ##A20E14;
+    -webkit-box-shadow: inset 0px -5px 5px #A20E14;
     box-shadow: inset 0px -5px 5px #A20E14;
 }
 .authorline {float:right; clear:right;}
@@ -141,7 +152,8 @@ article.crop .adminline {display:none;}*/
     margin-bottom:4px;}
 .mediatab:hover, .selectedtab {background-color:rgb(187, 20, 26); color:white; cursor:pointer; border-color: #5F0B0E;}
 
-.mediagallery {width:100%; max-height:200px; overflow-x:scroll; overflow-y:hidden; white-space: nowrap;}
+.mediagallery {width:100%; max-height:200px; overflow-x:scroll; overflow-y:hidden; white-space: nowrap; }
+.mediagallery.maingallery {white-space:normal; overflow:hidden; height:98px;}
 .mediabox .image { 
     max-width:200px; height:96px;
     border: 1px solid black;}
@@ -160,7 +172,7 @@ table {width: 100%; border-collapse:collapse;}
 thead {background-color:rgb(187, 20, 26); text-align:center; color:white;}
 thead td {border-color: #5F0B0E;
     -moz-box-shadow: inset 0px -5px 5px #A20E14;
-    -webkit-box-shadow: inset 0px -5px 5px ##A20E14;
+    -webkit-box-shadow: inset 0px -5px 5px #A20E14;
     box-shadow: inset 0px -5px 5px #A20E14;}
 td {border: 1px solid #444;}
 
@@ -171,9 +183,9 @@ td {border: 1px solid #444;}
 .labelbox ul {padding:0; margin:0;}
 .noform .labelbox, .noform .onlyifform {display:none;}
 
-.errors {color:red;}
+.errors {color:darkred;}
 
-.shoutbox {width:70%; border:1px solid #aaa; margin:auto; padding:6px; overflow:auto; word-wrap: break-word;}
+.shoutbox {width:70%; border:1px solid #aaa; margin:auto; padding:6px; overflow:auto; word-wrap: break-word; margin-top:6px;}
 .shoutbox #text {width:76.5%;}
 .shoutbox #submit {width:20%; float:right;}
 .post a {text-decoration:none;}

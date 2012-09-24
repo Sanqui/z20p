@@ -12,11 +12,13 @@
         <div class="mainarrows">
             {% if page > 1 %}
                 <a href="{{url_for_here(page=page-1)}}" class="leftarrow">◀</a>
+            {% else %}
+                <a class="leftarrow disabledarrow">◀</a>
             {% endif %}
+            <strong>{{page}}</strong>
             <a href="{{url_for_here(page=page+1)}}" class="rightarrow"">▶</a>
         </div>
-    <h2>Nejnovější screenshoty</h2>
-    <div class="mediagallery" id="gallery-images">
+    <div class="mediagallery maingallery" id="gallery-images">
         {%- for media in images -%}
             <div class="mediabox" id="media-{{media.id}}">
                 <div><a href="{{media.url}}" rel="prettyPhoto[media]" title="{{media.title}} - <a href='{{media.article.url or '#'}}'>{{media.article.title or '(bez článku)'}}</a><p><small>{{media.author.name}}, {{media.timestamp|datetime}}</small>"><img src="{{media.thumb}}" class="image" alt="{{media.title}}"></a></div>
@@ -27,7 +29,8 @@
                     {% endif %}
                 </div>-->
             </div>
-        {%- endfor -%}</div>
+        {% endfor -%}</div>
+    <a href="/media">{{icon("images-stack", "Obrázky")}} Všechny obrázky</a>
     <!--<h2>Nejnovější sloupky</h2>
         <article>recenze</article>
         <article>recenze</article>

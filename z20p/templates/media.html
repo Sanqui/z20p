@@ -5,7 +5,7 @@
 {% block content %}
     <h2>Obrázky</h2>
     <form action="/media" method="GET">
-        Řadit dle data {{form.order()}}, {{form.with_article()}} <input type="submit" value="Vypsat">
+        Řadit dle data {{form.order()}}, {{form.with_article()}}, od {{form.author()}} <input type="submit" value="Vypsat">
     </form>
     <article class="mediagrid">
         {% for image in media %}

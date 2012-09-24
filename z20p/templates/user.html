@@ -1,9 +1,10 @@
 {% extends "_base.html" %}
 
 {% block title %}{{user.name}}{% endblock %}
+{% block canonical %}{{user.url}}{% endblock %}
 
 {% block content %}
-    {% if g.admin or g.user == user%}
+    {% if g.user.admin or g.user == user%}
         <a href="/users/{{user.id}}/edit"><img src="/static/icons/pencil.png" alt="Edit"> Upravit profil</a>
     {% endif%}
     <h2>{{author(user)}}</h2>

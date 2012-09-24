@@ -1,6 +1,6 @@
 {% extends "_base.html" %}
 
-{% block title %}Nový článek{% endblock %}
+{% block title %}Napsat článek{% endblock %}
 
 {% block content %}
     <h2>Nový článek</h2>
@@ -13,10 +13,9 @@
         <div class="labelfloat">{{ render_field(form.labels) }}</div>
         {{ render_field(form.image) }}
         {{ render_field(form.image_title) }}
-        {{ render_field(form.published) }}
       </dl>
-      <p><input type="submit" value="Přidat">
+      <p><input type="submit" value="Napsat">
     </form>
-    
+    <p>Publikováním článku na stránce Zabij 10 prasat se vzdáváte všech práv, majetku a jmění.
     
 {% endblock %}

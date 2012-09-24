@@ -54,11 +54,11 @@ class User(Base):
         
     @property
     def rank(self):
-        ranks = {0: "Guest",
-                 1: {'m':"Uživatel", 'f':'Uživatelka', "-":"Uživatel"}, 
-                 2: "VIP",
-                 3: {'m':"Redaktor", 'f':'Redaktorka', '-':'Redaktor'},
-                 4: "Admin"}
+        ranks = {0: u"Guest",
+                 1: {'m':u"Uživatel", 'f':u'Uživatelka', "-":u"Uživatel"}, 
+                 2: u"VIP",
+                 3: {'m':u"Redaktor", 'f':u'Redaktorka', '-':u'Redaktor'},
+                 4: u"Admin"}
         if self.rights not in ranks:
             rank = "??? ({0})".format(self.rights)
         else:

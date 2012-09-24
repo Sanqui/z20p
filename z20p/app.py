@@ -51,7 +51,6 @@ class ArticleForm(Form):
     labels = MultiCheckboxField('Štítky', coerce=int)
     image = FileField('Obrázek', [file_allowed(uploads, "Jen obrázky")])
     image_title = TextField('Titulek obrázku', [validators.optional()])
-    published = BooleanField("Publikovat", default=True)
     
     # TODO make this work??
     #def validate_image(self, field):
@@ -128,6 +127,7 @@ def before_request():
 
 @app.teardown_request
 def shutdown_session(exception=None):
+    db.session.close()
     db.session.remove()
 
 @app.template_filter('datetime')
@@ -435,15 +435,19 @@ def media():
     class SortForm(Form):
         order = SelectField("Typ řazení", choices=[("desc", "sestupně"), ("asc", "vzestupně")], default="desc")
         with_article = SelectField("Se články", choices=[(1, "všechny obrázky"), (0, "jen obrázky bez článku")], default=True, coerce=int)
+        author = SelectField("Od autora", choices=[(0, "všech")], default=0, coerce=int)
     
     form = SortForm(request.args)
-
+    for user in db.session.query(db.User).join(db.User.media).filter(db.User.media.any()).all():
+        form.author.choices.append((user.id, user.name or user.ip))
+        
     page = get_page()
     
     order = {'asc': asc, 'desc': desc}[form.order.data]
     query = db.session.query(db.Media).filter(db.Media.type == "image").order_by(order(db.Media.timestamp))
     print(form.with_article.data)
     if not form.with_article.data: query = query.filter(db.Media.article == None)
+    if form.author.data: query = query.filter(db.Media.author_id == form.author.data)
     media = query[(page-1)*30:page*30]
     count = query.count()
     return render_template("media.html", upload_form=upload_form, form=form, media=media, page=page, count=count)
@@ -564,7 +568,9 @@ def register():
             laststamp=datetime.now(), last_post_read_id=0)
         db.session.add(user)
         db.session.commit()
-        g.user = db.session.query(db.User).filter_by(name=form.name.data).filter_by(password=pwhash(form.password.data)).scalar()
+        g.user = user
+        g.user.ip = request.remote_addr
+        db.session.commit()
         flash("Jste zaregistrováni.")
         return redirect("/login")
     
@@ -582,7 +588,7 @@ def users():
 @app.route("/users/<int:user_id>-<path:name>", methods=['GET'])
 def user(user_id, name=None):
     user = db.session.query(db.User).get(user_id)
-    articles = db.article_query.filter(db.Article.author == user)
+    articles = db.article_query.filter(db.Article.author == user).order_by(db.Article.timestamp.desc())
     if not user: abort(404)
     page = get_page()
     return render_template('user.html', user=user, page=page, articles=articles)
@@ -697,7 +703,7 @@ def upload_image(**kvargs):
     return media
 
 @app.route("/new_article", methods=['GET', 'POST'])
-@minrights(2)
+@minrights(1)
 def new_article():
     form = ArticleForm(request.form)
     labels = db.session.query(db.Label) \
@@ -706,7 +712,7 @@ def new_article():
     if request.method == 'POST' and form.validate():    
         article = db.Article(title=form.title.data, text=form.text.data,
             author_id=g.user.id, 
-            timestamp=datetime.now(), published=True)
+            timestamp=datetime.now(), published=False)
         media = upload_image(title=form.image_title.data, author_id=g.user.id,
             article=article)
         article.media = media
@@ -716,9 +722,14 @@ def new_article():
         article.labels = []
         for label_id in form.labels.data:
             article.labels.append(db.session.query(db.Label).filter_by(id=label_id).scalar())
+        if g.user.redactor:
+            article.published = True
+            msg = "Článek publikován."
+        else:
+            msg = "Děkujeme za váš příspěvek.  Redaktor váš článek ohodnotí a rozhodne, zda-li ho publikovat."
         db.session.add(article)
         db.session.commit()
-        flash('Článek přidán')
+        flash(msg)
         return redirect("/")
     return render_template("new_article.html", form=form)
     
@@ -731,6 +742,8 @@ def edit_article(edit_id, title=None):
     if not g.user.admin and (g.user != article.author): abort(403)
     class EditArticleForm(ArticleForm):
         image = SelectField('Obrázek', choices=[(-1, '-')], coerce=int)
+        published = BooleanField("Publikovat", default=True)
+    
     form = EditArticleForm(request.form, article)
     for media in article.all_media:
         if media.author == g.user and not media.assigned_article and not media.assigned_reaction:
@@ -774,7 +787,7 @@ def edit_article(edit_id, title=None):
     return render_template("edit_article.html", form=form, article=article)
 
 @app.route("/unpublished", methods=['GET'])
-@minrights(3)
+@minrights(1)
 def unpublished():
     mine = db.session.query(db.Article).filter(db.Article.published == False, db.Article.author == g.user).order_by(db.Article.timestamp.desc())
     unpublished = db.session.query(db.Article).join(db.Article.author).filter(db.Article.published == False, db.User.rights <= 1).order_by(db.Article.timestamp.desc())

@@ -9,6 +9,7 @@
     {% else %}
         <a href="{{media.url}}"><img src="{{media.thumb_url}}" class="image" alt="Video"  class="largeimage"></a>
     {% endif %}
+    <p>Přidal{{gr(media.author.gender)}} {{author(media.author)}} v {{media.timestamp|datetime}}
     <form method="POST" action="/media/{{media.id}}/edit">
       <dl>
         {{ render_field(form.title) }}
@@ -22,6 +23,5 @@
     <form method="POST" action="/media/{{media.id}}/delete">
         <input type="submit" value="Odstranit" class="confirm">
     </form>
-    Přidal{{gr(media.author.gender)}} <a href="/users/{{media.author.id}}">{{media.author.name}}</a> dne {{media.timestamp}}
     
 {% endblock %}

@@ -16,9 +16,16 @@
                 <a class="leftarrow disabledarrow">◀</a>
             {% endif %}
             <strong>{{page}}</strong>
-            <a href="{{url_for_here(page=page+1)}}" class="rightarrow"">▶</a>
+            <a href="{{url_for_here(page=page+1)}}" class="rightarrow">▶</a>
         </div>
-    <div class="mediagallery maingallery" id="gallery-images">
+    <div class="clear"></div>
+    <div class="mediagallery mainvideogallery">
+        {%- for media in videos -%}
+            <div class="mediabox" id="media-{{media.id}}">
+                <div><a href="{{media.url}}" rel="prettyPhoto[media]" title="{{media.title}} - <a href='{{media.article.url or '#'}}'>{{media.article.title or '(bez článku)'}}</a><p><small>{{media.author.name}}, {{media.timestamp|datetime}}</small>"><img src="{{media.thumb_url}}" class="image" alt="{{media.title}}"></a></div>
+            </div>
+        {% endfor -%}</div>
+    <div class="mediagallery maingallery">
         {%- for media in images -%}
             <div class="mediabox" id="media-{{media.id}}">
                 <div><a href="{{media.url}}" rel="prettyPhoto[media]" title="{{media.title}} - <a href='{{media.article.url or '#'}}'>{{media.article.title or '(bez článku)'}}</a><p><small>{{media.author.name}}, {{media.timestamp|datetime}}</small>"><img src="{{media.thumb}}" class="image" alt="{{media.title}}"></a></div>
@@ -30,7 +37,7 @@
                 </div>-->
             </div>
         {% endfor -%}</div>
-    <a href="/media">{{icon("images-stack", "Obrázky")}} Všechny obrázky</a>
+    <a href="/media" class="clear">{{icon("images-stack", "")}} Všechny obrázky</a>
     <!--<h2>Nejnovější sloupky</h2>
         <article>recenze</article>
         <article>recenze</article>

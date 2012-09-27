@@ -42,7 +42,9 @@ $(document).ready(function(){
     $('#tab-images').click(function(){switchtab('images')})
     $('#tab-videos').click(function(){switchtab('videos')})
     $('#tab-upload').click(function(){switchtab('upload')})
-    switchtab("images")
+    {% if request.endpoint != "main" %}
+        switchtab("images")
+    {% endif %}
     if (window.location.hash == "#gallery-videos") switchtab("videos")
     if (window.location.hash == "#upload") switchtab("upload")
     console.log(window.location.hash)
@@ -91,39 +93,39 @@ $(document).ready(function(){
 });
         </script>
     </head>
-    <body><img src="/static/img/article_border.png" style="display:none;" width=1 height=1><!--Preload-->
+    <body><img src="/static/img/article_border.png" style="display:none;" width=1 height=1 alt=""><!--Preload-->
         {%- if g.kip -%}
-            <img src="/static/kip{{g.kiptype}}.png" title="kip" alt="kip" class="kip" style="position:fixed; top:{{g.kiptop}}%; left:{{g.kipleft}}%;">
+            <img src="/static/img/kip{{g.kiptype}}.png" title="kip" alt="kip" class="kip" style="position:fixed; top:{{g.kiptop}}%; left:{{g.kipleft}}%;">
         {%- endif -%}
-        <h1 id="logo"><a href="/"><img src="http://www.zabij10prasat.cz/img/prasarny.png" alt="Zabij 10 prasat"></a></h1>
+        <h1 id="logo"><a href="/"><img src="/static/img/prasarny.png" alt="Zabij 10 prasat"></a></h1>
         <header>
+            <div class="linkbar">
+                {% if not g.user.guest %}
+                    <div class="logged">{{author(g.user)}}</div>
+                    <a href="/new_article">{{icon("blog--pencil", "")}} Napsat článek</a>  • 
+                    <a href="/unpublished">{{icon("blogs-stack", "")}} Nepublikované</a>  • 
+                {% endif %}
+                {% if g.user.redactor %}
+                    {% if g.user.admin %}
+                        <a href="/buttons">{{icon("ui-buttons", "")}} Tlačítka</a>  • 
+                        <a href="/labels">{{icon("tags-label", "")}} Štítky</a> • 
+                    {% endif %}
+                {% endif %}
+                <a href="/media?filter=all">{{icon("images-stack", "")}} Obrázky</a> • 
+                {% if not g.user.guest %}
+                    <a href="/users">{{icon("users", "")}} Uživatelé</a> • 
+                    <a href="/logout">{{icon("user--minus", "")}} Odhlásit</a>
+                {% else %}
+                    <a href="/login">{{icon("user--arrow", "")}} Přihlásit</a>  • 
+                    <a href="/register">{{icon("user--pencil", "")}} Registrovat</a>
+                {% endif %}
+            </div>
             {% with messages = get_flashed_messages() %}
                 {% for message in messages %}
                   <div class="flash">{{ message }}</div>
                 {% endfor %}
             {% endwith %}
-            <div class="linkbar">
-                {% if not g.user.guest %}
-                    <div class="logged">{{author(g.user)}}</div>
-                    <a href="/new_article">{{icon("blog--pencil", "Nový článek")}} Napsat článek</a>  • 
-                    <a href="/unpublished">{{icon("blogs-stack", "Nepublikované")}} Nepublikované</a>  • 
-                {% endif %}
-                {% if g.user.redactor %}
-                    {% if g.user.admin %}
-                        <a href="/buttons">{{icon("ui-buttons", "Tlačítka")}} Tlačítka</a>  • 
-                        <a href="/labels">{{icon("tags-label", "Štítky")}} Štítky</a> • 
-                    {% endif %}
-                {% endif %}
-                {% if not g.user.guest %}
-                    <a href="/users">{{icon("users", "Uživatelé")}} Uživatelé</a> • 
-                    <a href="/logout">{{icon("user--minus", "Logout")}} Logout</a>
-                {% else %}
-                    <a href="/login">{{icon("user--arrow", "Login")}} Login</a>  • 
-                    <a href="/register">{{icon("user--pencil", "Regirstovat")}} Registrovat</a>
-                {% endif %}
-            </div>
             <menu id="leftmenu">
-            <div class="categories">
                 {{ render_buttons(g.left_buttons) }}
             </menu>
             <menu id="rightmenu">

@@ -1,0 +1,23 @@
+/static/img/pigs.png{% extends "_base.html" %}
+
+{% block title %}{{error}}{% endblock %}
+{% block canonical %}/error?{{error}}{% endblock %}
+
+{% block content %}
+    {% if error == 404 %}
+        <h2>404: stránka nenalezena</h2>
+        <p>Stránka <strong>Zabij 10 prasat</strong> nedávno prošla kompletní rekonstrukcí, je proto možné, že jsme něco minuli a nějaký ten starý odkaz nefunguje.  V tomto případě nám prosím <a href="/info">napište</a>!
+    {% elif error == 403 %}
+        <h2>403: přístup odepřen</h2>
+        {% if g.user.guest %}
+            <p>Pravděpodobně se snažíte přistoupit na stránku, která je dostupná pouze pro <a href="/login">přihlášené uživatele</a>.
+        {% else %}
+            <p>Pravděpodobně se snažíte přistoupit na stránku, na jejíž přístup nemáte oprávnění.
+        {% endif %}
+    {% elif error == 500 %}
+        <h2>500: chyba na serveru</h2>
+        <p>Takže co ten server vlastně dělal?  Výbuch.
+        <p>Tato stránka je v současnosti nedostupná kvůli nějaké blíže nespecifikované chybě.  Zkuste to později.
+    {% endif %}
+    
+{% endblock %}

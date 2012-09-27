@@ -61,7 +61,7 @@
         <footer>
             <ul class="labels">
                 {% for label in article.labels %}
-                    <li><a href="{{label.url}}">{{label.name}}</a>
+                    <li><a href="{{label.url}}" class="label-{{label.category}}">{{label.name}}</a>
                 {% endfor %}
             </ul>
             <div class="lefthings">
@@ -139,9 +139,9 @@
             {%- for p in range(1, ((count-1)//per_page)+2) -%}
                 {%- if p == page -%}
                     <strong>{{p}}</strong>{{"," if not loop.last else ""}}
-                {% else -%}
+                {%- else -%}
                     <a href='{{url_for_here(page=p, _anchor=anchor)}}'>{{p}}</a>{{"," if not loop.last else ""}}
-                {% endif %}
+                {%- endif %}
             {% endfor %}
         </div>
     </div>
@@ -156,7 +156,7 @@
                     {% endfor -%}
                 </ul>
         {% else %}
-            <li><a href="{{button.url}}">{{icon(button.icon, button.name)+" " if button.icon}}{{button.name}}{{" <strong>({0})</strong>".format(g.unread)|safe if g.unread and button.name == "Shoutbox"}}</a>
+            <li><a href="{{button.url}}">{{icon(button.icon, "")+" " if button.icon}}{{button.name}}{{" <strong>({0})</strong>".format(g.unread)|safe if g.unread and button.name == "Shoutbox"}}</a>
         {% endif %}
     {% endfor %}
 {% endmacro %}
@@ -164,7 +164,7 @@
 <img src="{{'/static/icons/'+name+'.png' if '/' not in name else name}}" alt="{{alt}}" title="{{alt if title=='' else title}}" class="icon" width=16 height=16>
 {%- endmacro %}
 {% macro author(user) -%}
-<author><a href="{{user.url if (not user.guest or g.user.admin) else '#'}}" class="iconlink">{{icon(user.minipic, user.name) if user.minipic else icon('user-silhouette', user.name)}} </a><a href="{{user.url if (not user.guest or g.user.admin) else '#'}}">{{user.name or "["+user.ip+"]"}}</a>{{'★' if not user.guest}}</author>
+<span class="author"><a href="{{user.url if (not user.guest or g.user.admin) else '#'}}" class="iconlink">{{icon(user.minipic, user.name) if user.minipic else icon('user-silhouette', user.name)}} </a><a href="{{user.url if (not user.guest or g.user.admin) else '#'}}" rel="author">{{user.name or "["+user.ip+"]"}}</a>{{{0:'', 1:'☆', 2:'☆', 3:'★', 4:'★'}[user.rights]}}</span>
 {%- endmacro %}
 ## This really needs some more thinking through... # Also crap g is the global variable.
 {% macro gr(gender=None) -%}

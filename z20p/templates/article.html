@@ -10,11 +10,11 @@
         {%- for media in images -%}
             <div class="mediabox" id="media-{{media.id}}">
                 <div><a href="{{media.url}}" rel="prettyPhoto[media]" title="<a href='{{media.url}}'>{{media.title}}</a><p><small>{{media.author.name}}, {{media.timestamp|datetime}}</small>"><img src="{{media.thumb}}" class="image" alt="{{media.title}}"></a></div>
-                <div title="{{media.author.name}}, {{media.timestamp|datetime}}">{{media.title}}
+                <span title="{{media.author.name}}, {{media.timestamp|datetime}}">{{media.title}}
                     {% if g.user.admin or (g.user == media.author and not g.user.guest) %}
                         <a href="/media/{{media.id}}/edit">{{icon("pencil", "Edit")}}</a>
                     {% endif %}
-                </div>
+                </span>
             </div>
         {%- endfor -%}</div>
     <div class="mediagallery" id="gallery-videos">
@@ -49,10 +49,11 @@
             </form>
         </div>
     </div>
-    <h2 id="reactions">Reakce</h2>
-    {% for reaction in article.reactions %}
-        {{ display_article(reaction) }}
-    {% endfor %}
+    <div id="reactions">
+        {% for reaction in article.reactions %}
+            {{ display_article(reaction) }}
+        {% endfor %}
+    </div>
     <div class="rightcolumn">
         <h2>Ohodnotit</h2>
         <form method="POST" action="{{article.url}}/post">

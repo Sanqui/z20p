@@ -118,7 +118,7 @@ def before_request():
         g.left_buttons = db.session.query(db.Button).filter(db.Button.location=="left").order_by(db.Button.position).all()
         g.right_buttons = db.session.query(db.Button).filter(db.Button.location=="right").order_by(db.Button.position).all()
         g.button_ids = [button.id for button in g.left_buttons+g.right_buttons] # blargh
-        g.kip = random.randint(0, 4) == 0
+        g.kip = random.randint(0, 12) == 0
         if g.kip:
             g.kipleft = random.randint(0, 100)
             g.kiptop = random.randint(0, 100)
@@ -145,13 +145,23 @@ def url_for_here(**changed_args):
 app.jinja_env.globals['url_for_here'] = url_for_here
 app.jinja_env.globals['round'] = round # useful
 
+@app.errorhandler(404)
+def page_not_found(e):
+    return render_template('errorpage.html', error=404), 404
+
+@app.errorhandler(403)
+def page_not_found(e):
+    return render_template('errorpage.html', error=403), 403
+
 @app.route("/")
 def main():
     page = get_page()
     articles = db.article_query.order_by(db.Article.timestamp.desc())[(page-1)*4:page*4]
     images = db.session.query(db.Media).join(db.Media.article).filter(db.Media.type=="image") \
         .filter(db.Article.published == True).order_by(db.Media.timestamp.desc()).limit(8).all()
-    return render_template("main.html", articles=articles, images=images, page=page)
+    videos = db.session.query(db.Media).join(db.Media.article).filter(db.Media.type=="video") \
+        .filter(db.Article.published == True).order_by(db.Media.timestamp.desc()).limit(4).all()
+    return render_template("main.html", articles=articles, images=images, videos=videos, page=page)
 
 def get_page():
     try: # This needs more magic...
@@ -162,6 +172,10 @@ def get_page():
         abort(400)
     if page == 0: abort(400)
     return page
+
+@app.route("/info")
+def info():
+    return render_template("info.html")
 
 @app.route("/search")
 def search():
@@ -253,7 +267,7 @@ def search():
 def article(article_id, title=None):
     article = db.session.query(db.Article).get(article_id)
     if not article: abort(404)
-    if not article.published and not g.user.redactor and article.author != g.user: abort(404)
+    if not article.published and not g.user.redactor and article.author != g.user: abort(403)
     class UploadForm(Form):
         image = FileField('Obrázek', [file_allowed(uploads, "Jen obrázky")])
         title = TextField('Titulek obrázku', [validators.required()])
@@ -264,10 +278,10 @@ def article(article_id, title=None):
         media = upload_image(title=upload_form.title.data, author=g.user,
             article=article)
         db.session.commit() # Gotta commit here 'cause we're REDIRECTING THE USER
-        return redirect(article.url)
+        return redirect(article.url+"#gallery-images")
     
     class VideoForm(Form):
-        url = TextField('URL videa', [validators.required()])
+        url = TextField('URL videa', [validators.required(), validators.URL("Musí být Youtube URL.")])
         video_title = TextField('Titulek videa', [validators.required()])
         submit = SubmitField('Přidat video')
         
@@ -430,11 +444,11 @@ def media():
         media = upload_image(title=upload_form.title.data, author=g.user,
             article=None)
         db.session.commit()
-        return redirect("/media")
+        return redirect("/media?filter=all")
     
     class SortForm(Form):
         order = SelectField("Typ řazení", choices=[("desc", "sestupně"), ("asc", "vzestupně")], default="desc")
-        with_article = SelectField("Se články", choices=[(1, "všechny obrázky"), (0, "jen obrázky bez článku")], default=True, coerce=int)
+        filter = SelectField("Se články", choices=[("article", "obrázky u článků"), ("all", "všechny obrázky"), ("no_article", "jen obrázky bez článku")], default="article")
         author = SelectField("Od autora", choices=[(0, "všech")], default=0, coerce=int)
     
     form = SortForm(request.args)
@@ -445,8 +459,10 @@ def media():
     
     order = {'asc': asc, 'desc': desc}[form.order.data]
     query = db.session.query(db.Media).filter(db.Media.type == "image").order_by(order(db.Media.timestamp))
-    print(form.with_article.data)
-    if not form.with_article.data: query = query.filter(db.Media.article == None)
+    if form.filter.data == "no_article":
+        query = query.filter(db.Media.article == None)
+    elif form.filter.data == "article":
+        query = query.join(db.Media.article).filter(db.Article.published == True)
     if form.author.data: query = query.filter(db.Media.author_id == form.author.data)
     media = query[(page-1)*30:page*30]
     count = query.count()
@@ -552,7 +568,7 @@ def logout():
 @app.route("/register", methods=['GET', 'POST'])
 def register():
     class RegistrationForm(Form):
-        name = TextField('Jméno', [validators.required()])
+        name = TextField('Jméno', [validators.required(), validators.Length(3, 20, "Jméno musí být mezi třemi a dvaceti znaky.")])
         password = PasswordField('Heslo', [
             validators.Required(),
             validators.EqualTo('confirm', message='Hesla se musí schodovat')
@@ -588,7 +604,7 @@ def users():
 @app.route("/users/<int:user_id>-<path:name>", methods=['GET'])
 def user(user_id, name=None):
     user = db.session.query(db.User).get(user_id)
-    articles = db.article_query.filter(db.Article.author == user).order_by(db.Article.timestamp.desc())
+    articles = db.article_query.filter(db.Article.author == user).order_by(db.Article.timestamp.desc()).all()
     if not user: abort(404)
     page = get_page()
     return render_template('user.html', user=user, page=page, articles=articles)
@@ -600,7 +616,7 @@ def edit_user(user_id, name=None):
     user = db.session.query(db.User).get(user_id)
     if not user: abort(404)
     class EditUserForm(Form):
-        email = TextField('Email', [validators.optional()])
+        email = TextField('Email', [validators.optional(), validators.Email("Musí být platná emailová adresa.")])
         password = PasswordField('Heslo (jen pokud nové)', [ validators.optional(),
             validators.EqualTo('confirm', message='Hesla se musí schodovat')
         ])
@@ -622,7 +638,7 @@ def edit_user(user_id, name=None):
         abort(403) # No editing other users!
     
     if request.method == 'POST' and form.validate():
-        if admin:
+        if g.user.admin:
             user.name = form.name.data
             user.rights = form.rights.data
         user.email = form.email.data
@@ -805,7 +821,8 @@ class GuestShoutboxPostForm(ShoutboxPostForm):
 @app.route("/shoutbox/post", methods=['POST'])
 def shoutbox():
     page = get_page()
-    posts = db.session.query(db.ShoutboxPost).order_by(db.ShoutboxPost.timestamp.desc())[(page-1)*30:page*30]
+    posts = db.session.query(db.ShoutboxPost).order_by(db.ShoutboxPost.timestamp.desc())[(page-1)*30:page*30] # , db.Article, db.Reaction, db.Media, db.User, db.Rating, db.ShoutboxPost
+    #posts = db.session.query(db.ShoutboxPost).union(db.session.query(db.Reaction)).order_by("timestamp")[(page-1)*30:page*30]
     count =  db.session.query(db.ShoutboxPost).count()
     if not posts: abort(404)
     if g.user.guest:

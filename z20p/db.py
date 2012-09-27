@@ -11,7 +11,7 @@ from sqlalchemy.orm import scoped_session, sessionmaker, relationship, backref
 from sqlalchemy.schema import Column, ForeignKey, Table
 from sqlalchemy.types import DateTime, Integer, Unicode, Enum, UnicodeText, Boolean
 
-engine = create_engine(open("db").read(), encoding="utf8", pool_size = 100, pool_recycle=7200) # XXX
+engine = create_engine(open("db").read(), encoding="utf8", pool_size = 100, pool_recycle=4200) # XXX
 # pool_recycle is to prevent "server has gone away"
 session = scoped_session(sessionmaker(bind=engine, autoflush=False))
 
@@ -69,7 +69,7 @@ class User(Base):
     
     @property 
     def score(self):
-        return round(math.sqrt(len(self.articles))*1.5+math.sqrt(len(self.reactions))*1.2+math.sqrt(len(self.media))*0.6+math.sqrt(len(self.shoutbox_posts))*0.1+math.sqrt(len(self.ratings))*0.1+(self.rights or 0), 1)
+        return round(len(self.articles)**0.65+math.sqrt(len(self.reactions))*1.2+math.sqrt(len(self.media))*0.6+math.sqrt(len(self.shoutbox_posts))*0.1+math.sqrt(len(self.ratings))*0.1+(self.rights or 0), 1)
 
 class Label(Base):
     __tablename__ = 'labels'

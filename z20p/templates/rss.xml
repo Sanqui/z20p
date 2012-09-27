@@ -20,7 +20,7 @@
         </guid>
 	    <description>
 	        {% if article.media %}
-	            &lt;img src="{{article.media.url}}" style="width:166px; max-height:133px; border:1px solid black;	float:left;	margin:0px 5px 5px 0px;" alt="Obrázek" title="{{article.media.title}}" width=166 height=133&gt;&lt;br&gt;
+	            &lt;img src="{{article.media.thumb_article}}" style="width:166px; max-height:133px; border:1px solid black;	float:left;	margin:0px 5px 5px 0px;" alt="Obrázek" title="{{article.media.title}}" width=166 height=133&gt;&lt;br&gt;
             {% endif %}
             {{ article.text }}
             </description>

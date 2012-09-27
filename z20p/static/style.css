@@ -1,4 +1,5 @@
-body {background-color: #f0f0f8; color:#414a5b; font-size:smaller;}
+body {background-color: #f0f0f8; background-image: url('/static/img/pigs.png');
+    background-attachment:fixed; color:#414a5b; font-size:smaller;}
 * {font-family:Ubuntu, Verdana, sans-serif; }
 ul, ul * {list-style:none;}
 .clear {clear:both;}
@@ -30,7 +31,7 @@ header, #content {width: 55%; margin: auto;}
 .down:hover { border-color:white;}
 .button-labels {margin:0; padding:0; overflow:hidden;}
 #leftmenu .button-labels a, #rightmenu .button-labels a /* wordy to prevent having to important */
-    {font-size:8px ; padding:0 0 0 6px; margin:0 4px 0 6px; width:70%;
+    {font-size:10px ; padding:0 0 0 6px; margin:0 4px 0 6px; width:70%;
     float:right; } 
 menu li { margin: 2px; width:100%; }
 
@@ -68,6 +69,7 @@ menu li { margin: 2px; width:100%; }
 p {text-indent:18px; margin: 5px 0 0 0; padding:0; font-size:12px;}
 
 dt {font-weight:bold; float:left; width:30%; clear:left;}
+.info dt {width:30px;}
 
 a{	color: #862025;
     -webkit-transition: all 0.2s ease-in-out;
@@ -128,6 +130,14 @@ article.crop .labels {display:none;}
     -moz-box-shadow: inset 0px -5px 5px #ddd;
     -webkit-box-shadow: inset 0px -5px 5px #ddd;
     box-shadow: inset 0px -5px 5px #ddd;}
+.labels .label-genre {
+    -moz-box-shadow: inset 0px -5px 5px #edd;
+    -webkit-box-shadow: inset 0px -5px 5px #edd;
+    box-shadow: inset 0px -5px 5px #edd;}
+.labels .label-platform {
+    -moz-box-shadow: inset 0px -5px 5px #dde;
+    -webkit-box-shadow: inset 0px -5px 5px #dde;
+    box-shadow: inset 0px -5px 5px #dde;}
 .labels a:hover {background-color:rgb(187, 20, 26); color:white; border-color: #5F0B0E;
     -moz-box-shadow: inset 0px -5px 5px #A20E14;
     -webkit-box-shadow: inset 0px -5px 5px #A20E14;
@@ -137,8 +147,8 @@ article.crop .labels {display:none;}
 .lefthings {float:left; text-align:left;}
 .stats {}
 .dateline {}
-author {font-weight:bold;}
-author .iconlink {text-decoration:none;}
+.author {font-weight:bold;}
+.author .iconlink {text-decoration:none;}
 /*.adminline {float:left; clear:left;}
 article.crop .adminline {display:none;}*/
 .f2p {float:left; font-weight:bold;}
@@ -153,10 +163,11 @@ article.crop .adminline {display:none;}*/
 .mediatab:hover, .selectedtab {background-color:rgb(187, 20, 26); color:white; cursor:pointer; border-color: #5F0B0E;}
 
 .mediagallery {width:100%; max-height:200px; overflow-x:scroll; overflow-y:hidden; white-space: nowrap; }
-.mediagallery.maingallery {white-space:normal; overflow:hidden; height:98px;}
+.mediagallery.maingallery {white-space:normal; overflow:hidden; height:100px; width:auto; }
+.mediagallery.mainvideogallery {white-space:normal; overflow:hidden; height:100px; width:272px; text-align:right; float:right;}
 .mediabox .image { 
     max-width:200px; height:96px;
-    border: 1px solid black;}
+    border: 2px solid black; /*rgb(187, 20, 26);*/ border-radius:4px;}
 .mediabox {max-width:200px; display:inline-block; text-align:center; white-space: normal; vertical-align:top; margin-right:2px;}
 .mediabox dd {margin-left:0;}
 
@@ -168,7 +179,7 @@ article.crop .adminline {display:none;}*/
 .mediagrid .media {display:inline-block; margin:auto; /*border:1px solid #444;*/ width:172px; min-height:127px; vertical-align:top; overflow-x: hidden;}
 .mediagrid .media .gridimage {border: 1px solid black;}
 
-table {width: 100%; border-collapse:collapse;}
+table {width: 100%; border-collapse:collapse; background-color: #f0f0f8; }
 thead {background-color:rgb(187, 20, 26); text-align:center; color:white;}
 thead td {border-color: #5F0B0E;
     -moz-box-shadow: inset 0px -5px 5px #A20E14;
@@ -185,13 +196,13 @@ td {border: 1px solid #444;}
 
 .errors {color:darkred;}
 
-.shoutbox {width:70%; border:1px solid #aaa; margin:auto; padding:6px; overflow:auto; word-wrap: break-word; margin-top:6px;}
+.shoutbox {background-color: #f0f0f8; width:70%; border:1px solid #aaa; margin:auto; padding:6px; overflow:auto; word-wrap: break-word; margin-top:6px;}
 .shoutbox #text {width:76.5%;}
 .shoutbox #submit {width:20%; float:right;}
 .post a {text-decoration:none;}
 .post.odd {background-color:#f0f0f8;}
 .post.even {background-color:#e0e0e8;}
-.post author {margin-right:6px;}
+.post .author {margin-right:6px;}
 .post .last {opacity:0.5;}
 .dateright {float:right; color:#999;}
 

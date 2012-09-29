@@ -82,7 +82,7 @@ class Label(Base):
     
     @property
     def url(self):
-        return "/search?labels&{0}_labels={1}".format(self.category, self.id)
+        return "/search?labels&noform&{0}_labels={1}".format(self.category, self.id)
 
 class ButtonLabel(Base):
     __tablename__ = 'buttons_labels'
@@ -130,10 +130,17 @@ class Media(Base):
     url = Column(Unicode(256), nullable=False)
     type = Column(Enum("image", "video"))
     value = Column(Integer) # Enum('featured', 'good', 'regular), but then we'd get no ordering
+        
+    def thumbdir(self, dir="thumbs"):
+        u = self.url.split("/")
+        u.insert(-1, dir)
+        u = "/".join(u).split(".")
+        u[-1] = "png"
+        return '.'.join(u)
     
-    # TODO merge with thumb()
+    # This is KIND OF ugly-ish!
     @property
-    def thumb_url(self):
+    def thumb(self):
         if self.type == "video":
             vidid = None
             # I really ought to learn some regexes.
@@ -146,20 +153,8 @@ class Media(Base):
                 vidid = url.path
             if vidid:
                 return "https://img.youtube.com/vi/{0}/0.jpg".format(vidid)
-            else: return "about:blank" # herp herp
-    
-    
-    def thumbdir(self, dir="thumbs"):
-        u = self.url.split("/")
-        u.insert(-1, dir)
-        u = "/".join(u).split(".")
-        u[-1] = "png"
-        return '.'.join(u)
-    
-    # This is KIND OF ugly-ish!
-    @property
-    def thumb(self):
-        return self.thumbdir()
+            else: return "about:blank"
+        else: return self.thumbdir()
     
     @property
     def thumb_article(self): return self.thumbdir("article_thumbs")
@@ -214,8 +209,6 @@ class Article(Base):
     @property
     def rateable(self): return self.rating != None
 
-article_query = session.query(Article).filter(Article.published == True)
-
 class Reaction(Base):
     __tablename__ = 'reactions'
     id = Column(Integer, primary_key=True, nullable=False)
@@ -224,7 +217,7 @@ class Reaction(Base):
     author_id = Column(Integer, ForeignKey('users.id'))
     author = relationship("User", backref='reactions')
     media_id = Column(Integer, ForeignKey('media.id'))
-    media = relationship("Media", backref='assigned_reaction')
+    media = relationship("Media", backref='reactions')
     rating_id = Column(Integer, ForeignKey('ratings.id'))
     rating = relationship("Rating", backref='assigned_reaction')
     timestamp = Column(DateTime, nullable=False, index=True)

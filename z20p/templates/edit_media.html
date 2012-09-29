@@ -10,6 +10,19 @@
         <a href="{{media.url}}"><img src="{{media.thumb_url}}" class="image" alt="Video"  class="largeimage"></a>
     {% endif %}
     <p>Přidal{{gr(media.author.gender)}} {{author(media.author)}} v {{media.timestamp|datetime}}
+    {% if media.article %}
+        ke článku <a href="{{media.article.url}}">{{media.article.title}}</a>
+    {% endif %}
+    {{media.reaction}}
+    {% if media.reactions|count == 1 %}
+        u <a href="{{media.reactions[0].url}}">reakce</a>.
+    {% elif media.reactions|count > 1 %}
+        u reakcí
+        {% for reaction in reactions %}
+            <a href="{{reaction.url}}">{{loop.index}}</a>
+        {% endfor -%}
+        .
+    {% endif %}
     <form method="POST" action="/media/{{media.id}}/edit">
       <dl>
         {{ render_field(form.title) }}

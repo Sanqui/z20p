@@ -12,7 +12,9 @@
         {{ render_field(form.f2p) }}
         <div class="labelfloat">{{ render_field(form.labels) }}</div>
         {{ render_field(form.image) }}
-        {{ render_field(form.published) }}
+        {% if g.user.redactor %}
+            {{ render_field(form.published) }}
+        {% endif %}
       </dl>
       <p><input type="submit" value="Upravit">
     </form>

@@ -22,7 +22,7 @@
     <div class="mediagallery mainvideogallery">
         {%- for media in videos -%}
             <div class="mediabox" id="media-{{media.id}}">
-                <div><a href="{{media.url}}" rel="prettyPhoto[media]" title="{{media.title}} - <a href='{{media.article.url or '#'}}'>{{media.article.title or '(bez článku)'}}</a><p><small>{{media.author.name}}, {{media.timestamp|datetime}}</small>"><img src="{{media.thumb_url}}" class="image" alt="{{media.title}}"></a></div>
+                <div><a href="{{media.url}}" rel="prettyPhoto[media]" title="{{media.title}} - <a href='{{media.article.url or '#'}}'>{{media.article.title or '(bez článku)'}}</a><p><small>{{media.author.name}}, {{media.timestamp|datetime}}</small>"><img src="{{media.thumb}}" class="image" alt="{{media.title}}"></a></div>
             </div>
         {% endfor -%}</div>
     <div class="mediagallery maingallery">
@@ -37,7 +37,12 @@
                 </div>-->
             </div>
         {% endfor -%}</div>
-    <a href="/media" class="clear">{{icon("images-stack", "")}} Všechny obrázky</a>
+    <div class="leftfloat clear">
+        <a href="/media"">{{icon("images-stack", "")}} Všechny obrázky</a>
+    </div>
+    <div class="rightfloat">
+        <a href="/media?type=video&filter=all">{{icon("films", "")}} Všechna videa</a>
+    </div>
     <!--<h2>Nejnovější sloupky</h2>
         <article>recenze</article>
         <article>recenze</article>

@@ -26,7 +26,7 @@
 {% macro display_article(article, crop=False, cut=False) -%}
     <article class="{{'crop' if crop else 'regular'}}" id="{{'article' if article.is_article else 'reaction'}}-{{article.id}}">
         {% if article.media %}
-            {% if crop %} <a href="{{article.url}}">
+            {% if crop or cut %} <a href="{{article.url}}">
             {% else %} <a href="{{article.media.url}}" rel="prettyPhoto" title="{{article.media.title}}">{% endif %}
             <img src="{{article.media.thumb_article}}" title="{{article.media.title}}" alt="{{article.title}}" class="image">
             </a>
@@ -43,10 +43,10 @@
             <h1><a href="{{article.url}}">{{ article.title }}</a></h1>
         {% endif %}
         {% if not crop %}
-            {% if not cut or article.text.split("\n")|length <= 1%}
-                <p>{{article.text|replace("\n", "\n<p>")|safe}}
+            {% if True or not cut or article.text.split("\n")|length <= 1%}
+                <p>{{article.text|replace("\n", "\n<p>")|clean|safe}}
             {% else %}
-                <p>{{article.text.split("\n")[0]|safe}}
+                <p>{{article.text.split("\n")[0]|clean|safe}}
                 <p>…<a href="{{article.url}}">celý článek</a>
             {% endif %}
         {% else %}
@@ -104,7 +104,7 @@
                     {%- if article.ratings|length >= 2 -%}
                         Čtenářské hodnocení: <strong>{{round(article.ratings|sum(attribute='rating')/article.ratings|length, 1)}}/10</strong>
                     {%- else -%}
-                        <strong>BUĎTE PRVNÍ, KDO OHODNOTÍ TUTO HRU !!</strong>
+                        <strong>Přidejte vaše hodnocení</strong>
                     {%- endif -%}
                     </a> • 
                 {% endif %}<a href="{{article.url}}#reactions">
@@ -129,7 +129,7 @@
             {% endif %}
             <strong>{{page}}</strong>
             {% if page < count/per_page %}
-                <a href="{{url_for_here(page=page+1)}}" class="rightarrow"">▶</a>
+                <a href="{{url_for_here(page=page+1)}}" class="rightarrow">▶</a>
             {% else %}
                 <a class="rightarrow disabledarrow">▶</a>
             {% endif %}
@@ -163,8 +163,11 @@
 {% macro icon(name, alt, title="") -%}
 <img src="{{'/static/icons/'+name+'.png' if '/' not in name else name}}" alt="{{alt}}" title="{{alt if title=='' else title}}" class="icon" width=16 height=16>
 {%- endmacro %}
-{% macro author(user) -%}
-<span class="author"><a href="{{user.url if (not user.guest or g.user.admin) else '#'}}" class="iconlink">{{icon(user.minipic, user.name) if user.minipic else icon('user-silhouette', user.name)}} </a><a href="{{user.url if (not user.guest or g.user.admin) else '#'}}" rel="author">{{user.name or "["+user.ip+"]"}}</a>{{{0:'', 1:'☆', 2:'☆', 3:'★', 4:'★'}[user.rights]}}</span>
+{% macro author(user, clip=False) -%}
+<span class="author"><a href="{{user.url if (not user.guest or g.user.admin) else '#'}}" class="iconlink">{{icon(user.minipic, user.name) if user.minipic else icon('user-silhouette', user.name or user.ip)}}{{" " if not clip}}</a>
+{%- if not clip -%}
+    <a href="{{user.url if (not user.guest or g.user.admin) else '#'}}" rel="author">{{user.name or "["+user.ip+"]"}}</a>{{{-1:'✘', 0:'', 1:'♤', 2:'☆', 3:'☆', 4:'★'}[user.rights]}}</span>
+{%- endif -%}
 {%- endmacro %}
 ## This really needs some more thinking through... # Also crap g is the global variable.
 {% macro gr(gender=None) -%}

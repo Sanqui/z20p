@@ -8,7 +8,7 @@
         {% if g.user.guest %}
             Jméno: {{ form.name() }}
         {% endif %}
-        {{ form.text() }}
+        {{ form.text(autofocus="autofocus") }}
         {{ form.submit() }}
     </form>
         {% for post in posts %}

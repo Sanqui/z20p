@@ -5,6 +5,8 @@ from __future__ import absolute_import, unicode_literals, print_function
 import db
 from sqlalchemy import or_, and_, asc, desc
 
+from lxml.html.clean import Cleaner
+
 from datetime import datetime
 import time
 from functools import wraps # We need this to make Flask understand decorated routes.
@@ -59,6 +61,9 @@ class ArticleForm(Form):
     #    else:
     #        raise ValidationError("Nepovolený typ souboru.")
 
+class RedactorArticleForm(ArticleForm):
+    published = BooleanField("Publikovat")
+
 def get_guest(name=None):
     if name:
         guest = db.session.query(db.User).filter(db.User.name == name).filter(db.User.password == None).scalar()
@@ -83,11 +88,10 @@ def minrights(minrights):
     def decorator(function):
         @wraps(function)
         def f(*args, **kvargs):     
-            if 'user_id' in session:
-                if g.user.rights >= minrights:
-                    return function(*args, **kvargs)
-                return abort(403) #"soft 403 (nedostatecna prava: {0} < {1})".format(g.user.rights, minrights)
-            return abort(403) # "soft 403 (prihlas se)" # TODO use something
+            if g.user.rights >= minrights:
+                return function(*args, **kvargs)
+            else:
+                return abort(403)
         return f
     return decorator
 
@@ -124,6 +128,7 @@ def before_request():
             g.kiptop = random.randint(0, 100)
             g.kiptype = random.randint(1,2)
         #g.unread_posts = latest - g.user.last_post_read.id
+    g.article_query = db.session.query(db.Article).filter(db.Article.published == True)
 
 @app.teardown_request
 def shutdown_session(exception=None):
@@ -134,6 +139,12 @@ def shutdown_session(exception=None):
 def datetime_format(value, format='%d. %m. %Y  %H:%M'):
     if not value: return "-"
     return value.strftime(format)
+
+cleaner = Cleaner(comments=False, style=False, embedded=False, annoying_tags=False)
+
+@app.template_filter('clean')
+def clean(value):
+    return cleaner.clean_html(value)
 
 # https://gist.github.com/3765578
 def url_for_here(**changed_args):
@@ -156,11 +167,11 @@ def page_not_found(e):
 @app.route("/")
 def main():
     page = get_page()
-    articles = db.article_query.order_by(db.Article.timestamp.desc())[(page-1)*4:page*4]
+    articles = g.article_query.order_by(db.Article.timestamp.desc())[(page-1)*4:page*4]
     images = db.session.query(db.Media).join(db.Media.article).filter(db.Media.type=="image") \
         .filter(db.Article.published == True).order_by(db.Media.timestamp.desc()).limit(8).all()
     videos = db.session.query(db.Media).join(db.Media.article).filter(db.Media.type=="video") \
-        .filter(db.Article.published == True).order_by(db.Media.timestamp.desc()).limit(4).all()
+        .order_by(db.Media.timestamp.desc()).limit(2).all()
     return render_template("main.html", articles=articles, images=images, videos=videos, page=page)
 
 def get_page():
@@ -250,7 +261,7 @@ def search():
         order_by = {"timestamp": db.Article.timestamp, "rating": db.Rating.rating, "views": db.Article.views}[form.sort.data]
         order = {'asc': asc, 'desc': desc}[form.order.data]
         
-        articles = db.article_query.outerjoin(db.Article.rating).filter(and_(*and_conditions)).filter(or_(*or_conditions))
+        articles = g.article_query.outerjoin(db.Article.rating).filter(and_(*and_conditions)).filter(or_(*or_conditions))
         if label_or:
             articles = articles.filter(db.Article.labels.any(db.Label.id.in_(label_or)))
         matched_articles = articles.order_by(order(order_by)).all() # Nope, this won't work without the all.  It'll just regard everything which matched, including dupes (which get nuked when /read/ but that's about it).  :(
@@ -258,6 +269,17 @@ def search():
         matched_articles = matched_articles[(page-1)*5:(page)*5]
         
     return render_template("search.html", form=form, searched=searched, matched_articles=matched_articles, matched_labels=matched_labels, count=count, page=page, stype=stype)
+
+class VideoForm(Form):
+    url = TextField('URL videa', [validators.required(), validators.URL("Musí být Youtube URL.")])
+    video_title = TextField('Titulek videa', [validators.required()])
+    submit = SubmitField('Přidat video')
+    
+    def validate_url(self, url):
+        if url.data.startswith("http") and ("youtube" in url.data or "youtu.be/" in url.data):
+            pass
+        else:
+            raise ValidationError("Musí být Youtube URL.")
 
 # TODO all these POSTs should go elsewhere with a redirect.  Better for refreshing.
 @app.route("/articles/<int:article_id>", methods=['GET'])
@@ -279,17 +301,6 @@ def article(article_id, title=None):
             article=article)
         db.session.commit() # Gotta commit here 'cause we're REDIRECTING THE USER
         return redirect(article.url+"#gallery-images")
-    
-    class VideoForm(Form):
-        url = TextField('URL videa', [validators.required(), validators.URL("Musí být Youtube URL.")])
-        video_title = TextField('Titulek videa', [validators.required()])
-        submit = SubmitField('Přidat video')
-        
-        def validate_url(self, url):
-            if url.data.startswith("http") and ("youtube" in url.data or "youtu.be/" in url.data):
-                pass
-            else:
-                raise ValidationError("Musí být Youtube URL.")
     
     video_form = VideoForm(request.form)
     
@@ -392,7 +403,7 @@ def edit_reaction(reaction_id):
     form = EditReactionForm(request.form, reaction)
     if form.rating.data == None: form.rating.data = rating.rating if (rating and rating.rating) else 0
     for media in reaction.article.all_media:
-        if media.author == g.user and not media.assigned_article and not media.assigned_reaction:
+        if media.author == g.user and not media.assigned_article and not media.reactions:
             form.image.choices.append((media.id, media.title))
         elif media == reaction.media:
             form.image.choices.append((media.id, media.title))
@@ -434,31 +445,41 @@ def delete_reaction(reaction_id):
 @app.route("/media", methods=['GET'])
 @app.route("/media/post", methods=["GET", 'POST'])
 def media():
+    class SortForm(Form):
+        type = SelectField("Co", choices=[("image", "obrázky"), ("video", "videa"), ("both", "obojí")], default="image")
+        order = SelectField("Typ řazení", choices=[("desc", "sestupně"), ("asc", "vzestupně")], default="desc")
+        filter = SelectField("Se články", choices=[("article", "jen u článků"), ("all", "všechny"), ("no_article", "jen bez článku")], default="article")
+        author = SelectField("Od autora", choices=[(0, "všech")], default=0, coerce=int)
+    
+    form = SortForm(request.args)
+    for user in db.session.query(db.User).join(db.User.media).filter(db.User.media.any()).all():
+        form.author.choices.append((user.id, user.name or user.ip))
+    
     class UploadForm(Form):
         image = FileField('Obrázek', [file_allowed(uploads, "Jen obrázky")])
         title = TextField('Titulek obrázku', [validators.required()])
         submit = SubmitField('Přidat obrázek')
     
     upload_form = UploadForm(request.form)
-    if request.method == 'POST' and upload_form.validate():
+    if request.method == 'POST' and form.type.data == "image" and upload_form.validate():
         media = upload_image(title=upload_form.title.data, author=g.user,
             article=None)
         db.session.commit()
-        return redirect("/media?filter=all")
+        return redirect("/media?filter=all#top")
+
+    video_form = VideoForm(request.form)
+    if request.method == 'POST' and form.type.data == "video" and video_form.validate():
+        video = db.Media(title=video_form.video_title.data, url=video_form.url.data, type="video", timestamp=datetime.now(), author=g.user)
+        db.session.add(video)
+        db.session.commit()
+        return redirect("/media?filter=all&type=video#top")
     
-    class SortForm(Form):
-        order = SelectField("Typ řazení", choices=[("desc", "sestupně"), ("asc", "vzestupně")], default="desc")
-        filter = SelectField("Se články", choices=[("article", "obrázky u článků"), ("all", "všechny obrázky"), ("no_article", "jen obrázky bez článku")], default="article")
-        author = SelectField("Od autora", choices=[(0, "všech")], default=0, coerce=int)
-    
-    form = SortForm(request.args)
-    for user in db.session.query(db.User).join(db.User.media).filter(db.User.media.any()).all():
-        form.author.choices.append((user.id, user.name or user.ip))
-        
     page = get_page()
     
     order = {'asc': asc, 'desc': desc}[form.order.data]
-    query = db.session.query(db.Media).filter(db.Media.type == "image").order_by(order(db.Media.timestamp))
+    query = db.session.query(db.Media).order_by(order(db.Media.timestamp))
+    if form.type.data != "both":
+        query = query.filter(db.Media.type == form.type.data)
     if form.filter.data == "no_article":
         query = query.filter(db.Media.article == None)
     elif form.filter.data == "article":
@@ -466,7 +487,7 @@ def media():
     if form.author.data: query = query.filter(db.Media.author_id == form.author.data)
     media = query[(page-1)*30:page*30]
     count = query.count()
-    return render_template("media.html", upload_form=upload_form, form=form, media=media, page=page, count=count)
+    return render_template("media.html", upload_form=upload_form, video_form=video_form, form=form, media=media, page=page, count=count)
 
 # TODO /media/id redirect to image itself
 @app.route("/media/<int:media_id>/edit", methods=['GET', 'POST'])
@@ -523,7 +544,7 @@ def delete_media(media_id):
         db.session.commit()
         if media.type == "image": flash("Obrázek odstraněn")
         else: flash("Video odstraněno")
-        return redirect(media.article.url)
+        return redirect(media.article.url or "/media")
     
 
 @app.route("/login", methods=['GET', 'POST'])
@@ -604,7 +625,7 @@ def users():
 @app.route("/users/<int:user_id>-<path:name>", methods=['GET'])
 def user(user_id, name=None):
     user = db.session.query(db.User).get(user_id)
-    articles = db.article_query.filter(db.Article.author == user).order_by(db.Article.timestamp.desc()).all()
+    articles = g.article_query.filter(db.Article.author == user).order_by(db.Article.timestamp.desc()).all()
     if not user: abort(404)
     page = get_page()
     return render_template('user.html', user=user, page=page, articles=articles)
@@ -692,7 +713,7 @@ def mass_label(label_id):
     class MassLabelForm(Form):
         labels = MultiCheckboxField('Štítky', coerce=int)
         submit = SubmitField("Oštítkovat")
-    articles = db.article_query.order_by(db.Article.timestamp.asc).all()
+    articles = g.article_query.order_by(db.Article.timestamp.asc).all()
     form.articles.choices = [(a.id, a.title) for a in labels]
     return render_template("mass_label")
     
@@ -722,6 +743,7 @@ def upload_image(**kvargs):
 @minrights(1)
 def new_article():
     form = ArticleForm(request.form)
+    if g.user.redactor: form = RedactorArticleForm(request.form)
     labels = db.session.query(db.Label) \
         .order_by(db.Label.category.desc(), db.Label.name.asc()).all()
     form.labels.choices = [(l.id, l.category[0]+": "+l.name) for l in labels]
@@ -739,14 +761,15 @@ def new_article():
         for label_id in form.labels.data:
             article.labels.append(db.session.query(db.Label).filter_by(id=label_id).scalar())
         if g.user.redactor:
-            article.published = True
-            msg = "Článek publikován."
+            article.published = form.published.data
+            msg = "Článek přidán."
+            if article.published: msg = "Článek publikován."
         else:
-            msg = "Děkujeme za váš příspěvek.  Redaktor váš článek ohodnotí a rozhodne, zda-li ho publikovat."
+            msg = "Děkujeme za váš příspěvek.  Administrátor váš článek ohodnotí a rozhodne, zda-li ho publikovat."
         db.session.add(article)
         db.session.commit()
         flash(msg)
-        return redirect("/")
+        return redirect(article.url)
     return render_template("new_article.html", form=form)
     
 @app.route("/articles/<int:edit_id>/edit", methods=['GET', 'POST'])
@@ -758,11 +781,16 @@ def edit_article(edit_id, title=None):
     if not g.user.admin and (g.user != article.author): abort(403)
     class EditArticleForm(ArticleForm):
         image = SelectField('Obrázek', choices=[(-1, '-')], coerce=int)
+    
+    class RedactorEditArticleForm(EditArticleForm):
         published = BooleanField("Publikovat", default=True)
     
-    form = EditArticleForm(request.form, article)
+    if g.user.redactor:
+        form = RedactorEditArticleForm(request.form, article)
+    else:
+        form = EditArticleForm(request.form, article)
     for media in article.all_media:
-        if media.author == g.user and not media.assigned_article and not media.assigned_reaction:
+        if media.author == g.user and not media.assigned_article and not media.reactions:
             form.image.choices.append((media.id, media.title))
         elif media == article.media:
             print(article.media, form.image.data)
@@ -788,7 +816,7 @@ def edit_article(edit_id, title=None):
                 article.rating.rating = form.rating.data
         else:
             article.rating = db.Rating(rating=form.rating.data, user_id=g.user.id, article=article)
-        article.published = form.published.data
+        if g.user.redactor: article.published = form.published.data
         article.labels = []
         for label_id in form.labels.data:
             article.labels.append(db.session.query(db.Label).filter_by(id=label_id).scalar())
@@ -959,7 +987,7 @@ def index_php():
     page = request.args.get('page')
     if page == "main": return redirect("/", 301)
     if page == "info": return redirect("/info", 301)
-    if page == "single":
+    if page == "single" and "id" in request.args:
         article = db.session.query(db.Article).get(request.args.get('id'))
         return redirect(article.url, 301)
     if page == "search":
@@ -977,6 +1005,7 @@ def index_php():
     if page == "labels": return redirect("/labels", 301)
     if page == "login": return redirect("/login", 301)
     if page == "list": return redirect("/search?all", 301)
+    abort(404)
 
 @app.route("/article/<path:path>")
 def article_redirect(path):
@@ -985,7 +1014,7 @@ def article_redirect(path):
 @app.route("/rss")
 @app.route("/rss/")
 def rss():
-    articles = db.article_query \
+    articles = g.article_query \
         .order_by(db.Article.timestamp.desc()).limit(10).all()
     now = datetime.now()
     response = make_response(render_template("rss.xml", articles=articles, now=now))

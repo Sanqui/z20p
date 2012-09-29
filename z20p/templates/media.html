@@ -3,9 +3,9 @@
 {% block title %}Obrázky{% endblock %}
 
 {% block content %}
-    <h2>Obrázky</h2>
-    <form action="/media" method="GET">
-        Řadit dle data {{form.order()}}, {{form.filter()}}, od {{form.author()}} <input type="submit" value="Vypsat">
+    <h2>{{{"both":"Média", 'image':'Obrázky', 'video':'Videa'}[form.type.data]}}</h2>
+    <form action="/media" method="GET" class="rightfloat">
+        Vypisovat {{form.type()}} dle data {{form.order()}}, {{form.filter()}}, od {{form.author()}} <input type="submit" value="Vypsat">
     </form>
     <article class="mediagrid">
         {% for image in media %}
@@ -13,6 +13,7 @@
                 <a href="{{image.url}}" rel="prettyPhoto[media]" title="{{image.title}} - <a href='{{image.article.url or '#'}}'>{{image.article.title or '(bez článku)'}}</a><p><small>{{image.author.name}}, {{image.timestamp|datetime}}</small>"><img src="{{image.thumb}}" class="gridimage" alt="{{image.title}}"></a>
                 <div title="{{image.author.name}}, {{image.timestamp|datetime}}">
                     <a href="{{image.article.url or '#'}}">{{image.title}}</a>
+                    <!--{{author(image.author, clip=True)}}-->
                     {% if g.user.admin or (g.user == image.author and not g.user.guest) %}
                         <a href="/media/{{image.id}}/edit">{{icon("pencil", "Edit")}}</a>
                     {% endif %}
@@ -21,11 +22,21 @@
         {% endfor %}
     </article>
     {{render_pages(page, count, per_page=30)}}
-    <h2>Nahrát obrázek</h2>
-    <form method="POST" action="/media/post" enctype="multipart/form-data">
-        {{render_field(upload_form.image)}}
-        {{render_field(upload_form.title)}}
-        {{render_field(upload_form.submit)}}
-    </form>
-    Obrázek přidaný tímto formulářem nebude přiřazen k žádnému článku.
+    {% if form.type.data == 'image' %}
+        <h2 id="add">Nahrát obrázek</h2>
+        <form method="POST" action="/media/post?type=image#add" enctype="multipart/form-data">
+            {{render_field(upload_form.image)}}
+            {{render_field(upload_form.title)}}
+            {{render_field(upload_form.submit)}}
+        </form>
+        Obrázek přidaný tímto formulářem nebude přiřazen k žádnému článku.
+    {% elif form.type.data == 'video' %}
+        <h2 id="add">Přidat video</h2>
+        <form method="POST" action="/media/post?type=video#add">
+            {{render_field(video_form.url)}}
+            {{render_field(video_form.video_title)}}
+            {{render_field(video_form.submit)}}
+        </form>
+        Video přidané tímto formulářem nebude přiřazen k žádnému článku.
+    {% endif %}
 {% endblock %}

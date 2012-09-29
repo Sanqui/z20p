@@ -3,8 +3,9 @@
 {% block title %}Vyhledávání{% endblock %}
 
 {% block content %}
+    {% if "noform" in request.args or stype == "all" %}<div class="search">{% else %}<article class="search">{% endif %}
     {% if stype != "all" %}
-        <h2>Vyhledávání
+        <div><strong>Vyhledávání
             {%- if stype == "text" and form.text.data -%}
                 {{' "'+form.text.data+'"'}}
             {%- elif stype == "labels" and form.operator.data -%}{{": "-}}
@@ -12,7 +13,7 @@
                     {{label.name}}{{{'and':' a ','or':' nebo '}[form.operator.data] if not loop.last}}
                 {%- endfor -%}
             {%- endif -%}
-                </h2>
+        </strong></div>
     {% else %}
         <h2>Všechny články</h2>
     {% endif %}
@@ -34,14 +35,16 @@
             {% elif stype == "all" %}
                 <input type="hidden" name="all">
             {% endif %}
-            {% if count > 0 %}
-                Nalezeno <strong>{{count}}</strong> článků.
-                            Řazeno dle {{ form.sort() }}, {{ form.order() }}
-            {% else %}
-                Řadit dle {{ form.sort() }}, {{ form.order() }}
-            {% endif %}
-            <input type="submit" value="{{'Hledat' if stype!='all' else 'Vypsat'}}">
-        </form>
+            <div class="foundsort">
+                {% if count > 0 %}
+                        Nalezeno <strong>{{count}}</strong> článků.  Řazeno dle {{ form.sort() }}, {{ form.order() }}
+                {% else %}
+                    Řadit dle {{ form.sort() }}, {{ form.order() }}
+                {% endif %}<input type="hidden" name="noform">
+                <input type="submit" value="{{'Hledat' if stype!='all' else 'Vypsat'}}">
+            </div>
+    {% if "noform" in request.args or stype == "all"  %}</div>{% else %}</article>{% endif %}
+    </article>
     {% if searched %}
         {% if matched_labels and stype == "text" %}
             Matchující štítky:

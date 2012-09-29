@@ -16,7 +16,7 @@
         <dt>Rank</dt>
             <dd>{{user.rank}}</dd>
         <dt>Staty</dt>
-            <dd>{{user.articles|count}} článků, {{user.articles|count}} reakcí, {{user.media|count}} médií, {{user.shoutbox_posts|count}} příspěvků do shoutboxu</dd>
+            <dd>{{user.articles|count}} článků, {{user.reactions|count}} reakcí, {{user.media|count}} médií, {{user.shoutbox_posts|count}} příspěvků do shoutboxu</dd>
         <dt>Zaregistrován{{gr(user.gender)}} dne</dt>
             <dd>{{user.timestamp|datetime}}</dd>
         <dt>Naposledy viděn{{gr(user.gender)}}</dt>
@@ -28,7 +28,7 @@
                 <dd><a href={{user.last_url}}>{{user.last_url or "?"}}</a></dd>
         {% endif %}
     </dl>
-    <p class="clear">{{user.profile|replace('\n','<p>')|safe or '-'}}
+    <p class="clear">{{user.profile|replace('\n','<p>')|clean|safe or '-'}}
     {% if articles %}
         <h3 id="articles">Články</h3>
         {% for article in articles[(page-1)*5:page*5] %}

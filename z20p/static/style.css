@@ -109,7 +109,7 @@ article .image {
     float:left;
     margin:0px 5px 3px 0px;
     clear:both;}
-article.crop .image {max-width:99px;max-height:80px;}
+article.crop .image {width:106px;height:87px;}
 article.crop .platforms li {display:inline; padding-left:2px;}
 article.crop .platforms li:before {content:'• ';}
 article.crop .platforms li a {color:inherit; text-decoration:none;}
@@ -118,7 +118,7 @@ article footer {display:block;
     border-radius:6px; -moz-border-radius:6px;
     background-color:#dcdee4;
     padding:1px 5px 1px 5px;}
-article.crop footer {clear:right; margin-left: 105px;}
+article.crop footer {clear:right; margin-left: 112px;}
 article.crop footer .stats {clear:none;}
 
 article.crop .labels {display:none;}
@@ -176,8 +176,8 @@ article.crop .adminline {display:none;}*/
 .largeimage {margin:auto; max-width:250px; max-height:200px; border:1px solid black;}
 
 .mediagrid {text-align:center;}
-.mediagrid .media {display:inline-block; margin:auto; /*border:1px solid #444;*/ width:172px; min-height:127px; vertical-align:top; overflow-x: hidden;}
-.mediagrid .media .gridimage {border: 1px solid black;}
+.mediagrid .media {display:inline-block; margin:auto; /*border:1px solid #444;*/ width:172px; min-height:127px; vertical-align:top; overflow-x: hidden; }
+.mediagrid .media .gridimage {border: 1px solid black; height:96px;}
 
 table {width: 100%; border-collapse:collapse; background-color: #f0f0f8; }
 thead {background-color:rgb(187, 20, 26); text-align:center; color:white;}
@@ -189,8 +189,12 @@ td {border: 1px solid #444;}
 
 .leftcolumn {width:47.5%; float:left; border-right:1px solid #aaa;}
 .rightcolumn {width:47.5%; float:right;}
+.leftfloat {float:left;}
+.rightfloat {float:right;}
 
-.labelbox {height:168px; overflow-y: scroll; width:33%; float:left;}
+.search form {margin-top:2px;}
+.foundsort {margin-top:6px; text-align:right;}
+.labelbox {height:168px; overflow-y: scroll; width:33%; float:left; margin-bottom:4px;}
 .labelbox ul {padding:0; margin:0;}
 .noform .labelbox, .noform .onlyifform {display:none;}
 
@@ -206,10 +210,9 @@ td {border: 1px solid #444;}
 .post .last {opacity:0.5;}
 .dateright {float:right; color:#999;}
 
-
 textarea {width:90%; min-height:172px;}
 
-footer {clear:both; text-align:right;}
+body > footer p {clear:both; text-align:right; font-size:10px;}
 
 .labelfloat {position:fixed; right:0; top:0; width:20%; background:white; height:100%; overflow-y:scroll;  z-index:12;}
 .labelfloat dd, .labelfloat ul, .labelfloat li {margin:0; padding:0; list-style:none; line-height:0.9; clear:left;}

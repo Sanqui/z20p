@@ -13,6 +13,9 @@
         <div class="labelfloat">{{ render_field(form.labels) }}</div>
         {{ render_field(form.image) }}
         {{ render_field(form.image_title) }}
+        {% if g.user.redactor %}
+            {{ render_field(form.published) }}
+        {% endif %}
       </dl>
       <p><input type="submit" value="Napsat">
     </form>

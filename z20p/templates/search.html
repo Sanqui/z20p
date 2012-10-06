@@ -10,7 +10,7 @@
                 {{' "'+form.text.data+'"'}}
             {%- elif stype == "labels" and form.operator.data -%}{{": "-}}
                 {%- for label in matched_labels -%}
-                    {{label.name}}{{{'and':' a ','or':' nebo '}[form.operator.data] if not loop.last}}
+                    {{label.name}}{{{'and':' a ','or':' nebo ', "nor":" ani "}[form.operator.data] if not loop.last}}
                 {%- endfor -%}
             {%- endif -%}
         </strong></div>
@@ -47,7 +47,7 @@
     </article>
     {% if searched %}
         {% if matched_labels and stype == "text" %}
-            Matchující štítky:
+            Odpovídající štítky:
                 <ul>
                     {% for label in matched_labels %}
                         <li> {{label.name}}

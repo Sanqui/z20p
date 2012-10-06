@@ -7,12 +7,13 @@ header, #content {width: 55%; margin: auto;}
 #content {min-height:240px;}
 #logo {margin:auto; width:650px;}
 #logo img {width:650px; height:115px;}
-#leftmenu, #rightmenu {position: fixed; top: 135px;  width: 12.5%; margin:0; padding:0; list-style:none;}
-#leftmenu {left: 5.5%;}
-#rightmenu {right: 9.5%;}
+#leftmenu, #rightmenu {height:100%; width:160px; text-align:left;}
+#leftmenu, #rightmenu {position: fixed; top: 150px;  /*width: 12.5%;*/ margin:0; padding:0; list-style:none;}
+#leftmenu {right: 80.5%;}
+#rightmenu {left: 79.5%;}
 #leftmenu li, #rightmenu li {width:100%; position:relative;}
 #leftmenu a, #rightmenu a {position: relative; border:1px solid #aaa; padding:3px; width:100%; display:block; background:white;
-    color:#414a5b; text-decoration:none; padding-right:30px;
+    color:#414a5b; text-decoration:none; width:100%;
     font-size:14px;
     border-radius:6px;
     -moz-box-shadow: inset 0px -5px 5px #ddd;
@@ -23,16 +24,15 @@ header, #content {width: 55%; margin: auto;}
     -moz-box-shadow: inset 0px -5px 5px #A20E14;
     -webkit-box-shadow: inset 0px -5px 5px #A20E14;
     box-shadow: inset 0px -5px 5px #A20E14;}
-.down {position:absolute; right:-35px; background-color: rgb(187, 20, 26); border:1px solid #5F0B0E; color:white; z-index:1; height:99%; border-radius:0 6px 6px 0;
-    display:block;  font-weight:bold; cursor:pointer; width:24px; text-align:center; font-size:14px;
+.down {position:absolute; right:-8px; background-color: rgb(187, 20, 26); border:1px solid #5F0B0E; color:white; z-index:1; height:99%; border-radius:0 6px 6px 0;
+    display:block;  font-weight:bold; cursor:pointer; width:26px; text-align:center; font-size:14px;
     -moz-box-shadow: inset 0px -5px 5px #A20E14;
     -webkit-box-shadow: inset 0px -5px 5px #A20E14;
     box-shadow: inset 0px -5px 5px #A20E14;}
 .down:hover { border-color:white;}
 .button-labels {margin:0; padding:0; overflow:hidden;}
 #leftmenu .button-labels a, #rightmenu .button-labels a /* wordy to prevent having to important */
-    {font-size:10px ; padding:0 0 0 6px; margin:0 4px 0 6px; width:70%;
-    float:right; } 
+    {font-size:10px ; padding:0 2px 0 6px; margin:0 18px 0 5px; width:70%; float:right;} 
 menu li { margin: 2px; width:100%; }
 
 .linkbar {background-color: rgb(187, 20, 26); text-align:right; font-size:12px;
@@ -94,6 +94,10 @@ article { display:block;
 	-moz-border-image: url('/static/img/article_border.png') 14 14 14 14 round round;
 	-webkit-border-image: url('/static/img/article_border.png') 14 14 14 14 round round;
 	-o-border-image: url('/static/img/article_border.png') 14 14 14 14 round round;
+	-moz-background-clip: padding;
+-webkit-background-clip: padding;
+background-clip: padding-box;
+
 }
 article h1 {margin:0; letter-spacing:0.15em; margin:0; font-size:13px;}
 article.regular h1 a {color:inherit; text-decoration:none;}
@@ -191,6 +195,7 @@ td {border: 1px solid #444;}
 .rightcolumn {width:47.5%; float:right;}
 .leftfloat {float:left;}
 .rightfloat {float:right;}
+.rightalign {text-align:right;}
 
 .search form {margin-top:2px;}
 .foundsort {margin-top:6px; text-align:right;}

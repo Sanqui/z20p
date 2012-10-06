@@ -111,7 +111,7 @@ $(document).ready(function(){
                         <a href="/labels">{{icon("tags-label", "")}} Štítky</a> • 
                     {% endif %}
                 {% endif %}
-                <a href="/media?filter=all">{{icon("images-stack", "")}} Média</a> • 
+                <a href="/media?filter=all&type=both">{{icon("images-stack", "")}} Média</a> • 
                 <a href="/users">{{icon("users", "")}} Uživatelé</a> • 
                 {% if not g.user.guest %}
                     <a href="/logout">{{icon("user--minus", "")}} Odhlásit</a>

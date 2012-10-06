@@ -144,7 +144,8 @@ cleaner = Cleaner(comments=False, style=False, embedded=False, annoying_tags=Fal
 
 @app.template_filter('clean')
 def clean(value):
-    return cleaner.clean_html(value)
+    if value: return cleaner.clean_html(value)
+    else: return ""
 
 # https://gist.github.com/3765578
 def url_for_here(**changed_args):
@@ -164,19 +165,26 @@ def page_not_found(e):
 def page_not_found(e):
     return render_template('errorpage.html', error=403), 403
 
+@app.errorhandler(500)
+def page_not_found(e):
+    return render_template('errorpage.html', error=500), 500
+
 @app.route("/")
 def main():
     page = get_page()
-    articles = g.article_query.order_by(db.Article.timestamp.desc())[(page-1)*4:page*4]
+    page_columns = get_page("page_columns")
+    column_labels = db.session.query(db.Label).filter(db.Label.category == "column").all()
+    articles = g.article_query.order_by(db.Article.timestamp.desc()).filter(~ db.Article.labels.any(db.Label.id.in_([l.id for l in column_labels])))[(page-1)*4:page*4]
+    columns = g.article_query.order_by(db.Article.timestamp.desc()).filter(db.Article.labels.any(db.Label.id.in_([l.id for l in column_labels])))[(page_columns-1)*2:page_columns*2]
     images = db.session.query(db.Media).join(db.Media.article).filter(db.Media.type=="image") \
         .filter(db.Article.published == True).order_by(db.Media.timestamp.desc()).limit(8).all()
-    videos = db.session.query(db.Media).join(db.Media.article).filter(db.Media.type=="video") \
+    videos = db.session.query(db.Media).filter(db.Media.type=="video") \
         .order_by(db.Media.timestamp.desc()).limit(2).all()
-    return render_template("main.html", articles=articles, images=images, videos=videos, page=page)
+    return render_template("main.html", articles=articles, images=images, columns=columns, videos=videos, page=page, page_columns=page_columns)
 
-def get_page():
+def get_page(name="page"):
     try: # This needs more magic...
-        page = int(request.args.get("page"))
+        page = int(request.args.get(name))
     except TypeError:
         page = 1
     except ValueError:
@@ -205,7 +213,7 @@ def search():
         platform_labels = MultiCheckboxField('Platforma', choices=[], coerce=int)
         genre_labels = MultiCheckboxField('Žánr', choices=[], coerce=int)
         other_labels = MultiCheckboxField('Štítek', choices=[], coerce=int)
-        operator = SelectField("Operátor", choices=[("or", "nebo"), ("and", "a")], default="or")
+        operator = SelectField("Operátor", choices=[("or", "nebo"), ("and", "a"), ("nor", "ani")], default="or")
         labels = HiddenField("labels", default="y")
     
     if 'labels' in request.args:
@@ -217,7 +225,7 @@ def search():
         for label in labels:
             if label.category == 'platform': f = form.platform_labels
             if label.category == 'genre': f = form.genre_labels
-            if label.category == 'other': f = form.other_labels
+            if label.category == 'other' or label.category == 'platform': f = form.other_labels
             f.choices.append((label.id, label.name))
     elif "all" in request.args:
         stype = 'all'
@@ -241,6 +249,7 @@ def search():
         or_conditions = []
         and_conditions = []
         label_or = [] # see the note below
+        label_nor = []
         if stype == 'text':
             if form.within_labels.data:
                 matched_labels = db.session.query(db.Label).filter(db.Label.name.like('%'+form.text.data+'%')).all()
@@ -254,6 +263,8 @@ def search():
             for label in matched_labels:
                 if form.operator.data == "or":
                     label_or.append(label.id) # This is for speed.  Using or_conditions proved horribly slow.
+                elif form.operator.data == "nor":
+                    label_nor.append(label.id)
                 elif form.operator.data == "and":
                     and_conditions.append(db.Article.labels.contains(label))
         elif stype == 'all':
@@ -261,9 +272,16 @@ def search():
         order_by = {"timestamp": db.Article.timestamp, "rating": db.Rating.rating, "views": db.Article.views}[form.sort.data]
         order = {'asc': asc, 'desc': desc}[form.order.data]
         
-        articles = g.article_query.outerjoin(db.Article.rating).filter(and_(*and_conditions)).filter(or_(*or_conditions))
+        articles = g.article_query
+        if order_by == db.Rating.rating:
+            articles = articles.join(db.Article.rating)
+        else:
+            articles = articles.outerjoin(db.Article.rating)
+        articles = articles.filter(and_(*and_conditions)).filter(or_(*or_conditions))
         if label_or:
             articles = articles.filter(db.Article.labels.any(db.Label.id.in_(label_or)))
+        if label_nor:
+            articles = articles.filter(~ db.Article.labels.any(db.Label.id.in_(label_nor)))
         matched_articles = articles.order_by(order(order_by)).all() # Nope, this won't work without the all.  It'll just regard everything which matched, including dupes (which get nuked when /read/ but that's about it).  :(
         count = len(matched_articles)
         matched_articles = matched_articles[(page-1)*5:(page)*5]
@@ -281,7 +299,6 @@ class VideoForm(Form):
         else:
             raise ValidationError("Musí být Youtube URL.")
 
-# TODO all these POSTs should go elsewhere with a redirect.  Better for refreshing.
 @app.route("/articles/<int:article_id>", methods=['GET'])
 @app.route("/articles/<int:article_id>-<path:title>", methods=['GET'])
 @app.route("/articles/<int:article_id>/post", methods=['POST'])
@@ -925,6 +942,7 @@ def edit_button(button_id): # quick and dirty 2: electric boogaloo
         icon = TextField('Ikonka')
         name = TextField('Jméno', [validators.required()])
         url = TextField('URL (ne pokud bude mít štítky)')
+        function = SelectField('Funkce', choices=[('', ''), ("shoutbox","Shoutbox"), ("columns", "Sloupky")])
         submit = SubmitField('UPRAVIT tlačítko')
     form = ButtonForm(request.form, button)
     
@@ -937,7 +955,7 @@ def edit_button(button_id): # quick and dirty 2: electric boogaloo
     label_form.label.choices = [(l.id, l.category[0]+": "+l.name) for l in labels]
     
     if request.method == 'POST' and request.form['submit'] == form.submit.label.text and form.validate():
-        button.icon, button.name, button.url = form.icon.data or None, form.name.data, form.url.data or None
+        button.icon, button.name, button.url, button.function = form.icon.data or None, form.name.data, form.url.data or None, form.function.data
         flash("Tlačítko upraveno.")
         db.session.commit()
         return redirect("/buttons")

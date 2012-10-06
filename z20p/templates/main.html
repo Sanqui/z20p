@@ -7,7 +7,7 @@
         {% for article in articles %}
             {{ display_article(article, crop=True) }}
         {% else %}
-            <div>Nemáme žádné články!  D:</div>
+            <div>Tady už nic není.</div>
         {% endfor %}
         <div class="mainarrows">
             {% if page > 1 %}
@@ -43,9 +43,20 @@
     <div class="rightfloat">
         <a href="/media?type=video&filter=all">{{icon("films", "")}} Všechna videa</a>
     </div>
-    <!--<h2>Nejnovější sloupky</h2>
-        <article>recenze</article>
-        <article>recenze</article>
-    <h2>Herpy a derpy</h2>-->
-    
+    <div id="columns" class="clear">
+        {% for article in columns %}
+            {{ display_article(article, crop=True, force_labels=True) }}
+        {% else %}
+            Tady už nic není.
+        {% endfor %}
+    </div>    
+        <div class="mainarrows">
+            {% if page_columns > 1 %}
+                <a href="{{url_for_here(page_columns=page_columns-1, _anchor='columns')}}" class="leftarrow">◀</a>
+            {% else %}
+                <a class="leftarrow disabledarrow">◀</a>
+            {% endif %}
+            <strong>{{page_columns}}</strong>
+            <a href="{{url_for_here(page_columns=page_columns+1, _anchor='columns')}}" class="rightarrow">▶</a>
+        </div>
 {% endblock %}

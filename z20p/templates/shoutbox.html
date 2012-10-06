@@ -12,7 +12,7 @@
         {{ form.submit() }}
     </form>
         {% for post in posts %}
-            <div class="post {{ loop.cycle('odd', 'even') }} {{'last' if loop.last}}" title="{{post.timestamp|datetime}}">{{author(post.author)}} {{post.text}}<div class="dateright">{{post.timestamp|datetime("%H:%M:%S")}}</div><div class="clear"></div></div>
+            <div class="post {{ loop.cycle('odd', 'even') }} {{'last' if loop.last}}" title="{{post.timestamp|datetime}}">{{author(post.author)}} {{post.text|urlize}}<div class="dateright">{{post.timestamp|datetime("%H:%M:%S")}}</div><div class="clear"></div></div>
         {% endfor %}
         <div style="pages">
             {{ render_pages(page, count, per_page=30) }}

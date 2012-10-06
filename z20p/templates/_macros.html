@@ -23,7 +23,7 @@
   </td>
 {% endmacro %}
 ## TODO rename to render_article
-{% macro display_article(article, crop=False, cut=False) -%}
+{% macro display_article(article, crop=False, cut=False, force_labels=False) -%}
     <article class="{{'crop' if crop else 'regular'}}" id="{{'article' if article.is_article else 'reaction'}}-{{article.id}}">
         {% if article.media %}
             {% if crop or cut %} <a href="{{article.url}}">
@@ -44,7 +44,7 @@
         {% endif %}
         {% if not crop %}
             {% if True or not cut or article.text.split("\n")|length <= 1%}
-                <p>{{article.text|replace("\n", "\n<p>")|clean|safe}}
+                {{(("<p>"|safe)+(article.text|safe)|replace("\n", "\n<p>"|safe))|clean|safe}}
             {% else %}
                 <p>{{article.text.split("\n")[0]|clean|safe}}
                 <p>…<a href="{{article.url}}">celý článek</a>
@@ -52,7 +52,7 @@
         {% else %}
             <ul class="platforms">
             {%- for label in article.labels -%}
-                {%- if label.category == 'platform' %}
+                {%- if label.category == 'platform' or force_labels -%}
                     <li><a href="{{label.url}}">{{label.name}}</a>
                 {% endif -%}
             {%- endfor -%}
@@ -156,7 +156,7 @@
                     {% endfor -%}
                 </ul>
         {% else %}
-            <li><a href="{{button.url}}">{{icon(button.icon, "")+" " if button.icon}}{{button.name}}{{" <strong>({0})</strong>".format(g.unread)|safe if g.unread and button.name == "Shoutbox"}}</a>
+            <li><a href="{{button.url}}">{{icon(button.icon, "")+" " if button.icon}}{{button.name}}{{" <strong>({0})</strong>".format(g.unread)|safe if g.unread and button.function == "shoutbox"}}</a>
         {% endif %}
     {% endfor %}
 {% endmacro %}

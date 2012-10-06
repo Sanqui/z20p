@@ -13,7 +13,7 @@
                         <td>{% if not loop.first %}<a href="/buttons?move=up&id={{button.id}}">{{icon("arrow-090-medium")}}</a>{%endif %}</td>
                         <td>{% if not loop.last  %}<a href="/buttons?move=down&id={{button.id}}">{{icon("arrow-270-medium")}}</a>{%endif %}</td>
                         <td>{{icon(button.icon, button.name) if button.icon}}</td>
-                        <td><a href="/buttons/{{button.id}}/edit">{{button.name}}</a></td>
+                        <td><a href="/buttons/{{button.id}}/edit">{{button.name}}</a>{{" ["+button.function+"]" if button.function}}</td>
                         <td>{{button.labels|length}}</td>
                 {% endfor %}
             </table>

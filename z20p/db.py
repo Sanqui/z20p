@@ -82,7 +82,7 @@ class Label(Base):
     
     @property
     def url(self):
-        return "/search?labels&noform&{0}_labels={1}".format(self.category, self.id)
+        return "/search?labels&noform&{0}_labels={1}".format("other" if self.category=="column" else self.category, self.id)
 
 class ButtonLabel(Base):
     __tablename__ = 'buttons_labels'
@@ -102,6 +102,7 @@ class Button(Base):
     name = Column(Unicode(256), nullable=False)
     icon = Column(Unicode(256))
     url = Column(Unicode(256))
+    function = Column(Enum("", "shoutbox", "columns"), nullable=False)
     
     labels = relationship(ButtonLabel, lazy="joined", order_by=ButtonLabel.position.asc(), backref="button")
     #title = Column(Unicode(256))
@@ -110,7 +111,7 @@ class Button(Base):
     def search_url(self):
         url = "/search?labels&noform"
         for label in self.labels:
-            url += "&"+label.label.category+"_labels="+str(label.label.id)
+            url += "&"+("other" if label.label.category=="column" else label.label.category)+"_labels="+str(label.label.id)
         return url
 
 articles_labels = Table('article_labels', Base.metadata, # XXX wrong table name, but whatever.

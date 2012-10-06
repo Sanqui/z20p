@@ -64,6 +64,15 @@
             {{ render_field(rating_form.submit) }}
           </dl>
         </form>
+        {% if g.user.admin %} 
+            <h2>Čtenářská hodnocení</h2>
+            (vidí jen admini)
+            <ul>
+                {% for rating in article.ratings %}
+                    <li>{{rating.rating}}/10 - {{author(rating.user)}}
+                {% endfor %}
+            </ul>
+        {% endif %}
     </div>
     <div class="leftcolumn">
         <h2>Napsat reakci</h2>

@@ -11,7 +11,7 @@
     </form>
     <article class="mediagrid">
         {% for image in media %}
-            <div class="media">
+            <div class="media rank-{{image.rank}}">
                 <a href="{{image.url}}" rel="prettyPhoto[media]" title="{{image.title}} - <a href='{{image.article.url or '#'}}'>{{image.article.title or '(bez článku)'}}</a><p><small>{{image.author.name}}, {{image.timestamp|datetime}}</small>"><img src="{{image.thumb}}" class="gridimage" alt="{{image.title}}"></a>
                 <div title="{{image.author.name}}, {{image.timestamp|datetime}}">
                     {{image.title}}
@@ -29,7 +29,8 @@
         <form method="POST" action="/media/post?type=image#add" enctype="multipart/form-data">
             {{render_field(upload_form.image)}}
             {{render_field(upload_form.title)}}
-            {{render_field(upload_form.submit)}}
+            {{render_field(upload_form.rank)}}
+            {{upload_form.submit()}}
         </form>
         Obrázek přidaný tímto formulářem nebude přiřazen k žádnému článku.
     {% elif form.type.data == 'video' %}

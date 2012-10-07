@@ -4,6 +4,7 @@
 {% block canonical %}{{user.url}}{% endblock %}
 
 {% block content %}
+    <a href="/users">{{icon("arrow-180-medium")}} Seznam uživatelů</a>
     {% if g.user.admin or g.user == user%}
         <a href="/users/{{user.id}}/edit">{{icon('pencil')}} Upravit profil</a>
     {% endif%}
@@ -23,9 +24,9 @@
             <dt>Staty</dt>
                 <dd>{{user.articles|count}} článků, {{user.reactions|count}} reakcí, {{user.media|count}} médií, {{user.shoutbox_posts|count}} příspěvků do shoutboxu</dd>
             {% if g.user.admin %}
-                <dt>IP</dt>
+                <dt class="admin">Posledí IP</dt>
                     <dd>{{user.ip}}</dd>
-                <dt>Poslední URL (stalk stalk)</dt>
+                <dt class="admin">Poslední URL</dt>
                     <dd><a href={{user.last_url}}>{{user.last_url or "?"}}</a></dd>
             {% endif %}
         </dl>

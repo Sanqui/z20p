@@ -135,7 +135,7 @@ class Media(Base):
     title = Column(Unicode(256), nullable=False)
     url = Column(Unicode(256), nullable=False)
     type = Column(Enum("image", "video"))
-    value = Column(Integer) # Enum('featured', 'good', 'regular), but then we'd get no ordering
+    rank = Column(Integer) # Enum('featured', 'good', 'regular), but then we'd get no ordering
         
     def thumbdir(self, dir="thumbs"):
         u = self.url.split("/")

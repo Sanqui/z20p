@@ -36,7 +36,7 @@
         {% endif %}
         {% if article.rating %}
             <div class="ratingbox">
-                <span class="rating rating-{{article.rating.rating}}">{{ article.rating.rating }}</span>
+                <span class="rating rating-{{article.rating.rating}}">{{ "N" if article.rating.rating==-1 else article.rating.rating }}</span>
                 {%- if article.rating.rating != 10 -%}
                     <span class="outof">/10</span>
                 {%- endif -%}
@@ -50,7 +50,7 @@
                 {{(("<p>"|safe)+(article.text|safe)|replace("\n", "\n<p>"|safe))|clean|safe}}
             {% else %}
                 
-                {{(("<p>"|safe)+(article.text)|truncate(900)|safe|replace("\n", "\n<p>"|safe))|clean|safe}}
+                {{(("<p>"|safe)+(article.text)|truncate(840)|safe|replace("\n", "\n<p>"|safe))|clean|safe}}
                 <p>…<a href="{{article.url}}">celý článek</a>
             {% endif %}
         {% else %}

@@ -4,6 +4,9 @@
 
 {% block content %}
     {% if "noform" in request.args or stype == "all" %}<div class="search">{% else %}<article class="search">{% endif %}
+    {% if "noform" not in request.args and stype == "text" %}
+        <img src="/static/img/searchpig.png" class="rightfloat">
+    {% endif %}
     {% if stype != "all" %}
         <div><strong>Vyhledávání
             {%- if stype == "text" and form.text.data -%}
@@ -35,7 +38,7 @@
             {% elif stype == "all" %}
                 <input type="hidden" name="all">
             {% endif %}
-            <div class="foundsort">
+            <div class="foundsort clear">
                 {% if count > 0 %}
                         Nalezeno <strong>{{count}}</strong> článků.  Řazeno dle {{ form.sort() }}, {{ form.order() }}
                 {% else %}

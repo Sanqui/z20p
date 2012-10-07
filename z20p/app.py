@@ -44,11 +44,12 @@ class MultiCheckboxField(SelectMultipleField):
     widget = widgets.ListWidget(prefix_label=False)
     option_widget = widgets.CheckboxInput()
 
+rating_field = SelectField('Hodnocení', choices=[(-2, '-'), (-1, 'N')]+[(i, str(i)) for i in range(0,11)], coerce=int)
 
 class ArticleForm(Form):
     title = TextField('Titulek', [validators.required()])
     text = TextAreaField('Text', [validators.required()])
-    rating = SelectField('Hodnocení', choices=[(0, '-')]+[(i+1, str(i+1)) for i in range(0,10)], coerce=int)
+    rating = rating_field
     f2p = BooleanField('Hratelné zdarma')
     labels = MultiCheckboxField('Štítky', coerce=int)
     image = FileField('Obrázek', [file_allowed(uploads, "Jen obrázky")])
@@ -311,15 +312,12 @@ def article(article_id, title=None):
     article = db.session.query(db.Article).get(article_id)
     if not article: abort(404)
     if not article.published and not g.user.redactor and article.author != g.user: abort(403)
-    class UploadForm(Form):
-        image = FileField('Obrázek', [file_allowed(uploads, "Jen obrázky")])
-        title = TextField('Titulek obrázku', [validators.required()])
-        submit = SubmitField('Přidat obrázek')
     
     upload_form = UploadForm(request.form)
+    upload_form.populate()
     if request.method == 'POST' and request.form['submit'] == upload_form.submit.label.text and upload_form.validate():
         media = upload_image(title=upload_form.title.data, author=g.user,
-            article=article)
+            article=article, rank=upload_form.rank)
         db.session.commit() # Gotta commit here 'cause we're REDIRECTING THE USER
         return redirect(article.url+"#gallery-images")
     
@@ -333,27 +331,29 @@ def article(article_id, title=None):
         return redirect(article.url)
     
     class RatingForm(Form):
-        rating = SelectField('Hodnocení', choices=[(0, '-')]+[(i+1, str(i+1)) for i in range(0,10)], coerce=int)
+        rating = rating_field
         submit = SubmitField('Přidat hodnocení')
     
     rating = db.session.query(db.Rating).filter(db.Rating.article == article) \
          .filter(db.Rating.user == g.user).first()
-    rating_form = RatingForm(request.form, rating=rating.rating if rating else 0)
+    rating_form = RatingForm(request.form, rating=-2 if (not rating or rating == None) else rating.rating)
     
     if request.method == 'POST' and request.form['submit'] == rating_form.submit.label.text and rating_form.validate(): # XXX
+        msg = "Hodnocení nedotčeno."
         if rating:
-            if rating_form.rating.data:
-                rating.rating = rating_form.rating.data
+            if rating_form.rating.data != -2:
+                rating.rating = form.rating.data
                 msg = "Hodnocení upraveno."
             else:
                 db.session.delete(rating)
                 msg = "Hodnocení odebráno."
         else:
-            rating = db.Rating(rating=rating_form.rating.data, user_id=g.user.id, article=article)
-            if article.author == g.user: # If the author removes then adds an rating using this form
-                article.rating = rating
-            db.session.add(rating)
-            msg = "Ohodnoceno."
+            if rating_form.rating.data != -2:
+                rating = db.Rating(rating=rating_form.rating.data, user_id=g.user.id, article=article)
+                if article.author == g.user: # If the author removes then adds an rating using this form
+                    article.rating = rating
+                db.session.add(rating)
+                msg = "Ohodnoceno."
         flash(msg)
         db.session.commit()
         return redirect(article.url)
@@ -365,12 +365,12 @@ def article(article_id, title=None):
     class ReactionForm(Form):
         name = TextField('Jméno', name_validators) # Only for guests
         text = TextAreaField('Text', [validators.required()])
-        rating = SelectField('Hodnocení', choices=[(0, '-')]+[(i+1, str(i+1)) for i in range(0,10)], coerce=int)
+        rating = rating_field
         image = FileField('Obrázek', [file_allowed(uploads, "Jen obrázky")])
         title = TextField('Titulek obrázku', [validators.optional()])
         submit = SubmitField('Přidat reakci')
     
-    reaction_form = ReactionForm(request.form, rating=rating.rating if (rating and article.author != g.user) else 0)
+    reaction_form = ReactionForm(request.form, rating=rating.rating if (rating and rating.rating != None and article.author != g.user) else -2)
     #for media in article.all_media:
     #    if media.author == g.user and not media.assigned_article and not media.assigned_reaction:
     #        reaction_form.image.choices.append((media.id, media.title))
@@ -381,13 +381,13 @@ def article(article_id, title=None):
             user = g.user
         rating = None
         if user != article.author:
-            if rating and rating_form.rating.data:
-                rating.raing = reaction_form.rating.data
-            elif rating_form.rating.data:
-                rating = db.Rating(rating=reaction_form.rating.data, user=user, article=article)
+            if rating and rating_form.rating.data != -2:
+                rating.raing = None if reaction_form.rating.data == -2 else reaction_form.rating.data
+            elif rating_form.rating.data != -2:
+                rating = db.Rating(rating=None if reaction_form.rating.data == -2 else reaction_form.rating.data, user=user, article=article)
                 db.session.add(rating)
         media = upload_image(title=upload_form.title.data, author=user,
-            article=article)
+            article=article, rank=2)
         reaction = db.Reaction(text=reaction_form.text.data, rating=rating, article=article, timestamp=datetime.now(), author=user, media=media)
         db.session.add(reaction)
         flash("Reakce přidána.")
@@ -397,8 +397,8 @@ def article(article_id, title=None):
     article.views += 1
     db.session.commit()
     # TODO make these @properties of the article?
-    images = db.session.query(db.Media).filter(db.Media.article==article).filter(db.Media.type=="image").all()
-    videos = db.session.query(db.Media).filter(db.Media.article==article).filter(db.Media.type=="video").all()
+    images = db.session.query(db.Media).filter(db.Media.article==article).filter(db.Media.type=="image").order_by(db.Media.rank.desc(), db.Media.timestamp.asc()).all()
+    videos = db.session.query(db.Media).filter(db.Media.article==article).filter(db.Media.type=="video").order_by(db.Media.rank.desc(), db.Media.timestamp.asc()).all()
     return render_template("article.html", article=article, upload_form=upload_form, reaction_form=reaction_form, rating_form=rating_form, video_form=video_form, images=images, videos=videos)
 
 
@@ -423,14 +423,14 @@ def edit_reaction(reaction_id):
     if not g.user.admin and (g.user != reaction.author): abort(403)
     class EditReactionForm(Form):
         text = TextAreaField('Text', [validators.required()])
-        rating = SelectField('Hodnocení', choices=[(0, '-')]+[(i+1, str(i+1)) for i in range(0,10)], coerce=int)
+        rating = rating_field
         image = SelectField('Obrázek', choices=[(-1, '-')], coerce=int)
         submit = SubmitField('Upravit reakci')
     # This could be constructed better...
     rating = db.session.query(db.Rating).filter(db.Rating.assigned_reaction.contains(reaction)) \
          .filter(db.Rating.user == reaction.author).scalar()
     form = EditReactionForm(request.form, reaction)
-    if form.rating.data == None: form.rating.data = rating.rating if (rating and rating.rating) else 0
+    if form.rating.data == None: form.rating.data = rating.rating if (rating and rating.rating != None) else -2
     for media in reaction.article.all_media:
         if media.author == g.user and not media.assigned_article and not media.reactions:
             form.image.choices.append((media.id, media.title))
@@ -444,11 +444,11 @@ def edit_reaction(reaction_id):
             reaction.media_id = form.image.data
         else:
             reaction.media = None
-        if form.rating.data:
+        if form.rating.data != -2:
             if rating:
-                rating.rating = form.rating.data
+                rating.rating = None if form.rating.data == -2 else form.rating.data
             else:
-                rating = db.Rating(rating=form.rating.data, user=reaction.author, article=reaction.article)
+                rating = db.Rating(rating=None if form.rating.data == -2 else form.rating.data, user=reaction.author, article=reaction.article)
             reaction.rating = rating
         else:
             reaction.rating = None
@@ -472,6 +472,18 @@ def delete_reaction(reaction_id):
         flash("Reakce odstraněna")
         return redirect(reaction.article.url)
 
+class MediaForm(Form):
+    rank = SelectField("Rank", choices=[], default=2, coerce=int)
+    
+    def populate(self):
+        self.rank.choices = [(2, "Normální"), (1, "Derp")]
+        if g.user.rights >= 2: self.rank.choices.insert(0, (3, "Dobrý"))
+
+class UploadForm(MediaForm):
+    image = FileField('Obrázek', [file_allowed(uploads, "Jen obrázky")])
+    title = TextField('Titulek obrázku', [validators.required()])
+    submit = SubmitField('Přidat obrázek')
+
 @app.route("/media", methods=['GET'])
 @app.route("/media/post", methods=["GET", 'POST'])
 def media():
@@ -485,15 +497,11 @@ def media():
     for user in db.session.query(db.User).join(db.User.media).filter(db.User.media.any()).all():
         form.author.choices.append((user.id, user.name or user.ip))
     
-    class UploadForm(Form):
-        image = FileField('Obrázek', [file_allowed(uploads, "Jen obrázky")])
-        title = TextField('Titulek obrázku', [validators.required()])
-        submit = SubmitField('Přidat obrázek')
-    
     upload_form = UploadForm(request.form)
+    upload_form.populate()
     if request.method == 'POST' and form.type.data == "image" and upload_form.validate():
         media = upload_image(title=upload_form.title.data, author=g.user,
-            article=None)
+            article=None, rank=upload_form.rank)
         db.session.commit()
         return redirect("/media?filter=all#top")
 
@@ -527,7 +535,7 @@ def edit_media(media_id):
     if not media: abort(404)
     if not g.user.admin and (g.user != media.author): abort(403)
     # TODO image rank
-    class EditMediaForm(Form):
+    class EditMediaForm(MediaForm):
         title = TextField('Titulek', [validators.required()])
         submit = SubmitField('Upravit')
         
@@ -543,6 +551,8 @@ def edit_media(media_id):
             form.article.choices.append((article.id, article.title))
             if request.method == 'GET': form.article.data = media.article.id if media.article else 0
     
+    form.populate()
+    
     if request.method == 'POST' and form.validate():
         if g.user.admin:
             media.url = form.url.data
@@ -551,6 +561,7 @@ def edit_media(media_id):
             else:
                 media.article = None
         media.title = form.title.data
+        media.rank = form.rank.data
         db.session.commit()
         if media.type == "image":
             flash("Obrázek upraven.")
@@ -559,7 +570,7 @@ def edit_media(media_id):
         if media.article:
             return redirect(media.article.url+"#media-"+str(media.id))
         else:
-            return redirect("/media?with_article=0")
+            return redirect("/media?filter=no_article")
         media.edit_timestamp = datetime.now()
     
     return render_template("edit_media.html", media=media, form=form)
@@ -752,7 +763,6 @@ def mass_label(label_id):
 def upload_image(**kvargs):
     media = None
     if 'image' in request.files and request.files['image'].filename != "":
-        # TODO check for duplicate filenames
         if "." not in request.files['image'].filename or request.files['image'].filename.split(".")[-1].lower() not in ('png', 'jpg', 'jpeg', 'gif'):
             flash("Nahraný soubor není obrázek.", 'error')
             return None
@@ -783,10 +793,10 @@ def new_article():
             author_id=g.user.id, 
             timestamp=datetime.now(), published=False)
         media = upload_image(title=form.image_title.data, author_id=g.user.id,
-            article=article)
+            article=article, rank=3)
         article.media = media
         article.f2p = form.f2p.data
-        if form.rating.data:
+        if form.rating.data != -2:
             article.rating = db.Rating(rating=form.rating.data, user_id=g.user.id, article=article)
         article.labels = []
         for label_id in form.labels.data:
@@ -842,7 +852,7 @@ def edit_article(edit_id, title=None):
         article.title = form.title.data
         article.text = form.text.data
         if article.rating:
-            if not form.rating.data:
+            if form.rating.data == -2:
                 db.session.delete(article.rating)
                 article.rating = None
             else:

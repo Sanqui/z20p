@@ -8,7 +8,7 @@
     <a class="mediatab selectedtab" id="tab-images">Obrázky ({{images|length}})</a><a class="mediatab" id="tab-videos">Videa ({{videos|length}})</a><a class="mediatab" id="tab-upload">Upload</a>
     <div class="mediagallery" id="gallery-images">
         {%- for media in images -%}
-            <div class="mediabox" id="media-{{media.id}}">
+            <div class="mediabox rank-{{media.rank}}" id="media-{{media.id}}">
                 <div><a href="{{media.url}}" rel="prettyPhoto[media]" title="<a href='{{media.url}}'>{{media.title}}</a><p><small>{{media.author.name}}, {{media.timestamp|datetime}}</small>"><img src="{{media.thumb}}" class="image" alt="{{media.title}}"></a></div>
                 <span title="{{media.author.name}}, {{media.timestamp|datetime}}">{{media.title}}
                 <!--{{author(media.author, clip=True)}}-->
@@ -20,7 +20,7 @@
         {%- endfor -%}</div>
     <div class="mediagallery" id="gallery-videos">
         {%- for media in videos -%}
-            <div class="mediabox" id="media-{{media.id}}">
+            <div class="mediabox rank-{{media.rank}}" id="media-{{media.id}}">
 <!--TODO stick a large red right arrow over the image to signify it's a VIDEO.-->
                 <div><a href="{{media.url}}" rel="prettyPhoto[videos]"><img src="{{media.thumb}}" class="image" alt="Video"></a></div>
                 <div title="{{media.author.name}}, {{media.timestamp|datetime}}">{{media.title}}
@@ -37,6 +37,7 @@
               <dl>
                 {{ render_field(upload_form.image, accept="image/*") }}
                 {{ render_field(upload_form.title) }}
+                {{ render_field(upload_form.rank) }}
                 {{ render_field(upload_form.submit) }}
               </dl>
             </form>

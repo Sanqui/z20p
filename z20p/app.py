@@ -138,6 +138,7 @@ def shutdown_session(exception=None):
 @app.template_filter('datetime')
 def datetime_format(value, format='%d. %m. %Y  %H:%M'):
     if not value: return "-"
+    if isinstance(value, unicode): return value
     return value.strftime(format)
 
 cleaner = Cleaner(comments=False, style=False, embedded=False, annoying_tags=False)
@@ -159,7 +160,10 @@ app.jinja_env.globals['round'] = round # useful
 
 @app.errorhandler(404)
 def page_not_found(e):
-    return render_template('errorpage.html', error=404), 404
+    if not request.path.startswith("/static"):
+        return render_template('errorpage.html', error=404), 404
+    else:
+        return "404", 404 # We don't have templatestuffs.
 
 @app.errorhandler(403)
 def page_not_found(e):
@@ -174,8 +178,8 @@ def main():
     page = get_page()
     page_columns = get_page("page_columns")
     column_labels = db.session.query(db.Label).filter(db.Label.category == "column").all()
-    articles = g.article_query.order_by(db.Article.timestamp.desc()).filter(~ db.Article.labels.any(db.Label.id.in_([l.id for l in column_labels])))[(page-1)*4:page*4]
-    columns = g.article_query.order_by(db.Article.timestamp.desc()).filter(db.Article.labels.any(db.Label.id.in_([l.id for l in column_labels])))[(page_columns-1)*2:page_columns*2]
+    articles = g.article_query.order_by(db.Article.publish_timestamp.desc()).filter(~ db.Article.labels.any(db.Label.id.in_([l.id for l in column_labels])))[(page-1)*4:page*4]
+    columns = g.article_query.order_by(db.Article.publish_timestamp.desc()).filter(db.Article.labels.any(db.Label.id.in_([l.id for l in column_labels])))[(page_columns-1)*2:page_columns*2]
     images = db.session.query(db.Media).join(db.Media.article).filter(db.Media.type=="image") \
         .filter(db.Article.published == True).order_by(db.Media.timestamp.desc()).limit(8).all()
     videos = db.session.query(db.Media).filter(db.Media.type=="video") \
@@ -225,7 +229,7 @@ def search():
         for label in labels:
             if label.category == 'platform': f = form.platform_labels
             if label.category == 'genre': f = form.genre_labels
-            if label.category == 'other' or label.category == 'platform': f = form.other_labels
+            if label.category == 'other' or label.category == 'column': f = form.other_labels
             f.choices.append((label.id, label.name))
     elif "all" in request.args:
         stype = 'all'
@@ -269,7 +273,7 @@ def search():
                     and_conditions.append(db.Article.labels.contains(label))
         elif stype == 'all':
             and_conditions = [db.Article.published == True]
-        order_by = {"timestamp": db.Article.timestamp, "rating": db.Rating.rating, "views": db.Article.views}[form.sort.data]
+        order_by = {"timestamp": db.Article.publish_timestamp, "rating": db.Rating.rating, "views": db.Article.views}[form.sort.data]
         order = {'asc': asc, 'desc': desc}[form.order.data]
         
         articles = g.article_query
@@ -284,7 +288,7 @@ def search():
             articles = articles.filter(~ db.Article.labels.any(db.Label.id.in_(label_nor)))
         matched_articles = articles.order_by(order(order_by)).all() # Nope, this won't work without the all.  It'll just regard everything which matched, including dupes (which get nuked when /read/ but that's about it).  :(
         count = len(matched_articles)
-        matched_articles = matched_articles[(page-1)*5:(page)*5]
+        matched_articles = matched_articles[(page-1)*7:(page)*7]
         
     return render_template("search.html", form=form, searched=searched, matched_articles=matched_articles, matched_labels=matched_labels, count=count, page=page, stype=stype)
 
@@ -397,6 +401,14 @@ def article(article_id, title=None):
     videos = db.session.query(db.Media).filter(db.Media.article==article).filter(db.Media.type=="video").all()
     return render_template("article.html", article=article, upload_form=upload_form, reaction_form=reaction_form, rating_form=rating_form, video_form=video_form, images=images, videos=videos)
 
+
+@app.route("/reactions/", methods=['GET'])
+def reactions():
+    page = get_page()
+    reactions = db.session.query(db.Reaction).join(db.Reaction.article).filter(db.Article.published == True).order_by(db.Reaction.timestamp.desc())[(page-1)*10:(page)*10]
+    count = db.session.query(db.Reaction).join(db.Reaction.article).filter(db.Article.published == True).count()
+    return render_template("reactions.html", reactions=reactions, page=page, count=count)
+
 @app.route("/reactions/<int:reaction_id>", methods=['GET'])
 def reaction(reaction_id):
     reaction = db.session.query(db.Reaction).get(reaction_id)
@@ -440,6 +452,7 @@ def edit_reaction(reaction_id):
             reaction.rating = rating
         else:
             reaction.rating = None
+        reaction.edit_timestamp = datetime.now()
         db.session.commit()
         flash("Reakce upravena.")
         return redirect(reaction.article.url+"#reaction-"+str(reaction.id))
@@ -547,6 +560,7 @@ def edit_media(media_id):
             return redirect(media.article.url+"#media-"+str(media.id))
         else:
             return redirect("/media?with_article=0")
+        media.edit_timestamp = datetime.now()
     
     return render_template("edit_media.html", media=media, form=form)
 
@@ -642,7 +656,7 @@ def users():
 @app.route("/users/<int:user_id>-<path:name>", methods=['GET'])
 def user(user_id, name=None):
     user = db.session.query(db.User).get(user_id)
-    articles = g.article_query.filter(db.Article.author == user).order_by(db.Article.timestamp.desc()).all()
+    articles = g.article_query.filter(db.Article.author == user).order_by(db.Article.publish_timestamp.desc()).all()
     if not user: abort(404)
     page = get_page()
     return render_template('user.html', user=user, page=page, articles=articles)
@@ -779,6 +793,7 @@ def new_article():
             article.labels.append(db.session.query(db.Label).filter_by(id=label_id).scalar())
         if g.user.redactor:
             article.published = form.published.data
+            if article.published: article.publish_timestamp = datetime.now()
             msg = "Článek přidán."
             if article.published: msg = "Článek publikován."
         else:
@@ -801,6 +816,7 @@ def edit_article(edit_id, title=None):
     
     class RedactorEditArticleForm(EditArticleForm):
         published = BooleanField("Publikovat", default=True)
+        publish_timestamp = TextField("Datum publikace")
     
     if g.user.redactor:
         form = RedactorEditArticleForm(request.form, article)
@@ -833,10 +849,18 @@ def edit_article(edit_id, title=None):
                 article.rating.rating = form.rating.data
         else:
             article.rating = db.Rating(rating=form.rating.data, user_id=g.user.id, article=article)
-        if g.user.redactor: article.published = form.published.data
+        if g.user.redactor:
+            article.published = form.published.data
+            if article.published and not form.publish_timestamp.data:
+                article.publish_timestamp = datetime.now()
+            elif form.publish_timestamp.data:
+                article.publish_timestamp = form.publish_timestamp.data
+            elif not form.publish_timestamp.data:
+                article.publish_timestam = None
         article.labels = []
         for label_id in form.labels.data:
             article.labels.append(db.session.query(db.Label).filter_by(id=label_id).scalar())
+        article.edit_timestamp = datetime.now()
         db.session.commit()
         flash('Článek upraven')
         return redirect(article.url)

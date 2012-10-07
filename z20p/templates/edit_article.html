@@ -14,10 +14,15 @@
         {{ render_field(form.image) }}
         {% if g.user.redactor %}
             {{ render_field(form.published) }}
+            {{ render_field(form.publish_timestamp) }}
         {% endif %}
       </dl>
       <p><input type="submit" value="Upravit">
     </form>
+    {% if g.user.redactor %}
+        <p>Je-li datum publikace prázdné a článek je publikován, bude vyplněno současným.  Datum lze ovšem retroaktivně změnit.
+        <p>Nesnaž se "publikovat" článek v budoucnosti, nepůjde to. 
+    {% endif %}
     
     
 {% endblock %}

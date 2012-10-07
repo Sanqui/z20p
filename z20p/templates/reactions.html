@@ -1,0 +1,13 @@
+{% extends "_base.html" %}
+
+{% block title %}Reakce{% endblock %}
+
+{% block content %}
+    <h2>Nejnovější reakce</h2>
+    {% for reaction in reactions %}
+        {{display_article(reaction, reaction_title=True)}}
+    {% endfor %}
+    
+    {{ render_pages(page, count, per_page=10) }}
+    
+{% endblock %}

@@ -58,7 +58,7 @@
             {% for article in matched_articles %}
                 {{ display_article(article, cut=True) }}
             {% endfor %}
-            {{ render_pages(page, count) }}
+            {{ render_pages(page, count, per_page=7) }}
         {% elif count == 0 %}
             <p>Žádný článek nenalezen.
         {% endif %}

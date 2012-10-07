@@ -68,8 +68,12 @@ class User(Base):
         return rank            
     
     @property 
-    def score(self):
-        return round(len(self.articles)**0.65+math.sqrt(len(self.reactions))*1.2+math.sqrt(len(self.media))*0.6+math.sqrt(len(self.shoutbox_posts))*0.1+math.sqrt(len(self.ratings))*0.1+(self.rights or 0), 1)
+    def exp(self):
+        return sum((len(self.articles)*1.75, len(self.reactions)*1.5, len(self.media)*1.2, len(self.shoutbox_posts)*0.1, len(self.ratings)*0.1, self.rights or 0))
+    
+    @property
+    def level(self):
+        return int(math.floor(math.sqrt(self.exp)))
 
 class Label(Base):
     __tablename__ = 'labels'
@@ -127,6 +131,7 @@ class Media(Base):
     author = relationship("User", backref='media')
     article_id = Column(Integer, ForeignKey('articles.id'))
     timestamp = Column(DateTime, nullable=False, index=True)
+    edit_timestamp = Column(DateTime)
     title = Column(Unicode(256), nullable=False)
     url = Column(Unicode(256), nullable=False)
     type = Column(Enum("image", "video"))
@@ -185,6 +190,8 @@ class Article(Base):
     rating = relationship("Rating", backref='assigned_article', primaryjoin=rating_id==Rating.id, post_update=True, uselist=False)
     ratings = relationship("Rating", primaryjoin=id==Rating.article_id, backref="article")
     timestamp = Column(DateTime, nullable=False, index=True)
+    publish_timestamp = Column(DateTime, index=True)
+    edit_timestamp = Column(DateTime)
     published = Column(Boolean, nullable=False)
     title = Column(Unicode(256), nullable=False)
     text = Column(UnicodeText, nullable=False)
@@ -222,6 +229,7 @@ class Reaction(Base):
     rating_id = Column(Integer, ForeignKey('ratings.id'))
     rating = relationship("Rating", backref='assigned_reaction')
     timestamp = Column(DateTime, nullable=False, index=True)
+    edit_timestamp = Column(DateTime)
     text = Column(UnicodeText, nullable=False)
     is_reaction=True
     @property

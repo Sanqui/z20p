@@ -10,22 +10,22 @@
     <article>
         <h2>{{author(user)}}</h2>
         <dl>
-            <dt>Skóre</dt>
-                <dd>{{user.score}}</dd>
             <dt>Email</dt>
                 <dd>{{user.email.replace("@", " zavináč ") if user.email else '-'}}</dd>
             <dt>Rank</dt>
                 <dd>{{user.rank}}</dd>
+            <dt>Level</dt>
+                <dd>{{user.level}} ({{user.exp}} exp, dočasné)</dd>
+            <dt>Zaregistrován{{gr(user.gender)}} dne</dt>
+                <dd>{{(user.timestamp or "Dávno")|datetime}}</dd>
+            <dt>Naposledy spatřen{{gr(user.gender)}}</dt>
+                <dd>{{user.laststamp|datetime}}</dd>
             <dt>Staty</dt>
                 <dd>{{user.articles|count}} článků, {{user.reactions|count}} reakcí, {{user.media|count}} médií, {{user.shoutbox_posts|count}} příspěvků do shoutboxu</dd>
-            <dt>Zaregistrován{{gr(user.gender)}} dne</dt>
-                <dd>{{user.timestamp|datetime}}</dd>
-            <dt>Naposledy viděn{{gr(user.gender)}}</dt>
-                <dd>{{user.laststamp|datetime}}</dd>
-            {% if g.user.admin or g.user == user%}
+            {% if g.user.admin %}
                 <dt>IP</dt>
                     <dd>{{user.ip}}</dd>
-                <dt>Poslední URL (stalk stalk stalk)</dt>
+                <dt>Poslední URL (stalk stalk)</dt>
                     <dd><a href={{user.last_url}}>{{user.last_url or "?"}}</a></dd>
             {% endif %}
         </dl>
@@ -34,7 +34,7 @@
     {% if articles %}
         <h3 id="articles">Články</h3>
         {% for article in articles[(page-1)*5:page*5] %}
-            {{ display_article(article, crop=True) }}
+            {{ display_article(article, crop=True, force_labels=True) }}
         {% endfor %}
         {{ render_pages(page, user.articles|count, anchor="articles") }}
     {% endif %}

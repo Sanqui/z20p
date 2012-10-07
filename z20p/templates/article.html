@@ -61,7 +61,7 @@
         <form method="POST" action="{{article.url}}/post">
           <dl>
             {{ render_field(rating_form.rating) }}
-            {{ render_field(rating_form.submit) }}
+            {{ rating_form.submit() }}
           </dl>
         </form>
         {% if g.user.admin %} 
@@ -83,7 +83,7 @@
             {% if g.user != article.author %} {{ render_field(reaction_form.rating) }} {% endif %}
             {{ render_field(reaction_form.image, accept="image/*") }}
             {{ render_field(reaction_form.title) }}
-            {{ render_field(reaction_form.submit) }}
+            {{ reaction_form.submit() }}
           </dl>
         </form>
     </div>

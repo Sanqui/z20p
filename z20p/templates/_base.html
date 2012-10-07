@@ -112,6 +112,7 @@ $(document).ready(function(){
                     {% endif %}
                 {% endif %}
                 <a href="/media?filter=all&type=both">{{icon("images-stack", "")}} Média</a> • 
+                <a href="/reactions">{{icon("sticky-notes-stack", "")}} Reakce</a> • 
                 <a href="/users">{{icon("users", "")}} Uživatelé</a> • 
                 {% if not g.user.guest %}
                     <a href="/logout">{{icon("user--minus", "")}} Odhlásit</a>
@@ -138,9 +139,11 @@ $(document).ready(function(){
             {% endblock %}
         </section>
         <footer>
-            <p>Všechen psaný obsah je, není-li stanoveno jinak, © redakční tým Zabij 10 prasat.
-            <p>Fugue icon set © <a href="http://p.yusukekamiyamane.com/">Yusuke Kamiyamane</a> <a href="http://creativecommons.org/licenses/by/3.0/deed.cs">{{icon("creative-commons", "pod Creative Commons licencí")}}</a>
-            <p>Zabij 10 prasat běží na redakčním systému z20p psaném pomocí <a href="http://flask.pocoo.org/">Flask</a>.
+            <p>Webová stránka <a href="http://www.zabij10prasat.cz/">Zabij 10 prasat</a> a související náležitosti © Zabij 10 prasat.<br>
+            Všechen obsah článků je vystaven dle <a href="http://creativecommons.org/licenses/by-sa/3.0/cz/">Creative Commons</a>.<br>
+            Fugue icon set © <a href="http://p.yusukekamiyamane.com/">Yusuke Kamiyamane</a> dle <a href="http://creativecommons.org/licenses/by/3.0/cz/">Creative Commons</a>.<br>
+            Všechen ostatní obsah je chráněn autorskými právy jeho příslušných vlastníků.<br>
+            <b>Zabij 10 prasat</b> běží na redakčním systému Z20P psaném pomocí <a href="http://flask.pocoo.org/">Flask</a>.
         </footer>
     </body>
 </html>

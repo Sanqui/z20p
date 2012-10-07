@@ -1,13 +1,16 @@
 body {background-color: #f0f0f8; background-image: url('/static/img/pigs.png');
     background-attachment:fixed; color:#414a5b; font-size:smaller;}
 * {font-family:Ubuntu, Verdana, sans-serif; }
+
+*::-moz-selection {background-color:#BB141A; color:white; text-shadow:none;}
+::selection {background-color:#BB141A; color:white; text-shadow:none;}
 ul, ul * {list-style:none;}
 .clear {clear:both;}
 header, #content {width: 55%; margin: auto;}
 #content {min-height:240px;}
 #logo {margin:auto; width:650px;}
 #logo img {width:650px; height:115px;}
-#leftmenu, #rightmenu {height:100%; width:160px; text-align:left;}
+#leftmenu, #rightmenu { width:160px; text-align:left;}
 #leftmenu, #rightmenu {position: fixed; top: 150px;  /*width: 12.5%;*/ margin:0; padding:0; list-style:none;}
 #leftmenu {right: 80.5%;}
 #rightmenu {left: 79.5%;}
@@ -49,6 +52,7 @@ menu li { margin: 2px; width:100%; }
 .pages {text-align:center;}
 
 .mainarrows {margin:0 auto 0px auto; width:64px; text-align:center;}
+.mainarrows strong {vertical-align:middle;}
 .mainarrows a {background-color: rgb(187, 20, 26); display:inline-block; color:white; text-decoration:none;
     border:1px solid #5F0B0E;
     -moz-box-shadow: inset 0px -5px 5px #A20E14;
@@ -69,6 +73,7 @@ menu li { margin: 2px; width:100%; }
 p {text-indent:18px; margin: 5px 0 0 0; padding:0; font-size:12px;}
 
 dt {font-weight:bold; float:left; width:30%; clear:left;}
+dt::after {content:':';}
 .info dt {width:30px;}
 
 a{	color: #862025;
@@ -90,10 +95,10 @@ article { display:block;
     border: 1px solid #777;
     border-width: 14px;
     background-color:white;
-	border-image: url('/static/img/article_border.png') 14 14 14 14 round round;
 	-moz-border-image: url('/static/img/article_border.png') 14 14 14 14 round round;
 	-webkit-border-image: url('/static/img/article_border.png') 14 14 14 14 round round;
 	-o-border-image: url('/static/img/article_border.png') 14 14 14 14 round round;
+	border-image: url('/static/img/article_border.png') 14 14 14 14 round round;
 	-moz-background-clip: padding;
 -webkit-background-clip: padding;
 background-clip: padding-box;
@@ -105,8 +110,9 @@ article.regular h1 a:hover {text-decoration:underline;}
 article .ratingbox {float:right; padding:8px; 
     background:rgb(187, 20, 26); border-radius:100% 0 100% 100%; color:white;
     width:30px; height:30px;}
-article .rating {font-size:24px; font-weight:bold; padding:0 3px 0 3px;}
-article .outof {vertical-align:top; font-size:smaller; position:relative; left:-3px;}
+article .rating {font-size:24px; font-weight:bold; padding:0 3px 0 1px;}
+article .rating-10 {padding:0;}
+article .outof {vertical-align:top; font-size:9px; position:relative; left:-2px;}
 article .image {
     max-width:172px; max-height:250px;
     border: 1px solid black;
@@ -177,13 +183,17 @@ article.crop .adminline {display:none;}*/
 
 #gallery-upload input {max-width:60%;}
 
+article.reaction {}
+article.reaction h1 a {text-decoration:none;}
+article.reaction footer {/*background-color:#fced9a*/}
+
 .largeimage {margin:auto; max-width:250px; max-height:200px; border:1px solid black;}
 
 .mediagrid {text-align:center;}
 .mediagrid .media {display:inline-block; margin:auto; /*border:1px solid #444;*/ width:172px; min-height:127px; vertical-align:top; overflow-x: hidden; }
 .mediagrid .media .gridimage {border: 1px solid black; height:96px;}
 
-table {width: 100%; border-collapse:collapse; background-color: #f0f0f8; }
+table {width: 100%; border-collapse:collapse; background-color: #f0f0f8; margin-bottom:2px;}
 thead {background-color:rgb(187, 20, 26); text-align:center; color:white;}
 thead td {border-color: #5F0B0E;
     -moz-box-shadow: inset 0px -5px 5px #A20E14;

@@ -4,21 +4,25 @@
 
 {% block content %}
     <h2>Nový článek</h2>
-    <form method="POST" action="/new_article" enctype="multipart/form-data">
-      <dl>
-        {{ render_field(form.title) }}
-        {{ render_field(form.text) }}
-        {{ render_field(form.rating) }}
-        {{ render_field(form.f2p) }}
-        <div class="labelfloat">{{ render_field(form.labels) }}</div>
-        {{ render_field(form.image) }}
-        {{ render_field(form.image_title) }}
-        {% if g.user.redactor %}
-            {{ render_field(form.published) }}
-        {% endif %}
-      </dl>
-      <p><input type="submit" value="Napsat">
-    </form>
-    <p>Publikováním článku na stránce Zabij 10 prasat se vzdáváte všech práv, majetku a jmění.
+    <article>
+        <form method="POST" action="/new_article" enctype="multipart/form-data">
+          <dl>
+            {{ render_field(form.title) }}
+            {{ render_field(form.text) }}
+            {{ render_field(form.rating) }}
+            {{ render_field(form.f2p) }}
+            <div class="labelfloat">{{ render_field(form.labels) }}</div>
+            {{ render_field(form.image) }}
+            {{ render_field(form.image_title) }}
+            {% if g.user.redactor %}
+                {{ render_field(form.published) }}
+            {% endif %}
+          </dl>
+          <p><input type="submit" value="Napsat">
+        </form>
+        <p>Článek nemusí být dlouhý. Naopak krátké, čtivé, a výstižné texty jsou to, po čem na <b>Zabij 10 prasat</b> nejvíc toužíme.
+        <p>U recenzí uvádějte všechny platformy, na které hra vyšla. Včetně portů (pokud se příliš neliší) a oficiální emulace; remaky naopak uvádějte výhradně když se dají shrnout do stejných slov.
+    </article>
+    <p>Uložením článku potvrzujete, že jste autory obsahu či máte právo na jeho použití, a vystavujete ho dle licence <a href="http://creativecommons.org/licenses/by-sa/3.0/cz/">Creative Commons</a> se svolením k případnému komerčnímu využití a úpravě při zachování licence. Jako autor díla bude uvedeno Vaše uživatelské jméno na <b>Zabij 10 prasat</b> a za název díla bude považován Vámi zadaný titulek článku.
     
 {% endblock %}

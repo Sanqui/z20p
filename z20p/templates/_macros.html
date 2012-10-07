@@ -23,8 +23,11 @@
   </td>
 {% endmacro %}
 ## TODO rename to render_article
-{% macro display_article(article, crop=False, cut=False, force_labels=False) -%}
-    <article class="{{'crop' if crop else 'regular'}}" id="{{'article' if article.is_article else 'reaction'}}-{{article.id}}">
+{% macro display_article(article, crop=False, cut=False, force_labels=False, reaction_title=False) -%}
+    <article class="{{'crop' if crop else 'regular'}} {{'reaction' if article.is_reaction}}" id="{{'article' if article.is_article else 'reaction'}}-{{article.id}}">
+        {% if reaction_title %}
+            <h1><a href="{{article.url}}">Reakce na <em>{{ article.article.title }}</em>:</a></h1>
+        {% endif %}
         {% if article.media %}
             {% if crop or cut %} <a href="{{article.url}}">
             {% else %} <a href="{{article.media.url}}" rel="prettyPhoto" title="{{article.media.title}}">{% endif %}
@@ -33,7 +36,7 @@
         {% endif %}
         {% if article.rating %}
             <div class="ratingbox">
-                <span class="rating">{{ article.rating.rating }}</span>
+                <span class="rating rating-{{article.rating.rating}}">{{ article.rating.rating }}</span>
                 {%- if article.rating.rating != 10 -%}
                     <span class="outof">/10</span>
                 {%- endif -%}
@@ -43,10 +46,11 @@
             <h1><a href="{{article.url}}">{{ article.title }}</a></h1>
         {% endif %}
         {% if not crop %}
-            {% if True or not cut or article.text.split("\n")|length <= 1%}
+            {% if not cut or article.text|striptags|length <= 1000 %}
                 {{(("<p>"|safe)+(article.text|safe)|replace("\n", "\n<p>"|safe))|clean|safe}}
             {% else %}
-                <p>{{article.text.split("\n")[0]|clean|safe}}
+                
+                {{(("<p>"|safe)+(article.text)|truncate(900)|safe|replace("\n", "\n<p>"|safe))|clean|safe}}
                 <p>…<a href="{{article.url}}">celý článek</a>
             {% endif %}
         {% else %}
@@ -83,7 +87,7 @@
                         <a href="{{article.url}}/edit">{{icon("pencil", "Editovat")}}</a>
                     {% endif %}
                 {% endif %}
-                <div class="dateline">{{icon("calendar-blue", "Datum publikace:")}} {{article.timestamp|datetime}}</div>
+                <div class="dateline" title="vytvoření: {{article.timestamp|datetime}}, poslední editace: {{article.edit_timestamp|datetime}}">{{icon("calendar-blue", "Datum publikace:")}} {{(article.publish_timestamp or article.timestamp)|datetime}}</div>
             </div> 
             <div class="authorline">Napsal{{gr(article.author.gender)}}: {{author(article.author)}}</div> 
             <div class="clear"></div>

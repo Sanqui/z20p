@@ -4,12 +4,12 @@
 
 {% block content %}
     <h2>Uživatelé</h2>
-    <table><thead><tr><td>Jméno</td><td>Skóre</td><td>Práva</td><td>Datum registrace</td><td>Naposledy</td></tr></thead>
+    <table><thead><tr><td>Jméno</td><td>Level</td><td>Práva</td><td>Datum registrace</td><td>Naposledy</td></tr></thead>
     <tbody>
         {% for user in users %}
             <tr id="user-{{user.id}}">
                 <td>{{author(user)}}</td>
-                <td>{{user.score}}</td>
+                <td>{{user.level}}</td>
                 <td>{{user.rank}}</td>
                 <td>{{user.timestamp|datetime}}</td>
                 <td>{{user.laststamp|datetime}}</td>

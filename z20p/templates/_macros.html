@@ -37,7 +37,7 @@
         {% if article.rating %}
             <div class="ratingbox">
                 <span class="rating rating-{{article.rating.rating}}">{{ "N" if article.rating.rating==-1 else article.rating.rating }}</span>
-                {%- if article.rating.rating != 10 -%}
+                {%- if article.rating.rating not in (-1, 10) -%}
                     <span class="outof">/10</span>
                 {%- endif -%}
             </div>
@@ -46,11 +46,11 @@
             <h1><a href="{{article.url}}">{{ article.title }}</a></h1>
         {% endif %}
         {% if not crop %}
-            {% if not cut or article.text|striptags|length <= 1000 %}
+            {% if True or not cut or article.text|striptags|length <= 2100 %}
                 {{(("<p>"|safe)+(article.text|safe)|replace("\n", "\n<p>"|safe))|clean|safe}}
             {% else %}
                 
-                {{(("<p>"|safe)+(article.text)|truncate(840)|safe|replace("\n", "\n<p>"|safe))|clean|safe}}
+                {{(("<p>"|safe)+(article.text)|truncate(1000)|safe|replace("\n", "\n<p>"|safe))|clean|safe}}
                 <p>…<a href="{{article.url}}">celý článek</a>
             {% endif %}
         {% else %}
@@ -164,6 +164,31 @@
         {% endif %}
     {% endfor %}
 {% endmacro %}
+{% macro render_media_box(media, rel="", article_icon=False, icons=True, title=True) -%}
+    <div class="mediabox rank-{{media.rank}}" id="media-{{media.id}}">
+        <div class="imagewrap">
+            {%- if icons %}
+                <div class="imageicons">
+                    <!--<a id="raise">{{icon("pencil", "Edit")}}</a><!--
+                 --<a >{{icon("pencil", "Edit")}}</a><br>-->
+                    {%- if g.user.admin or (g.user == media.author and not g.user.guest) -%}
+                        <a href="/media/{{media.id}}/edit">{{icon("pencil", "Edit")}}</a>
+                    {%- endif -%}
+                    {%- if media.type == 'video' %}
+                        <a href="{{media.url}}">{{icon("film", "Video")}}</a>
+                    {%- endif -%}
+                    {%- if article_icon and media.article -%}
+                        <a href="{{media.article.url}}">{{icon("blog", media.article.title)}}</a>
+                    {%- endif -%}
+                    <a href="{{media.author.url}}">{{author(media.author, clip=True)}}</a>
+                </div>
+            {% endif -%}
+            <a href="{{media.url}}" rel="prettyPhoto[{{rel}}]" title="<a href='{{media.url}}'>{{media.title}}</a><p><small>{{media.author.name}}, {{media.timestamp|datetime}}</small>"><img src="{{media.thumb}}" class="image" alt="{{media.title}}"></a></div>
+        {%- if title %}
+            <div title="{{media.author.name}}, {{media.timestamp|datetime}}" >{{media.title}}</div>
+        {%- endif -%}
+    </div>
+{%- endmacro %}
 {% macro icon(name, alt, title="") -%}
 <img src="{{'/static/icons/'+name+'.png' if '/' not in name else name}}" alt="{{alt}}" title="{{alt if title=='' else title}}" class="icon" width=16 height=16>
 {%- endmacro %}

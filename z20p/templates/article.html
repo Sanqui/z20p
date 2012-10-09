@@ -8,28 +8,11 @@
     <a class="mediatab selectedtab" id="tab-images">Obrázky ({{images|length}})</a><a class="mediatab" id="tab-videos">Videa ({{videos|length}})</a><a class="mediatab" id="tab-upload">Upload</a>
     <div class="mediagallery" id="gallery-images">
         {%- for media in images -%}
-            <div class="mediabox rank-{{media.rank}}" id="media-{{media.id}}">
-                <div><a href="{{media.url}}" rel="prettyPhoto[media]" title="<a href='{{media.url}}'>{{media.title}}</a><p><small>{{media.author.name}}, {{media.timestamp|datetime}}</small>"><img src="{{media.thumb}}" class="image" alt="{{media.title}}"></a></div>
-                <span title="{{media.author.name}}, {{media.timestamp|datetime}}">{{media.title}}
-                <!--{{author(media.author, clip=True)}}-->
-                    {% if g.user.admin or (g.user == media.author and not g.user.guest) %}
-                        <a href="/media/{{media.id}}/edit">{{icon("pencil", "Edit")}}</a>
-                    {% endif %}
-                </span>
-            </div>
+            {{ render_media_box(media, rel="images") }}
         {%- endfor -%}</div>
     <div class="mediagallery" id="gallery-videos">
         {%- for media in videos -%}
-            <div class="mediabox rank-{{media.rank}}" id="media-{{media.id}}">
-<!--TODO stick a large red right arrow over the image to signify it's a VIDEO.-->
-                <div><a href="{{media.url}}" rel="prettyPhoto[videos]"><img src="{{media.thumb}}" class="image" alt="Video"></a></div>
-                <div title="{{media.author.name}}, {{media.timestamp|datetime}}">{{media.title}}
-                    <!--{{author(media.author, clip=True)}}-->
-                    {% if g.user.admin or (g.user == media.author and not g.user.guest) %}
-                        <a href="/media/{{media.id}}/edit">{{icon("pencil", "Edit")}}</a>
-                    {% endif %}
-                </div>
-            </div>
+            {{ render_media_box(media, rel="videos") }}
         {%- endfor -%}</div>
     <div class="mediagallery" id="gallery-upload">
         <div class="leftcolumn">
@@ -58,13 +41,15 @@
         {% endfor %}
     </div>
     <div class="rightcolumn">
-        <h2>Ohodnotit</h2>
-        <form method="POST" action="{{article.url}}/post">
-          <dl>
-            {{ render_field(rating_form.rating) }}
-            {{ rating_form.submit() }}
-          </dl>
-        </form>
+        {% if article.rating %}
+            <h2>Ohodnotit</h2>
+            <form method="POST" action="{{article.url}}/post">
+              <dl>
+                {{ render_field(rating_form.rating) }}
+                {{ rating_form.submit() }}
+              </dl>
+            </form>
+        {% endif %}
         {% if g.user.admin %} 
             <h2>Čtenářská hodnocení</h2>
             (vidí jen admini)
@@ -81,7 +66,7 @@
           <dl>
             {% if g.user.guest %} {{ render_field(reaction_form.name) }} {% endif %}
             {{ render_field(reaction_form.text) }}
-            {% if g.user != article.author %} {{ render_field(reaction_form.rating) }} {% endif %}
+            {% if g.user != article.author and article.rating %} {{ render_field(reaction_form.rating) }} {% endif %}
             {{ render_field(reaction_form.image, accept="image/*") }}
             {{ render_field(reaction_form.title) }}
             {{ reaction_form.submit() }}

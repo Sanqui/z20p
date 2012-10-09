@@ -69,11 +69,11 @@ class User(Base):
     
     @property 
     def exp(self):
-        return sum((len(self.articles)*1.75, len(self.reactions)*1.5, len(self.media)*1.2, len(self.shoutbox_posts)*0.1, len(self.ratings)*0.1, self.rights or 0))
+        return sum((len(self.articles)*800, len(self.reactions)*60, len(self.media)*20, len(self.shoutbox_posts)*6, len(self.ratings)*40))
     
     @property
     def level(self):
-        return int(math.floor(math.sqrt(self.exp)))
+        return int(math.floor(self.exp**0.3))
 
 class Label(Base):
     __tablename__ = 'labels'

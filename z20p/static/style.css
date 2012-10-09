@@ -108,7 +108,7 @@ background-clip: padding-box;
 article h1 {margin:0; letter-spacing:0.15em; margin:0; font-size:13px;}
 article.regular h1 a {color:inherit; text-decoration:none;}
 article.regular h1 a:hover {text-decoration:underline;}
-article .ratingbox {float:right; padding:8px; 
+article .ratingbox {float:right; padding:8px;  text-align:center;
     background:rgb(187, 20, 26); border-radius:100% 0 100% 100%; color:white;
     width:30px; height:30px;}
 article .rating {font-size:24px; font-weight:bold; padding:0 3px 0 1px;}
@@ -175,15 +175,18 @@ article.crop .adminline {display:none;}*/
 
 .mediagallery {width:100%; max-height:200px; overflow-x:scroll; overflow-y:hidden; white-space: nowrap; }
 .mediagallery.maingallery {white-space:normal; overflow:hidden; height:100px; width:auto; }
-.mediagallery.mainvideogallery {white-space:normal; overflow:hidden; height:100px; width:272px; text-align:right; float:right;}
+.mediagallery.mainvideogallery {white-space:normal; overflow:hidden; height:100px; width:278px; text-align:right; float:right;}
 .mediabox .image { 
     max-width:200px; height:96px;
-    border: 2px solid black; /*rgb(187, 20, 26);*/ border-radius:4px;}
-.mediabox.rank-3 .image{
-    border-color:rgb(187, 20, 26);
-}
+    border: 2px solid black; /*rgb(187, 20, 26);*/ border-radius:4px; }
+.mediagallery .mediabox.rank-3 .image, .mediagrid .mediabox.rank-3 .image {   border-color:#ffbe0f #ea7900 #ea7900 #ffbe0f !important;  border-width:3px;}
+.mediagallery .mediabox.rank-1 .image, .mediagrid .mediabox.rank-1 .image {   border-color:gray !important;}
+
 .mediabox {max-width:200px; display:inline-block; text-align:center; white-space: normal; vertical-align:top; margin-right:2px;}
 .mediabox dd {margin-left:0;}
+
+.imagewrap {position:relative; max-width:auto; display:inline-block; white-space:nowrap; }
+.imageicons {position:absolute; right:0; bottom:0;}
 
 #gallery-upload input {max-width:60%;}
 
@@ -194,9 +197,10 @@ article.reaction footer {/*background-color:#fced9a*/}
 .largeimage {margin:auto; max-width:250px; max-height:200px; border:1px solid black;}
 
 .mediagrid {text-align:center;}
-.mediagrid .media {display:inline-block; margin:auto; /*border:1px solid #444;*/ width:172px; min-height:127px; vertical-align:top; overflow-x: hidden; }
-.mediagrid .media .gridimage {border: 2px solid black; /*rgb(187, 20, 26);*/ border-radius:4px; height:96px;}
-.mediagrid .media.rank-3 .gridimage { border-color:rgb(187, 20, 26); }
+.mediagrid .mediabox {display:inline-block; margin:auto; /*border:1px solid #444;*/ width:172px; min-height:127px; vertical-align:top; overflow-x: hidden; }
+.mediagrid .mediabox .image {border: 2px solid black; /*rgb(187, 20, 26);*/ border-radius:4px; height:96px; max-width:168px;}
+.mediagrid .mediabox .imagewrap {max-width:172px;}
+.mediagrid .media.rank-3 .image { border-color:rgb(187, 20, 26); }
 
 table {width: 100%; border-collapse:collapse; background-color: #f0f0f8; margin-bottom:2px;}
 thead {background-color:rgb(187, 20, 26); text-align:center; color:white;}
@@ -212,7 +216,7 @@ td {border: 1px solid #444;}
 .rightfloat {float:right;}
 .rightalign {text-align:right;}
 
-.search form {margin-top:2px;}
+.search form {margin-top:22px;}
 .foundsort {margin-top:6px; text-align:right;}
 .labelbox {height:168px; overflow-y: scroll; width:33%; float:left; margin-bottom:4px;}
 .labelbox ul {padding:0; margin:0;}
@@ -238,3 +242,6 @@ body > footer p {clear:both; text-align:right; font-size:10px;}
 .labelfloat dd, .labelfloat ul, .labelfloat li {margin:0; padding:0; list-style:none; line-height:0.9; clear:left;}
 
 .kip {z-index:256;}
+
+
+.pp_social {display:none;}

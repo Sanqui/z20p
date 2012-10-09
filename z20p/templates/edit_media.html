@@ -7,7 +7,7 @@
     {% if media.type == "image" %}
         <img src="{{media.url}}" class="largeimage">
     {% else %}
-        <a href="{{media.url}}"><img src="{{media.thumb_url}}" class="image" alt="Video"  class="largeimage"></a>
+        <a href="{{media.url}}"><img src="{{media.thumb}}" class="image" alt="Video"  class="largeimage"></a>
     {% endif %}
     <p>Přidal{{gr(media.author.gender)}} {{author(media.author)}} v {{media.timestamp|datetime}}
     {% if media.article %}
@@ -31,7 +31,7 @@
             {{ render_field(form.article) }}
             {{ render_field(form.url) }}
         {% endif %}
-        {{ render_field(form.submit) }}
+        {{ form.submit() }}
       </dl>
     </form>
     <form method="POST" action="/media/{{media.id}}/delete">

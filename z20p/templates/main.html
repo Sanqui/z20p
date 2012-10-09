@@ -21,21 +21,12 @@
     <div class="clear"></div>
     <div class="mediagallery mainvideogallery">
         {%- for media in videos -%}
-            <div class="mediabox" id="media-{{media.id}}">
-                <div><a href="{{media.url}}" rel="prettyPhoto[media]" title="{{media.title}} - <a href='{{media.article.url or '#'}}'>{{media.article.title or '(bez článku)'}}</a><p><small>{{media.author.name}}, {{media.timestamp|datetime}}</small>"><img src="{{media.thumb}}" class="image" alt="{{media.title}}"></a></div>
-            </div>
-        {% endfor -%}</div>
+            {{ render_media_box(media, rel="videos", icons=False, title=False) }}
+        {% endfor -%}
+    </div>
     <div class="mediagallery maingallery">
         {%- for media in images -%}
-            <div class="mediabox" id="media-{{media.id}}">
-                <div><a href="{{media.url}}" rel="prettyPhoto[media]" title="{{media.title}} - <a href='{{media.article.url or '#'}}'>{{media.article.title or '(bez článku)'}}</a><p><small>{{media.author.name}}, {{media.timestamp|datetime}}</small>"><img src="{{media.thumb}}" class="image" alt="{{media.title}}"></a></div>
-                <!--{{media.article.url}}#media-{{media.id}} <div >
-                    <a href="{{media.article.url}}">{{media.title}}</a>
-                    {% if g.user.admin or (g.user == media.author and not g.user.guest) %}
-                        <a href="/media/{{media.id}}/edit">{{icon("pencil", "Edit")}}</a>
-                    {% endif %}
-                </div>-->
-            </div>
+            {{ render_media_box(media, rel="images", icons=False, title=False) }}
         {% endfor -%}</div>
     <div class="leftfloat clear">
         <a href="/media"">{{icon("images-stack", "")}} Všechny obrázky</a>

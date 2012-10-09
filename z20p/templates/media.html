@@ -10,18 +10,9 @@
         Vypisovat {{form.type()}} dle data {{form.order()}}, {{form.filter()}}, od {{form.author()}} <input type="submit" value="Vypsat">
     </form>
     <article class="mediagrid">
-        {% for image in media %}
-            <div class="media rank-{{image.rank}}">
-                <a href="{{image.url}}" rel="prettyPhoto[media]" title="{{image.title}} - <a href='{{image.article.url or '#'}}'>{{image.article.title or '(bez článku)'}}</a><p><small>{{image.author.name}}, {{image.timestamp|datetime}}</small>"><img src="{{image.thumb}}" class="gridimage" alt="{{image.title}}"></a>
-                <div title="{{image.author.name}}, {{image.timestamp|datetime}}">
-                    {{image.title}}
-                    <!--{{author(image.author, clip=True)}}-->
-                    {% if g.user.admin or (g.user == image.author and not g.user.guest) %}
-                        <a href="/media/{{image.id}}/edit">{{icon("pencil", "Edit")}}</a>
-                    {% endif %}
-                </div>
-            </div>
-        {% endfor %}
+        {% for image in media -%}
+            {{ render_media_box(image, rel="media", article_icon=True) }}
+        {%- endfor %}
     </article>
     {{render_pages(page, count, per_page=30)}}
     {% if form.type.data == 'image' %}

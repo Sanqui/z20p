@@ -50,7 +50,7 @@ class ArticleForm(Form):
     title = TextField('Titulek', [validators.required()])
     text = TextAreaField('Text', [validators.required()])
     rating = rating_field
-    f2p = BooleanField('Hratelné zdarma')
+    f2p = SelectField('Hratelné zdarma', choices=[(-1, "N/A"), (0, "Ne"), (1, "Ano")], coerce=int)
     labels = MultiCheckboxField('Štítky', coerce=int)
     image = FileField('Obrázek', [file_allowed(uploads, "Jen obrázky")])
     image_title = TextField('Titulek obrázku', [validators.optional()])
@@ -179,7 +179,7 @@ def main():
     page = get_page()
     page_columns = get_page("page_columns")
     column_labels = db.session.query(db.Label).filter(db.Label.category == "column").all()
-    articles = g.article_query.order_by(db.Article.publish_timestamp.desc()).filter(~ db.Article.labels.any(db.Label.id.in_([l.id for l in column_labels])))[(page-1)*4:page*4]
+    articles = g.article_query.order_by(db.Article.publish_timestamp.desc()).filter(~ db.Article.labels.any(db.Label.id.in_([l.id for l in column_labels])))[(page-1)*3:page*3]
     columns = g.article_query.order_by(db.Article.publish_timestamp.desc()).filter(db.Article.labels.any(db.Label.id.in_([l.id for l in column_labels])))[(page_columns-1)*2:page_columns*2]
     images = db.session.query(db.Media).join(db.Media.article).filter(db.Media.type=="image") \
         .filter(db.Article.published == True).order_by(db.Media.timestamp.desc()).limit(8).all()
@@ -317,7 +317,7 @@ def article(article_id, title=None):
     upload_form.populate()
     if request.method == 'POST' and request.form['submit'] == upload_form.submit.label.text and upload_form.validate():
         media = upload_image(title=upload_form.title.data, author=g.user,
-            article=article, rank=upload_form.rank)
+            article=article, rank=upload_form.rank.data)
         db.session.commit() # Gotta commit here 'cause we're REDIRECTING THE USER
         return redirect(article.url+"#gallery-images")
     
@@ -370,7 +370,9 @@ def article(article_id, title=None):
         title = TextField('Titulek obrázku', [validators.optional()])
         submit = SubmitField('Přidat reakci')
     
+    
     reaction_form = ReactionForm(request.form, rating=rating.rating if (rating and rating.rating != None and article.author != g.user) else -2)
+    if not article.rating: reaction_form.rating = None
     #for media in article.all_media:
     #    if media.author == g.user and not media.assigned_article and not media.assigned_reaction:
     #        reaction_form.image.choices.append((media.id, media.title))
@@ -473,11 +475,11 @@ def delete_reaction(reaction_id):
         return redirect(reaction.article.url)
 
 class MediaForm(Form):
-    rank = SelectField("Rank", choices=[], default=2, coerce=int)
+    rank = SelectField("Váha", choices=[], default=2, coerce=int)
     
     def populate(self):
-        self.rank.choices = [(2, "Normální"), (1, "Derp")]
-        if g.user.rights >= 2: self.rank.choices.insert(0, (3, "Dobrý"))
+        self.rank.choices = [(2, "Normální"), (1, "Nízká")]
+        if g.user.rights >= 2: self.rank.choices.insert(0, (3, "Vysoká"))
 
 class UploadForm(MediaForm):
     image = FileField('Obrázek', [file_allowed(uploads, "Jen obrázky")])
@@ -501,7 +503,7 @@ def media():
     upload_form.populate()
     if request.method == 'POST' and form.type.data == "image" and upload_form.validate():
         media = upload_image(title=upload_form.title.data, author=g.user,
-            article=None, rank=upload_form.rank)
+            article=None, rank=upload_form.rank.data)
         db.session.commit()
         return redirect("/media?filter=all#top")
 
@@ -795,7 +797,7 @@ def new_article():
         media = upload_image(title=form.image_title.data, author_id=g.user.id,
             article=article, rank=3)
         article.media = media
-        article.f2p = form.f2p.data
+        article.f2p = None if form.f2p.data==-1 else form.f2p.data
         if form.rating.data != -2:
             article.rating = db.Rating(rating=form.rating.data, user_id=g.user.id, article=article)
         article.labels = []
@@ -848,7 +850,7 @@ def edit_article(edit_id, title=None):
             article.media_id = form.image.data
         else:
             article.media = None
-        article.f2p = form.f2p.data
+        article.f2p = None if form.f2p.data==-1 else form.f2p.data
         article.title = form.title.data
         article.text = form.text.data
         if article.rating:
@@ -858,7 +860,8 @@ def edit_article(edit_id, title=None):
             else:
                 article.rating.rating = form.rating.data
         else:
-            article.rating = db.Rating(rating=form.rating.data, user_id=g.user.id, article=article)
+            if form.rating.data != -2:
+                article.rating = db.Rating(rating=form.rating.data, user_id=g.user.id, article=article)
         if g.user.redactor:
             article.published = form.published.data
             if article.published and not form.publish_timestamp.data:

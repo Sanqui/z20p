@@ -4,21 +4,23 @@
 
 {% block content %}
     <h2>Upravit článek</h2>
-    <form method="POST" action="{{article.url}}/edit" enctype="multipart/form-data">
-      <dl>
-        {{ render_field(form.title) }}
-        {{ render_field(form.text) }}
-        {{ render_field(form.rating) }}
-        {{ render_field(form.f2p) }}
-        <div class="labelfloat">{{ render_field(form.labels) }}</div>
-        {{ render_field(form.image) }}
-        {% if g.user.redactor %}
-            {{ render_field(form.published) }}
-            {{ render_field(form.publish_timestamp) }}
-        {% endif %}
-      </dl>
-      <p><input type="submit" value="Upravit">
-    </form>
+    <article>
+        <form method="POST" action="{{article.url}}/edit" enctype="multipart/form-data">
+          <dl>
+            {{ render_field(form.title) }}
+            {{ render_field(form.text) }}
+            {{ render_field(form.rating) }}
+            {{ render_field(form.f2p) }}
+            <div class="labelfloat">{{ render_field(form.labels) }}</div>
+            {{ render_field(form.image) }}
+            {% if g.user.redactor %}
+                {{ render_field(form.published) }}
+                {{ render_field(form.publish_timestamp) }}
+            {% endif %}
+          </dl>
+          <p><input type="submit" value="Upravit">
+        </form>
+    </article>
     {% if g.user.redactor %}
         <p>Je-li datum publikace prázdné a článek je publikován, bude vyplněno současným.  Datum lze ovšem retroaktivně změnit.
         <p>Nesnaž se "publikovat" článek v budoucnosti, nepůjde to. 

@@ -19,12 +19,12 @@
     </table>
     {% if g.user.admin %}
         <h2>Anonymové (vidí jen admini)</h2>
-        <table><thead><tr><td>Jméno</td><td>Skóre</td><td>Naposledy</td></tr></thead>
+        <table><thead><tr><td>Jméno</td><td>Level</td><td>Naposledy</td></tr></thead>
         <tbody>
             {% for user in anons %}
                 <tr id="user-{{user.id}}">
                     <td>{{author(user)}}</td>
-                    <td>{{user.score}}</td>
+                    <td>{{user.level}}</td>
                     <td>{{user.laststamp|datetime}}</td>
                 </tr>
             {% endfor %}

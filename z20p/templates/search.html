@@ -5,7 +5,7 @@
 {% block content %}
     {% if "noform" in request.args or stype == "all" %}<div class="search">{% else %}<article class="search">{% endif %}
     {% if "noform" not in request.args and stype == "text" %}
-        <img src="/static/img/searchpig.png" class="rightfloat">
+        <img src="/static/img/searchpig.png" class="rightfloat" alt="Prasátka hledají">
     {% endif %}
     {% if stype != "all" %}
         <div><strong>Vyhledávání

@@ -1070,7 +1070,7 @@ def article_redirect(path):
 @app.route("/rss/")
 def rss():
     articles = g.article_query \
-        .order_by(db.Article.timestamp.desc()).limit(10).all()
+        .order_by(db.Article.publish_timestamp.desc()).limit(10).all()
     now = datetime.now()
     response = make_response(render_template("rss.xml", articles=articles, now=now))
     response.headers['Content-type'] = "application/rss+xml"

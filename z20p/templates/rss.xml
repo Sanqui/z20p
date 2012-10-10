@@ -24,7 +24,7 @@
             {% endif %}
             {{ article.text }}
             </description>
-	    <pubDate>{{article.timestamp|datetime("%a, %d %b %Y %H:%M:%S +2000")}}</pubDate>
+	    <pubDate>{{article.publish_timestamp|datetime("%a, %d %b %Y %H:%M:%S +2000")}}</pubDate>
 	    {% for label in article.labels %}
     	    <category>{{label.name}}</category>
 	    {% endfor %}

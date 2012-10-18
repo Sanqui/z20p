@@ -68,6 +68,8 @@
             {{ render_field(reaction_form.text) }}
             {% if g.user != article.author and article.rating %} {{ render_field(reaction_form.rating) }} {% endif %}
             {{ render_field(reaction_form.image, accept="image/*") }}
+            {{ render_field(reaction_form.rank) }}
+            {{ render_field(reaction_form.article_image) }}
             {{ render_field(reaction_form.title) }}
             {{ reaction_form.submit() }}
           </dl>

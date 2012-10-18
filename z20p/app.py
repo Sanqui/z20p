@@ -2,7 +2,8 @@
 from __future__ import absolute_import, unicode_literals, print_function
 
 #from z20p import db
-import db
+#import db
+from z20p import db
 from sqlalchemy import or_, and_, asc, desc
 
 from lxml.html.clean import Cleaner
@@ -14,6 +15,8 @@ import hashlib
 import os
 import subprocess
 import random
+
+UPLOADS_DIR = "z20p/static/uploads/"
 
 def pwhash(string):
     return hashlib.sha224(string+"***REMOVED***").hexdigest()
@@ -72,7 +75,7 @@ def get_guest(name=None):
             guest = db.User(name=name, timestamp=datetime.now(), laststamp=datetime.now(), ip=request.remote_addr)
             db.session.add(guest)
         guest.laststamp = datetime.now()
-        guest.last_url = request.path
+        guest.last_url = url_for_here()
         db.session.commit()
     else:
         guest = db.session.query(db.User).filter(db.User.ip == request.remote_addr).filter(db.User.password == None).filter(db.User.name == None).scalar()
@@ -80,7 +83,7 @@ def get_guest(name=None):
             guest = db.User(name=None, timestamp=datetime.now(), laststamp=datetime.now(), ip=request.remote_addr)
             db.session.add(guest)
         guest.laststamp = datetime.now()
-        guest.last_url = request.path
+        guest.last_url = url_for_here()
         db.session.commit()
     return guest
 
@@ -107,7 +110,7 @@ def before_request():
                 return
             session.permanent = True
             user.laststamp = datetime.now()
-            user.last_url = request.path
+            user.last_url = url_for_here()
             g.user = user
             db.session.commit()
         else:
@@ -117,8 +120,9 @@ def before_request():
         # I'm not sure if I'm okay with this being here, but I don't want logic and cruft in templates.
         # This could also be done in a single query; I'm just too stupid with SQL.
         if not g.user.guest:
-            latest = db.session.query(db.ShoutboxPost.id).order_by(db.ShoutboxPost.timestamp.desc()).first().id
-            g.unread = latest - g.user.last_post_read_id
+            latest = db.session.query(db.ShoutboxPost.id).order_by(db.ShoutboxPost.timestamp.desc()).first()
+            if latest:
+                g.unread = latest.id - (g.user.last_post_read_id or 0)
         # Templating stuff.
         g.left_buttons = db.session.query(db.Button).filter(db.Button.location=="left").order_by(db.Button.position).all()
         g.right_buttons = db.session.query(db.Button).filter(db.Button.location=="right").order_by(db.Button.position).all()
@@ -146,15 +150,21 @@ cleaner = Cleaner(comments=False, style=False, embedded=False, annoying_tags=Fal
 
 @app.template_filter('clean')
 def clean(value):
-    if value: return cleaner.clean_html(value)
-    else: return ""
+    try:
+        if value: return cleaner.clean_html(value)
+        else: return ""
+    except Exception: # XXX specify
+        return ""
 
 # https://gist.github.com/3765578
 def url_for_here(**changed_args):
-    args = request.args.to_dict(flat=False)
-    args.update(request.view_args)
-    args.update(changed_args)
-    return url_for(request.endpoint, **args)
+    if request.endpoint:
+        args = request.args.to_dict(flat=False)
+        args.update(request.view_args)
+        args.update(changed_args)
+        return url_for(request.endpoint, **args)
+    else:
+        return request.path
 
 app.jinja_env.globals['url_for_here'] = url_for_here
 app.jinja_env.globals['round'] = round # useful
@@ -181,8 +191,8 @@ def main():
     column_labels = db.session.query(db.Label).filter(db.Label.category == "column").all()
     articles = g.article_query.order_by(db.Article.publish_timestamp.desc()).filter(~ db.Article.labels.any(db.Label.id.in_([l.id for l in column_labels])))[(page-1)*3:page*3]
     columns = g.article_query.order_by(db.Article.publish_timestamp.desc()).filter(db.Article.labels.any(db.Label.id.in_([l.id for l in column_labels])))[(page_columns-1)*2:page_columns*2]
-    images = db.session.query(db.Media).join(db.Media.article).filter(db.Media.type=="image") \
-        .filter(db.Article.published == True).order_by(db.Media.timestamp.desc()).limit(8).all()
+    images = db.session.query(db.Media).filter(db.Media.type=="image").filter(db.Media.rank >= 2) \
+        .order_by(db.Media.timestamp.desc()).limit(8).all()
     videos = db.session.query(db.Media).filter(db.Media.type=="video") \
         .order_by(db.Media.timestamp.desc()).limit(2).all()
     return render_template("main.html", articles=articles, images=images, columns=columns, videos=videos, page=page, page_columns=page_columns)
@@ -362,16 +372,18 @@ def article(article_id, title=None):
         name_validators = [validators.required()]
     else:
         name_validators = [validators.optional()]
-    class ReactionForm(Form):
+    class ReactionForm(MediaForm):
         name = TextField('Jméno', name_validators) # Only for guests
         text = TextAreaField('Text', [validators.required()])
         rating = rating_field
         image = FileField('Obrázek', [file_allowed(uploads, "Jen obrázky")])
+        article_image = BooleanField("Obrázek ke článku", default=True)
         title = TextField('Titulek obrázku', [validators.optional()])
         submit = SubmitField('Přidat reakci')
     
     
     reaction_form = ReactionForm(request.form, rating=rating.rating if (rating and rating.rating != None and article.author != g.user) else -2)
+    reaction_form.populate()
     if not article.rating: reaction_form.rating = None
     #for media in article.all_media:
     #    if media.author == g.user and not media.assigned_article and not media.assigned_reaction:
@@ -389,7 +401,7 @@ def article(article_id, title=None):
                 rating = db.Rating(rating=None if reaction_form.rating.data == -2 else reaction_form.rating.data, user=user, article=article)
                 db.session.add(rating)
         media = upload_image(title=upload_form.title.data, author=user,
-            article=article, rank=2)
+            article=article if reaction_form.article_image.data else None, rank=reaction_form.rank.data)
         reaction = db.Reaction(text=reaction_form.text.data, rating=rating, article=article, timestamp=datetime.now(), author=user, media=media)
         db.session.add(reaction)
         flash("Reakce přidána.")
@@ -492,7 +504,7 @@ def media():
     class SortForm(Form):
         type = SelectField("Co", choices=[("image", "obrázky"), ("video", "videa"), ("both", "obojí")], default="image")
         order = SelectField("Typ řazení", choices=[("desc", "sestupně"), ("asc", "vzestupně")], default="desc")
-        filter = SelectField("Se články", choices=[("article", "jen u článků"), ("all", "všechny"), ("no_article", "jen bez článku")], default="article")
+        filter = SelectField("Se články", choices=[("article", "jen u článků"), ("all", "všechny"), ("no_article", "jen bez článku")], default="all")
         author = SelectField("Od autora", choices=[(0, "všech")], default=0, coerce=int)
     
     form = SortForm(request.args)
@@ -588,7 +600,7 @@ def delete_media(media_id):
         db.session.commit()
         if media.type == "image": flash("Obrázek odstraněn")
         else: flash("Video odstraněno")
-        return redirect(media.article.url or "/media")
+        return redirect(media.article.url if media.article else "/media")
     
 
 @app.route("/login", methods=['GET', 'POST'])
@@ -770,13 +782,13 @@ def upload_image(**kvargs):
             return None
         image = request.files['image']
         filename = secure_filename(image.filename).replace("-", "_")
-        while os.path.exists(os.path.join("static/uploads/", filename)): # Lazy
+        while os.path.exists(os.path.join(UPLOADS_DIR, filename)): # Lazy
             filename = filename.split(".")
             filename[0] += "_"
             filename = ".".join(filename)
-        image.save(os.path.join("static/uploads/", filename))
-        subprocess.check_call(["mogrify", "-layers", "flatten", "-format", "png", "-path", "static/uploads/thumbs/", "-thumbnail", '200x96', "-strip", "-quality", "100", "-unsharp", "0x0.5", "-colors", "256", "static/uploads/"+filename], stderr=subprocess.STDOUT)
-        subprocess.check_call(["mogrify", "-layers", "flatten", "-format", "png", "-path", "static/uploads/article_thumbs/", "-thumbnail", '172x300', "-strip", "-quality", "100", "-unsharp", "0x0.5", "-colors", "256", "static/uploads/"+filename])
+        image.save(os.path.join(UPLOADS_DIR, filename))
+        subprocess.check_call(["mogrify", "-layers", "flatten", "-format", "png", "-path", UPLOADS_DIR+"thumbs/", "-thumbnail", '200x96', "-strip", "-quality", "100", "-unsharp", "0x0.5", "-colors", "256",UPLOADS_DIR+filename], stderr=subprocess.STDOUT)
+        subprocess.check_call(["mogrify", "-layers", "flatten", "-format", "png", "-path", UPLOADS_DIR+"article_thumbs/", "-thumbnail", '172x300', "-strip", "-quality", "100", "-unsharp", "0x0.5", "-colors", "256", UPLOADS_DIR+filename])
         media = db.Media(type="image", url="/static/uploads/"+filename, timestamp=datetime.now(), **kvargs)
         db.session.add(media)
         flash("Obrázek nahrán.")
@@ -795,7 +807,7 @@ def new_article():
             author_id=g.user.id, 
             timestamp=datetime.now(), published=False)
         media = upload_image(title=form.image_title.data, author_id=g.user.id,
-            article=article, rank=3)
+            article=article, rank=2)
         article.media = media
         article.f2p = None if form.f2p.data==-1 else form.f2p.data
         if form.rating.data != -2:
@@ -906,7 +918,6 @@ def shoutbox():
     posts = db.session.query(db.ShoutboxPost).order_by(db.ShoutboxPost.timestamp.desc())[(page-1)*30:page*30] # , db.Article, db.Reaction, db.Media, db.User, db.Rating, db.ShoutboxPost
     #posts = db.session.query(db.ShoutboxPost).union(db.session.query(db.Reaction)).order_by("timestamp")[(page-1)*30:page*30]
     count =  db.session.query(db.ShoutboxPost).count()
-    if not posts: abort(404)
     if g.user.guest:
         guest = db.session.query(db.User).filter(db.User.name != None).filter(db.User.password == None).filter(db.User.ip == g.user.ip).order_by(db.User.laststamp.desc()).limit(1).scalar()
         name = None
@@ -927,7 +938,7 @@ def shoutbox():
         #flash("Příspěvek přidán.")
         return redirect("/shoutbox")
         
-    if page == 1: g.user.last_post_read = posts[0]
+    if posts and page == 1: g.user.last_post_read = posts[0]
     g.unread = 0
     db.session.commit()
     
@@ -947,7 +958,7 @@ def buttons(): # QUICK 'N DIRTY OKAY.
     if request.method == 'POST' and form.validate():
         if form.location.data == "left": count=len(g.left_buttons)
         else: count = len(g.right_buttons)
-        button = db.Button(icon=form.icon.data or None, name=form.name.data, url=form.url.data or None, location=form.location.data, position=count)
+        button = db.Button(icon=form.icon.data or None, name=form.name.data, url=form.url.data or None, location=form.location.data, position=count, function="")
         db.session.add(button)
         flash('Tlačítko "'+button.name+'" přidáno', "success")
     
@@ -1060,6 +1071,7 @@ def index_php():
     if page == "labels": return redirect("/labels", 301)
     if page == "login": return redirect("/login", 301)
     if page == "list": return redirect("/search?all", 301)
+    elif not page: return redirect("/", 301)
     abort(404)
 
 @app.route("/article/<path:path>")
@@ -1073,8 +1085,20 @@ def rss():
         .order_by(db.Article.publish_timestamp.desc()).limit(10).all()
     now = datetime.now()
     response = make_response(render_template("rss.xml", articles=articles, now=now))
-    response.headers['Content-type'] = "application/rss+xml"
+    #response.headers['Content-type'] = "application/rss+xml"
     return response
+    
+@app.route("/robots.txt") # XXX this should be a static file.
+def robots():
+    return """User-agent: /
+Allow: *
+"""
 
 if __name__ == "__main__":
     app.run(host="", port=5631, debug=True, threaded=True)
+
+if not app.debug:
+    import logging
+    file_handler = logging.FileHandler('flask.log')
+    file_handler.setLevel(logging.WARNING)
+    app.logger.addHandler(file_handler)

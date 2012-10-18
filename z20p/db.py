@@ -54,7 +54,7 @@ class User(Base):
         
     @property
     def rank(self):
-        ranks = {0: u"Guest",
+        ranks = {None: u"Guest", 0: u"Guest",
                  1: {'m':u"Uživatel", 'f':u'Uživatelka', "-":u"Uživatel"}, 
                  2: u"VIP",
                  3: {'m':u"Redaktor", 'f':u'Redaktorka', '-':u'Redaktor'},

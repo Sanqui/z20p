@@ -1,5 +1,7 @@
 *.pyc
 *~
+db
+flask.log
 z20p/db
 z20p/static/uploads/*
 z20p/static/icons/*

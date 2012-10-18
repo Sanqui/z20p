@@ -1,5 +1,5 @@
 from __future__ import absolute_import
 
-from z20p.app import app
+from z20p import app
 
-app.run(host="0.0.0.0", debug=True) # debug=True
+app.app.run(host="", port=5631, debug=True, threaded=True, use_evalex=False) # debug=True

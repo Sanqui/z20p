@@ -68,6 +68,14 @@ class ArticleForm(Form):
 class RedactorArticleForm(ArticleForm):
     published = BooleanField("Publikovat")
 
+
+class MediaForm(Form):
+    rank = SelectField("Váha", choices=[], default=2, coerce=int)
+    
+    def populate(self):
+        self.rank.choices = [(2, "Normální"), (1, "Nízká")]
+        if g.user.rights >= 2: self.rank.choices.insert(0, (3, "Vysoká"))
+
 def get_guest(name=None):
     if name:
         guest = db.session.query(db.User).filter(db.User.name == name).filter(db.User.password == None).scalar()
@@ -303,7 +311,7 @@ def search():
         
     return render_template("search.html", form=form, searched=searched, matched_articles=matched_articles, matched_labels=matched_labels, count=count, page=page, stype=stype)
 
-class VideoForm(Form):
+class VideoForm(MediaForm):
     url = TextField('URL videa', [validators.required(), validators.URL("Musí být Youtube URL.")])
     video_title = TextField('Titulek videa', [validators.required()])
     submit = SubmitField('Přidat video')
@@ -332,9 +340,10 @@ def article(article_id, title=None):
         return redirect(article.url+"#gallery-images")
     
     video_form = VideoForm(request.form)
+    video_form.populate()
     
     if request.method == 'POST' and request.form['submit'] == video_form.submit.label.text and video_form.validate():
-        media = db.Media(type="video", url=video_form.url.data, timestamp=datetime.now(), article=article, author=g.user, title=video_form.video_title.data)
+        media = db.Media(type="video", url=video_form.url.data, timestamp=datetime.now(), article=article, author=g.user, title=video_form.video_title.data, rank=video_form.rank.data)
         db.session.add(media)
         flash("Video přidáno.")
         db.session.commit()
@@ -486,13 +495,6 @@ def delete_reaction(reaction_id):
         flash("Reakce odstraněna")
         return redirect(reaction.article.url)
 
-class MediaForm(Form):
-    rank = SelectField("Váha", choices=[], default=2, coerce=int)
-    
-    def populate(self):
-        self.rank.choices = [(2, "Normální"), (1, "Nízká")]
-        if g.user.rights >= 2: self.rank.choices.insert(0, (3, "Vysoká"))
-
 class UploadForm(MediaForm):
     image = FileField('Obrázek', [file_allowed(uploads, "Jen obrázky")])
     title = TextField('Titulek obrázku', [validators.required()])
@@ -520,8 +522,9 @@ def media():
         return redirect("/media?filter=all#top")
 
     video_form = VideoForm(request.form)
+    video_form.populate()
     if request.method == 'POST' and form.type.data == "video" and video_form.validate():
-        video = db.Media(title=video_form.video_title.data, url=video_form.url.data, type="video", timestamp=datetime.now(), author=g.user)
+        video = db.Media(title=video_form.video_title.data, url=video_form.url.data, type="video", timestamp=datetime.now(), author=g.user, rank=video_form.rank.data)
         db.session.add(video)
         db.session.commit()
         return redirect("/media?filter=all&type=video#top")
@@ -1086,6 +1089,17 @@ def rss():
     now = datetime.now()
     response = make_response(render_template("rss.xml", articles=articles, now=now))
     #response.headers['Content-type'] = "application/rss+xml"
+    return response
+
+@app.route("/sitemap")
+@app.route("/sitemap/")
+def sitemap():
+    articles = g.article_query \
+        .order_by(db.Article.publish_timestamp.desc())
+    users = db.session.query(db.User).filter(db.User.rights >= 1)
+    now = datetime.now()
+    response = make_response(render_template("sitemap.xml", articles=articles, users=users, now=now))
+    #response.headers['Content-type'] = "application/xml"
     return response
     
 @app.route("/robots.txt") # XXX this should be a static file.

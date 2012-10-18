@@ -216,6 +216,10 @@ class Article(Base):
     
     @property
     def rateable(self): return self.rating != None
+    
+    @property
+    def lastmod(self):
+        return max([self.edit_timestamp or self.timestamp]+[reaction.edit_timestamp or reaction.timestamp for reaction in self.reactions])
 
 class Reaction(Base):
     __tablename__ = 'reactions'

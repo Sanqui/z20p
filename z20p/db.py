@@ -21,6 +21,9 @@ class JSONEncodedDict(TypeDecorator):
 
     def process_bind_param(self, value, dialect):
         if value is not None:
+            for k in value:
+                if isinstance(value[k], datetime):
+                    value[k] = value[k].isoformat()
             value = json.dumps(value)
 
         return value

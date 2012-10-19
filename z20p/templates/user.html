@@ -41,4 +41,22 @@
         {% endfor %}
         {{ render_pages(page, user.articles|count, anchor="articles") }}
     {% endif %}
+    {% if g.user.admin %}
+        <h3 id="logs">Logy</h3>
+        <table>
+            <thead><tr><td>id</td><td>Čas</td><td>Aktivní</td><td>Věc</td><td>ID věci</td><td>Akce</td><td>Expů</td><td>Data</td></tr></thead>
+            {% for entry in user.logs %}
+                <tr><td>{{entry.id}}</td><td class='nobr'>{{entry.timestamp|datetime}}</td><td>{{{True: "Ano", False: "Ne"}[entry.active]}}</td><td>{{entry.thing}}</td><td>{{entry.thing_id or "-"}}</td><td>{{entry.action}}</td><td>{{entry.exp}}</td>
+                <td>
+                    {%- if entry.data -%}
+                        {% for key, value in entry.data.items() %}
+                            <b>{{key}}</b>: {{value}}; 
+                        {% endfor %}
+                    {%- else -%}
+                        -
+                    {%- endif -%}
+                </td></tr>
+            {% endfor %}
+        </table>
+    {% endif %}
 {% endblock %}

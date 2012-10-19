@@ -112,6 +112,11 @@ def log(action='other', thing=None, data=None, thing_id=None, exp=0, active=True
         thing_id = thing.id
     except AttributeError:
         thing_name = 'other'
+    if thing_name != 'other':
+        data = {}
+        for column in thing.__table__.columns:
+            column = column.key
+            data[column] = getattr(thing, column)
     log_entry = db.LogEntry(timestamp=datetime.now(), user=user, active=active,
             thing=thing_name, thing_id=thing_id, action=action, exp=exp,
             data = data)
@@ -135,7 +140,8 @@ def before_request():
             # Let's use a temporary dummy user.
             # g.user = db.session.query(db.User).filter_by(id=1).one() # This ought to be the guest...
             g.user = get_guest()
-        log(action='log', data={'url': url_for_here()}, exp=1)
+        url = url_for_here()
+        log(action='log', data={'url': url}, exp=1 if url != g.user.last_url else 0)
         db.session.commit()
         # I'm not sure if I'm okay with this being here, but I don't want logic and cruft in templates.
         # This could also be done in a single query; I'm just too stupid with SQL.
@@ -425,6 +431,7 @@ def article(article_id, title=None):
             article=article if reaction_form.article_image.data else None, rank=reaction_form.rank.data)
         reaction = db.Reaction(text=reaction_form.text.data, rating=rating, article=article, timestamp=datetime.now(), author=user, media=media)
         db.session.add(reaction)
+        log('create', reaction)
         flash("Reakce přidána.")
         db.session.commit()
         return redirect(article.url)
@@ -488,6 +495,7 @@ def edit_reaction(reaction_id):
         else:
             reaction.rating = None
         reaction.edit_timestamp = datetime.now()
+        log('edit', reaction)
         db.session.commit()
         flash("Reakce upravena.")
         return redirect(reaction.article.url+"#reaction-"+str(reaction.id))
@@ -500,8 +508,7 @@ def delete_reaction(reaction_id):
     reaction = db.session.query(db.Reaction).get(reaction_id)
     if not reaction: abort(404)
     if request.method == 'POST':
-        print("Reaction id "+str(reaction.id)+" DELETED")
-        print(reaction.id, reaction.author.id, reaction.author.name, reaction.text)
+        log('delete', reaction)
         db.session.delete(reaction)
         db.session.commit()
         flash("Reakce odstraněna")
@@ -591,6 +598,7 @@ def edit_media(media_id):
                 media.article = None
         media.title = form.title.data
         media.rank = form.rank.data
+        log('edit', media)
         db.session.commit()
         if media.type == "image":
             flash("Obrázek upraven.")
@@ -611,6 +619,7 @@ def delete_media(media_id):
     if not media: abort(404)
     if not g.user.admin and (g.user != media.author): abort(403)
     if request.method == 'POST':
+        log('delete', media)
         db.session.delete(media)
         db.session.commit()
         if media.type == "image": flash("Obrázek odstraněn")
@@ -631,6 +640,7 @@ def login():
             session['user_id'] = user.id
             g.user = user
             g.user.ip = request.remote_addr
+            log('log', data={'action': 'login'})
             db.session.commit()
             flash("Jste přihlášeni.")
             return redirect("/")
@@ -650,6 +660,8 @@ def login():
 
 @app.route("/logout")
 def logout():
+    log('log', data={'action': 'logout'})
+    db.session.commit()
     if 'user' in session:
         session.pop("user")
     if 'user_id' in session:
@@ -678,6 +690,7 @@ def register():
         db.session.commit()
         g.user = user
         g.user.ip = request.remote_addr
+        log('create', user)
         db.session.commit()
         flash("Jste zaregistrováni.")
         return redirect("/login")
@@ -739,6 +752,7 @@ def edit_user(user_id, name=None):
         user.gender = form.gender.data
         user.minipic = form.minipic.data
         user.profile = form.profile.data
+        log('edit', user)
         db.session.commit()
         flash("Uživatel upraven!")
         return redirect("/users/"+str(user.id))
@@ -759,6 +773,7 @@ def labels(edit_id=None):
             label = db.Label(name=form.name.data, category=form.category.data,
                 user_id=g.user.id)
             db.session.add(label)
+            log('create', label)
             db.session.commit()
             flash('Štítek přidán')
     
@@ -768,6 +783,7 @@ def labels(edit_id=None):
         if request.method == 'POST' and form.validate():
             editlabel.name = form.name.data
             editlabel.category = form.category.data
+            log('edit', editlabel)
             db.session.commit()
             # Done!
             flash("Štítek upraven.")
@@ -805,6 +821,7 @@ def upload_image(**kvargs):
         subprocess.check_call(["mogrify", "-layers", "flatten", "-format", "png", "-path", UPLOADS_DIR+"thumbs/", "-thumbnail", '200x96', "-strip", "-quality", "100", "-unsharp", "0x0.5", "-colors", "256",UPLOADS_DIR+filename], stderr=subprocess.STDOUT)
         subprocess.check_call(["mogrify", "-layers", "flatten", "-format", "png", "-path", UPLOADS_DIR+"article_thumbs/", "-thumbnail", '172x300', "-strip", "-quality", "100", "-unsharp", "0x0.5", "-colors", "256", UPLOADS_DIR+filename])
         media = db.Media(type="image", url="/static/uploads/"+filename, timestamp=datetime.now(), **kvargs)
+        log('create', media)
         db.session.add(media)
         flash("Obrázek nahrán.")
     return media
@@ -838,6 +855,7 @@ def new_article():
         else:
             msg = "Děkujeme za váš příspěvek.  Administrátor váš článek ohodnotí a rozhodne, zda-li ho publikovat."
         db.session.add(article)
+        log('create', article)
         db.session.commit()
         flash(msg)
         return redirect(article.url)

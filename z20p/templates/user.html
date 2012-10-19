@@ -26,6 +26,8 @@
             {% if g.user.admin %}
                 <dt class="admin">Posledí IP</dt>
                     <dd>{{user.ip}}</dd>
+                <dt class="admin">Posledí User-Agent</dt>
+                    <dd>{{user.user_agent}}</dd>
                 <dt class="admin">Poslední URL</dt>
                     <dd><a href={{user.last_url}}>{{user.last_url or "?"}}</a></dd>
             {% endif %}

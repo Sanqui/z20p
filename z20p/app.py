@@ -82,17 +82,15 @@ def get_guest(name=None):
         if not guest:
             guest = db.User(name=name, timestamp=datetime.now(), laststamp=datetime.now(), ip=request.remote_addr)
             db.session.add(guest)
-        guest.laststamp = datetime.now()
-        guest.last_url = url_for_here()
-        db.session.commit()
     else:
         guest = db.session.query(db.User).filter(db.User.ip == request.remote_addr).filter(db.User.password == None).filter(db.User.name == None).scalar()
         if not guest:
             guest = db.User(name=None, timestamp=datetime.now(), laststamp=datetime.now(), ip=request.remote_addr)
             db.session.add(guest)
-        guest.laststamp = datetime.now()
-        guest.last_url = url_for_here()
-        db.session.commit()
+    guest.laststamp = datetime.now()
+    guest.last_url = url_for_here()
+    guest.user_agent = request.user_agent.string
+    db.session.commit()
     return guest
 
 # Callable decorator
@@ -107,6 +105,18 @@ def minrights(minrights):
         return f
     return decorator
 
+def log(action='other', thing=None, data=None, thing_id=None, exp=0, active=True, user=None):
+    if user == None: user = g.user
+    try:
+        thing_name = thing.__singlename__
+        thing_id = thing.id
+    except AttributeError:
+        thing_name = 'other'
+    log_entry = db.LogEntry(timestamp=datetime.now(), user=user, active=active,
+            thing=thing_name, thing_id=thing_id, action=action, exp=exp,
+            data = data)
+    db.session.add(log_entry)
+
 @app.before_request
 def before_request():
     if not request.path.startswith("/static"): # Yeah no.
@@ -119,12 +129,14 @@ def before_request():
             session.permanent = True
             user.laststamp = datetime.now()
             user.last_url = url_for_here()
+            user.user_agent = request.user_agent.string
             g.user = user
-            db.session.commit()
         else:
             # Let's use a temporary dummy user.
             # g.user = db.session.query(db.User).filter_by(id=1).one() # This ought to be the guest...
             g.user = get_guest()
+        log(action='log', data={'url': url_for_here()}, exp=1)
+        db.session.commit()
         # I'm not sure if I'm okay with this being here, but I don't want logic and cruft in templates.
         # This could also be done in a single query; I'm just too stupid with SQL.
         if not g.user.guest:
@@ -889,6 +901,7 @@ def edit_article(edit_id, title=None):
         for label_id in form.labels.data:
             article.labels.append(db.session.query(db.Label).filter_by(id=label_id).scalar())
         article.edit_timestamp = datetime.now()
+        log('edit', article)
         db.session.commit()
         flash('Článek upraven')
         return redirect(article.url)

@@ -4,12 +4,31 @@ import time
 import os.path
 import urlparse # urllib.parse in py3k
 import math
+import json
 
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import scoped_session, sessionmaker, relationship, backref
 from sqlalchemy.schema import Column, ForeignKey, Table
-from sqlalchemy.types import DateTime, Integer, Unicode, Enum, UnicodeText, Boolean
+from sqlalchemy.types import DateTime, Integer, Unicode, Enum, UnicodeText, Boolean, TypeDecorator
+
+class JSONEncodedDict(TypeDecorator):
+    """Represents an immutable structure as a json-encoded string.
+    Recipe modified from http://docs.sqlalchemy.org/en/rel_0_7/core/types.html#marshal-json-strings
+    """
+
+    impl = UnicodeText
+
+    def process_bind_param(self, value, dialect):
+        if value is not None:
+            value = json.dumps(value)
+
+        return value
+
+    def process_result_value(self, value, dialect):
+        if value is not None:
+            value = json.loads(value)
+        return value
 
 engine = create_engine(open("db").read(), encoding="utf8", pool_size = 100, pool_recycle=4200) # XXX
 # pool_recycle is to prevent "server has gone away"
@@ -17,17 +36,18 @@ session = scoped_session(sessionmaker(bind=engine, autoflush=False))
 
 Base = declarative_base(bind=engine)
 
-
 ### Yonder tables
 
 class User(Base):
     __tablename__ = 'users'
+    __singlename__ = 'user'
     id = Column(Integer, primary_key=True, nullable=False)
     name = Column(Unicode(64))
     password = Column(Unicode(128))
     timestamp = Column(DateTime, nullable=False, index=True)
     laststamp = Column(DateTime, nullable=False, index=True)
     ip = Column(Unicode(64))
+    user_agent = Column(Unicode(256))
     rights = Column(Integer)
     gender = Column(Enum('m', 'f', '-'))
     email = Column(Unicode(128))
@@ -90,6 +110,7 @@ class Label(Base):
 
 class ButtonLabel(Base):
     __tablename__ = 'buttons_labels'
+    __singlename__ = 'button_label'
     id = Column(Integer, primary_key=True)
     button_id = Column(Integer, ForeignKey('buttons.id'), nullable=False)
     #button = relationship("Button", backref=backref("labels", lazy="joined", ))
@@ -99,6 +120,7 @@ class ButtonLabel(Base):
 
 class Button(Base):
     __tablename__ = 'buttons'
+    __singlename__ = 'button'
     
     id = Column(Integer, primary_key=True, nullable=False)
     location = Column(Enum("left", "right"), nullable=False)
@@ -126,6 +148,7 @@ articles_labels = Table('article_labels', Base.metadata, # XXX wrong table name,
 # TODO store md5
 class Media(Base):
     __tablename__ = 'media'
+    __singlename__ = 'media'
     id = Column(Integer, primary_key=True, nullable=False)
     author_id = Column(Integer, ForeignKey('users.id'))
     author = relationship("User", backref='media')
@@ -171,6 +194,7 @@ class Media(Base):
 
 class Rating(Base):
     __tablename__ = 'ratings'
+    __singlename__ = 'rating'
     id = Column(Integer, primary_key=True, nullable=False)
     user_id = Column(Integer, ForeignKey('users.id'))
     user = relationship("User", backref='ratings')
@@ -179,6 +203,7 @@ class Rating(Base):
 
 class Article(Base):
     __tablename__ = 'articles'
+    __singlename__ = 'article'
 
     id = Column(Integer, primary_key=True, nullable=False)
     author_id = Column(Integer, ForeignKey('users.id'))
@@ -228,6 +253,7 @@ class Article(Base):
 
 class Reaction(Base):
     __tablename__ = 'reactions'
+    __singlename__ = 'reaction'
     id = Column(Integer, primary_key=True, nullable=False)
     article_id = Column(Integer, ForeignKey('articles.id'))
     article = relationship("Article", backref='reactions')
@@ -247,12 +273,27 @@ class Reaction(Base):
 
 class ShoutboxPost(Base):
     __tablename__ = 'shoutbox_posts'
+    __singlename__ = 'shoutbox_post'
     id = Column(Integer, primary_key=True, nullable=False)
     author_id = Column(Integer, ForeignKey('users.id', use_alter=True, name="fk_author"))
     author = relationship("User", backref='shoutbox_posts', primaryjoin=author_id==User.id, post_update=True)
     last_read_by = relationship("User", primaryjoin=id==User.last_post_read_id, backref="last_post_read")
     timestamp = Column(DateTime, nullable=False, index=True)
     text = Column(UnicodeText, nullable=False)
+
+class LogEntry(Base):
+    __tablename__ = 'logs'
+    __singlename__ = 'log_entry'
+    id = Column(Integer, primary_key=True, nullable=False)
+    timestamp = Column(DateTime, nullable=False)
+    user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
+    user = relationship("User", backref='logs')
+    active = Column(Boolean, nullable=False)
+    thing = Column(Enum('article', 'reaction', 'user', 'media', 'rating', 'label', 'button', 'shoutbox_post', 'other'), nullable=False)
+    thing_id = Column(Integer)
+    action = Column(Enum('create', 'edit', 'delete', 'log', 'other'), nullable=False)
+    exp = Column(Integer, nullable=False)
+    data = Column(JSONEncodedDict())
 
 if __name__ == "__main__":
     if raw_input('Drop all? ').strip().lower().startswith('y'):

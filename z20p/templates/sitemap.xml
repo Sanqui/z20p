@@ -32,14 +32,14 @@
    {% for article in articles %}
       <url>
           <loc>http://www.zabij10prasat.cz{{article.url}}</loc>
-          <lastmod>{{article.lastmod.isoformat()}}</lastmod>
+          <lastmod>{{article.lastmod.isoformat()}}+01:00</lastmod>
           <priority>0.9</priority>
        </url>
    {% endfor %}
    {% for user in users %}
       <url>
           <loc>http://www.zabij10prasat.cz{{user.url}}</loc>
-          <lastmod>{{(user.edit_timestamp or user.timestamp or user.articles[-1].timestamp).isoformat()}}</lastmod>
+          <lastmod>{{(user.edit_timestamp or user.timestamp or user.articles[-1].timestamp).isoformat()}}+01:00</lastmod>
           <priority>0.7</priority>
        </url>
    {% endfor %}

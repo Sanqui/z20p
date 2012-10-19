@@ -361,7 +361,7 @@ def article(article_id, title=None):
         msg = "Hodnocení nedotčeno."
         if rating:
             if rating_form.rating.data != -2:
-                rating.rating = form.rating.data
+                rating.rating = rating_form.rating.data
                 msg = "Hodnocení upraveno."
             else:
                 db.session.delete(rating)
@@ -420,8 +420,8 @@ def article(article_id, title=None):
     article.views += 1
     db.session.commit()
     # TODO make these @properties of the article?
-    images = db.session.query(db.Media).filter(db.Media.article==article).filter(db.Media.type=="image").order_by(db.Media.rank.desc(), db.Media.timestamp.asc()).all()
-    videos = db.session.query(db.Media).filter(db.Media.article==article).filter(db.Media.type=="video").order_by(db.Media.rank.desc(), db.Media.timestamp.asc()).all()
+    images = db.session.query(db.Media).filter(db.Media.article==article).filter(db.Media.type=="image").order_by(db.Media.rank.desc(), db.Media.timestamp.desc()).all()
+    videos = db.session.query(db.Media).filter(db.Media.article==article).filter(db.Media.type=="video").order_by(db.Media.rank.desc(), db.Media.timestamp.desc()).all()
     return render_template("article.html", article=article, upload_form=upload_form, reaction_form=reaction_form, rating_form=rating_form, video_form=video_form, images=images, videos=videos)
 
 

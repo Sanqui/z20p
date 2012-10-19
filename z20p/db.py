@@ -220,6 +220,11 @@ class Article(Base):
     @property
     def lastmod(self):
         return max([self.edit_timestamp or self.timestamp]+[reaction.edit_timestamp or reaction.timestamp for reaction in self.reactions])
+        
+    @property
+    def avg_rating(self):
+        acceptable_ratings = [rating.rating for rating in self.ratings if rating.rating >= 0]
+        return round(sum(acceptable_ratings)/len(acceptable_ratings), 1)
 
 class Reaction(Base):
     __tablename__ = 'reactions'

@@ -46,7 +46,7 @@
             <h1><a href="{{article.url}}">{{ article.title }}</a></h1>
         {% endif %}
         {% if not crop %}
-            {% if True or not cut or article.text|striptags|length <= 2100 %}
+            {% if not cut or article.text|striptags|length <= 2100 %}
                 {{(("<p>"|safe)+(article.text|safe)|replace("\n", "\n<p>"|safe))|clean|safe}}
             {% else %}
                 
@@ -106,7 +106,7 @@
                 {% if article.rateable %}
                     <a href="{{article.url}}#rating">
                     {%- if article.ratings|length >= 2 -%}
-                        Čtenářské hodnocení: <strong>{{round(article.ratings|sum(attribute='rating')/article.ratings|length, 1)}}/10</strong>
+                        Čtenářské hodnocení: <strong>{{article.avg_rating}}/10</strong>
                     {%- else -%}
                         <strong>Přidejte vaše hodnocení</strong>
                     {%- endif -%}

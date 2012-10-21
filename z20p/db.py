@@ -252,7 +252,7 @@ class Article(Base):
     @property
     def avg_rating(self):
         acceptable_ratings = [rating.rating for rating in self.ratings if rating.rating >= 0]
-        return round(sum(acceptable_ratings)/len(acceptable_ratings), 1)
+        return round(float(sum(acceptable_ratings))/len(acceptable_ratings), 1)
 
 class Reaction(Base):
     __tablename__ = 'reactions'

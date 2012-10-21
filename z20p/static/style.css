@@ -95,14 +95,15 @@ a:hover {color:#c2252c;}
 article { display:block;
     border: 1px solid #777;
     border-width: 14px;
-    background-color:white;
+    background-color:#f9f8fb;
 	-moz-border-image: url('/static/img/article_border.png') 14 14 14 14 round round;
 	-webkit-border-image: url('/static/img/article_border.png') 14 14 14 14 round round;
 	-o-border-image: url('/static/img/article_border.png') 14 14 14 14 round round;
 	border-image: url('/static/img/article_border.png') 14 14 14 14 round round;
 	-moz-background-clip: padding;
--webkit-background-clip: padding;
-background-clip: padding-box;
+    -webkit-background-clip: padding;
+    -o-background-clip: padding;
+    background-clip: padding-box;
 
 }
 article h1 {margin:0; letter-spacing:0.15em; margin:0; font-size:13px;}

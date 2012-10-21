@@ -2,6 +2,7 @@
 
 {% block title %}{{article.title}}{% endblock %}
 {% block canonical %}{{article.url}}{% endblock %}
+{% block image %}{{article.media.url}}{% endblock %}
 
 {% block content %}
     {{ display_article(article) }}

@@ -1124,6 +1124,7 @@ def rss():
 
 @app.route("/sitemap")
 @app.route("/sitemap/")
+@app.route("/sitemap.xml")
 def sitemap():
     articles = g.article_query \
         .order_by(db.Article.publish_timestamp.desc())
@@ -1137,6 +1138,7 @@ def sitemap():
 def robots():
     return """User-agent: /
 Allow: *
+Sitemap: http://www.zabij10prasat.cz/sitemap
 """
 
 if __name__ == "__main__":

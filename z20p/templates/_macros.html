@@ -31,7 +31,7 @@
         {% if article.media %}
             {% if crop or cut %} <a href="{{article.url}}">
             {% else %} <a href="{{article.media.url}}" rel="prettyPhoto" title="{{article.media.title}}">{% endif %}
-            <img src="{{article.media.thumb_article}}" title="{{article.media.title}}" alt="{{article.title}}" class="image">
+            <img src="{{article.media.thumb_article}}" title="{{article.title}} - {{article.media.title}}" alt="{{article.title}}" class="image">
             </a>
         {% endif %}
         {% if article.rating %}
@@ -72,7 +72,7 @@
                 {% if article.is_article %}
                     <div class="stats">
                         {% if g.user.admin or g.user == article.author %}
-                            <a href="{{article.url}}/edit">{{icon("pencil", "Editovat")}}</a>
+                            <a href="{{article.url}}/edit">{{icon("pencil", "")}} editovat</a>
                         {% endif %}
                         {{icon("images-stack", "Obrázků")}}×{{ article.images|count }}
                         {{icon("films", "Videí")}}×{{ article.videos|count }}
@@ -195,7 +195,7 @@
 {% macro author(user, clip=False) -%}
 <span class="author"><a href="{{user.url if (not user.guest or g.user.admin) else '#'}}" class="iconlink">{{icon(user.minipic, user.name) if user.minipic else icon('user-silhouette', user.name or user.ip)}}{{" " if not clip}}</a>
 {%- if not clip -%}
-    <a href="{{user.url if (not user.guest or g.user.admin) else '#'}}" rel="author">{{user.name or "["+user.ip+"]"}}</a>{{{-1:'✘', 0:'', 1:'♤', 2:'☆', 3:'☆', 4:'★'}[user.rights]}}</span>
+    <a href="{{user.url if (not user.guest or g.user.admin) else '#'}}" rel="author">{{user.name or "["+user.ip+(" "+(user.user_agent[:24]+"..." if user.user_agent|length>23 else user.user_agent) if user.user_agent else "")+"]"}}</a>{{{-1:'✘', 0:'', 1:'♤', 2:'♣', 3:'☆', 4:'★'}[user.rights]}}</span>
 {%- endif -%}
 {%- endmacro %}
 ## This really needs some more thinking through... # Also crap g is the global variable.

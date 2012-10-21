@@ -24,10 +24,10 @@
             <dt>Staty</dt>
                 <dd>{{user.articles|count}} článků, {{user.reactions|count}} reakcí, {{user.media|count}} médií, {{user.shoutbox_posts|count}} příspěvků do shoutboxu</dd>
             {% if g.user.admin %}
-                <dt class="admin">Posledí IP</dt>
-                    <dd>{{user.ip}}</dd>
-                <dt class="admin">Posledí User-Agent</dt>
-                    <dd>{{user.user_agent}}</dd>
+                <dt class="admin">Poslední IP</dt>
+                    <dd>{{user.ip or '-'}}</dd>
+                <dt class="admin">Poslední User-Agent</dt>
+                    <dd>{{user.user_agent or '-'}}</dd>
                 <dt class="admin">Poslední URL</dt>
                     <dd><a href={{user.last_url}}>{{user.last_url or "?"}}</a></dd>
             {% endif %}
@@ -39,7 +39,7 @@
         {% for article in articles[(page-1)*5:page*5] %}
             {{ display_article(article, crop=True, force_labels=True) }}
         {% endfor %}
-        {{ render_pages(page, user.articles|count, anchor="articles") }}
+        {{ render_pages(page, articles|count, anchor="articles") }}
     {% endif %}
     {% if g.user.admin %}
         <h3 id="logs">Logy</h3>

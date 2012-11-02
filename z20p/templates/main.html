@@ -16,7 +16,11 @@
                 <a class="leftarrow disabledarrow">◀</a>
             {% endif %}
             <strong>{{page}}</strong>
-            <a href="{{url_for_here(page=page+1)}}" class="rightarrow">▶</a>
+            {% if page < 1+(num_articles//3) %}
+                <a href="{{url_for_here(page=page+1)}}" class="rightarrow">▶</a>
+            {% else %}
+                <a class="rightarrow disabledarrow">▶</a>
+            {% endif %}
         </div>
     <div class="clear"></div>
     <div class="mediagallery mainvideogallery">
@@ -48,6 +52,10 @@
                 <a class="leftarrow disabledarrow">◀</a>
             {% endif %}
             <strong>{{page_columns}}</strong>
-            <a href="{{url_for_here(page_columns=page_columns+1, _anchor='columns')}}" class="rightarrow">▶</a>
+            {% if page < 1+(num_columns//2) %}
+                <a href="{{url_for_here(page=page+1, _anchor='columns')}}" class="rightarrow">▶</a>
+            {% else %}
+                <a class="rightarrow disabledarrow">▶</a>
+            {% endif %}
         </div>
 {% endblock %}

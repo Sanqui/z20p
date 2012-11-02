@@ -215,13 +215,17 @@ def main():
     page = get_page()
     page_columns = get_page("page_columns")
     column_labels = db.session.query(db.Label).filter(db.Label.category == "column").all()
-    articles = g.article_query.order_by(db.Article.publish_timestamp.desc()).filter(~ db.Article.labels.any(db.Label.id.in_([l.id for l in column_labels])))[(page-1)*3:page*3]
-    columns = g.article_query.order_by(db.Article.publish_timestamp.desc()).filter(db.Article.labels.any(db.Label.id.in_([l.id for l in column_labels])))[(page_columns-1)*2:page_columns*2]
+    articles_q = g.article_query.order_by(db.Article.publish_timestamp.desc()).filter(~ db.Article.labels.any(db.Label.id.in_([l.id for l in column_labels])))
+    articles = articles_q[(page-1)*3:page*3]
+    num_articles = articles_q.count()
+    columns_q = g.article_query.order_by(db.Article.publish_timestamp.desc()).filter(db.Article.labels.any(db.Label.id.in_([l.id for l in column_labels])))
+    columns = columns_q[(page_columns-1)*2:page_columns*2]
+    num_columns = columns_q.count()
     images = db.session.query(db.Media).filter(db.Media.type=="image").filter(db.Media.rank >= 2) \
         .order_by(db.Media.timestamp.desc()).limit(8).all()
     videos = db.session.query(db.Media).filter(db.Media.type=="video") \
         .order_by(db.Media.timestamp.desc()).limit(2).all()
-    return render_template("main.html", articles=articles, images=images, columns=columns, videos=videos, page=page, page_columns=page_columns)
+    return render_template("main.html", articles=articles, images=images, columns=columns, videos=videos, page=page, page_columns=page_columns, num_articles = num_articles, num_columns = num_columns)
 
 def get_page(name="page"):
     try: # This needs more magic...
@@ -880,10 +884,9 @@ def edit_article(edit_id, title=None):
     else:
         form = EditArticleForm(request.form, article)
     for media in article.all_media:
-        if media.author == g.user and not media.assigned_article and not media.reactions:
+        if not media.assigned_article and not media.reactions:
             form.image.choices.append((media.id, media.title))
         elif media == article.media:
-            print(article.media, form.image.data)
             form.image.choices.append((media.id, media.title))
             if form.image.data == None: form.image.data = media.id
     labels = db.session.query(db.Label) \

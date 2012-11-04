@@ -4,7 +4,7 @@ from __future__ import absolute_import, unicode_literals, print_function
 #from z20p import db
 #import db
 from z20p import db
-from sqlalchemy import or_, and_, asc, desc
+from sqlalchemy import or_, and_, asc, desc, func
 
 from lxml.html.clean import Cleaner
 
@@ -245,7 +245,7 @@ def info():
 def search():
     # Oh boy.
     class SearchForm(Form):
-        sort = SelectField("Řazení", choices=[("timestamp", "data publikace"), ("rating", "hodnocení"), ("views", "počtu shlédnutí")], default="timestamp")
+        sort = SelectField("Řazení", choices=[("timestamp", "data publikace"), ("rating", "hodnocení"), ("user_rating", "čtenářského hodnocení"), ("views", "počtu shlédnutí"), ("media", "počtu médií")], default="timestamp")
         order = SelectField("Typ řazení", choices=[("desc", "sestupně"), ("asc", "vzestupně")], default="desc")
         # No submit so it doesn't get struck in the URL
     
@@ -314,14 +314,22 @@ def search():
                     and_conditions.append(db.Article.labels.contains(label))
         elif stype == 'all':
             and_conditions = [db.Article.published == True]
-        order_by = {"timestamp": db.Article.publish_timestamp, "rating": db.Rating.rating, "views": db.Article.views}[form.sort.data]
+        order_by = {"timestamp": db.Article.publish_timestamp, "rating": db.Rating.rating, "views": db.Article.views, "media": 'media_count', "user_rating": "user_rating"}[form.sort.data]
         order = {'asc': asc, 'desc': desc}[form.order.data]
         
         articles = g.article_query
+
         if order_by == db.Rating.rating:
             articles = articles.join(db.Article.rating)
-        else:
-            articles = articles.outerjoin(db.Article.rating)
+        elif order_by == "media_count":
+            media_statement = db.session.query(db.Media.article_id, func.count('*').label('media_count')).group_by(db.Media.article_id).subquery()
+            articles = articles.outerjoin(media_statement, db.Article.id==media_statement.c.article_id)
+            order_by = media_statement.c.media_count
+        elif order_by == "user_rating":
+            rating_statement = db.session.query(db.Rating.article_id, func.avg(db.Rating.rating).label('rating_avg')).filter(db.Rating.rating != -1).group_by(db.Rating.article_id).subquery()
+            articles = articles.outerjoin(rating_statement, db.Article.id==rating_statement.c.article_id)
+            order_by = rating_statement.c.rating_avg
+        
         articles = articles.filter(and_(*and_conditions)).filter(or_(*or_conditions))
         if label_or:
             articles = articles.filter(db.Article.labels.any(db.Label.id.in_(label_or)))

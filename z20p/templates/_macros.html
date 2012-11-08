@@ -193,7 +193,7 @@
 <img src="{{'/static/icons/'+name+'.png' if '/' not in name else name}}" alt="{{alt}}" title="{{alt if title=='' else title}}" class="icon" width=16 height=16>
 {%- endmacro %}
 {% macro author(user, clip=False) -%}
-<span class="author"><a href="{{user.url if (not user.guest or g.user.admin) else '#'}}" class="iconlink">{{icon(user.minipic, user.name) if user.minipic else icon('user-silhouette', user.name or user.ip) if "bot" not in (user.user_agent.lower() if user.user_agent else "") else icon('server-cloud', user.ip)}}{{" " if not clip}}</a>
+<span class="author"><a href="{{user.url if (not user.guest or g.user.admin) else '#'}}" class="iconlink">{{icon(user.minipic, user.name) if user.minipic else icon('user-silhouette', user.name or user.ip) if not user.is_bot else icon('computer', user.ip)}}{{" " if not clip}}</a>
 {%- if not clip -%}
     <a href="{{user.url if (not user.guest or g.user.admin) else '#'}}" rel="author">{{user.name or "["+user.ip+(" "+(user.user_agent[:24]+"..." if user.user_agent|length>23 else user.user_agent) if user.user_agent else "")+"]"}}</a>{{{-1:'✘', 0:'', 1:'♤', 2:'♣', 3:'☆', 4:'★'}[user.rights]}}</span>
 {%- endif -%}

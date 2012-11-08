@@ -98,6 +98,13 @@ class User(Base):
     def level(self):
         return int(math.floor(self.exp**0.3))
 
+    @property
+    def isbot(self):
+        if self.user_agent:
+            for s in ("bot", "yahoo", 'twitter', 'dlvr', 'baidu', "spider", "jakarta", "pingdom"):
+                if s in self.user_agent.lower():
+                    return True
+
 class Label(Base):
     __tablename__ = 'labels'
 
@@ -139,6 +146,8 @@ class Button(Base):
     @property
     def search_url(self):
         url = "/search?labels&noform"
+        if self.function == 'columns':
+            url += "&sort=timestamp"
         for label in self.labels:
             url += "&"+("other" if label.label.category=="column" else label.label.category)+"_labels="+str(label.label.id)
         return url

@@ -160,7 +160,7 @@ def before_request():
             g.kiptop = random.randint(0, 100)
             g.kiptype = random.randint(1,2)
         #g.unread_posts = latest - g.user.last_post_read.id
-    g.article_query = db.session.query(db.Article).filter(db.Article.published == True).order_by(db.Article.publish_timestamp.desc())
+    g.article_query = db.session.query(db.Article).filter(db.Article.published == True)
 
 @app.teardown_request
 def shutdown_session(exception=None):
@@ -336,7 +336,7 @@ def search():
             articles = articles.filter(db.Article.labels.any(db.Label.id.in_(label_or)))
         if label_nor:
             articles = articles.filter(~ db.Article.labels.any(db.Label.id.in_(label_nor)))
-        matched_articles = articles.order_by(order(order_by)).all() # Nope, this won't work without the all.  It'll just regard everything which matched, including dupes (which get nuked when /read/ but that's about it).  :(
+        matched_articles = articles.order_by(order(order_by), db.Article.publish_timestamp.desc()).all() # Nope, this won't work without the all.  It'll just regard everything which matched, including dupes (which get nuked when /read/ but that's about it).  :(
         count = len(matched_articles)
         matched_articles = matched_articles[(page-1)*7:(page)*7]
         

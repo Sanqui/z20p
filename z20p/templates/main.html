@@ -53,7 +53,7 @@
             {% endif %}
             <strong>{{page_columns}}</strong>
             {% if page < 1+(num_columns//2) %}
-                <a href="{{url_for_here(page=page+1, _anchor='columns')}}" class="rightarrow">▶</a>
+                <a href="{{url_for_here(page_columns=page_columns+1, _anchor='columns')}}" class="rightarrow">▶</a>
             {% else %}
                 <a class="rightarrow disabledarrow">▶</a>
             {% endif %}

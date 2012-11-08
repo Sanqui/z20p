@@ -223,9 +223,9 @@ def main():
     columns = columns_q[(page_columns-1)*2:page_columns*2]
     num_columns = columns_q.count()
     images = db.session.query(db.Media).filter(db.Media.type=="image").filter(db.Media.rank >= 2) \
-        .order_by(db.Media.timestamp.desc()).limit(8).all()
+        .order_by(db.Media.timestamp.desc()).outerjoin(db.Media.article).filter((db.Article.published == True) | (db.Media.article == None)).limit(8).all()
     videos = db.session.query(db.Media).filter(db.Media.type=="video") \
-        .order_by(db.Media.timestamp.desc()).limit(2).all()
+        .order_by(db.Media.timestamp.desc()).outerjoin(db.Media.article).filter((db.Article.published == True) | (db.Media.article == None)).limit(2).all()
     return render_template("main.html", articles=articles, images=images, columns=columns, videos=videos, page=page, page_columns=page_columns, num_articles = num_articles, num_columns = num_columns)
 
 def get_page(name="page"):
@@ -564,7 +564,7 @@ def media():
     page = get_page()
     
     order = {'asc': asc, 'desc': desc}[form.order.data]
-    query = db.session.query(db.Media).order_by(order(db.Media.timestamp))
+    query = db.session.query(db.Media).order_by(order(db.Media.timestamp)).outerjoin(db.Media.article).filter((db.Article.published == True) | (db.Media.article == None))
     if form.type.data != "both":
         query = query.filter(db.Media.type == form.type.data)
     if form.filter.data == "no_article":
@@ -750,7 +750,7 @@ def edit_user(user_id, name=None):
     
     class AdminEditUserForm(EditUserForm):
         name = TextField('Jméno')
-        rights = IntegerField('Práva')
+        rights = SelectField('Práva', choices={-1: 'Ban', 0: "Guest", 1: 'Uživatel', 2: "VIP", 3: "Redaktor", 4: "Admin"}.items(), coerce=int, default=1)
     
     admin = False
     if g.user.admin:

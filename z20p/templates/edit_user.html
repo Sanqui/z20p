@@ -3,6 +3,7 @@
 {% block title %}úprava - {{user.name}}{% endblock %}
 
 {% block content %}
+    <a href="{{user.url}}">{{icon("arrow-180-medium")}} {{user.name}}</a>
     <h2>Úprava - {{user.name}}</h2>
     <form method="POST" action="/users/{{user.id}}/edit">
       <dl>

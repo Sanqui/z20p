@@ -25,7 +25,7 @@ from werkzeug import secure_filename
 from flask import Flask, render_template, request, flash, redirect, session, abort, url_for, make_response, g
 
 app = Flask('z20p')
-app.secret_key = b"superuniqueandsecret"
+app.config.from_object('z20p.settings')
 
 # TODO split this into file
 from wtforms import Form, BooleanField, TextField, TextAreaField, PasswordField, RadioField, SelectField, SelectMultipleField, BooleanField, HiddenField, SubmitField, validators, ValidationError, widgets
@@ -124,6 +124,7 @@ def log(action='other', thing=None, data=None, thing_id=None, exp=0, active=True
 
 @app.before_request
 def before_request():
+    g.title = app.config['TITLE']
     if not request.path.startswith("/static"): # Yeah no.
         if 'user_id' in session:
             user = db.session.query(db.User).get(session['user_id'])
@@ -159,7 +160,7 @@ def before_request():
             g.kiptop = random.randint(0, 100)
             g.kiptype = random.randint(1,2)
         #g.unread_posts = latest - g.user.last_post_read.id
-    g.article_query = db.session.query(db.Article).filter(db.Article.published == True)
+    g.article_query = db.session.query(db.Article).filter(db.Article.published == True).order_by(db.Article.publish_timestamp.desc())
 
 @app.teardown_request
 def shutdown_session(exception=None):
@@ -245,7 +246,7 @@ def info():
 def search():
     # Oh boy.
     class SearchForm(Form):
-        sort = SelectField("Řazení", choices=[("timestamp", "data publikace"), ("rating", "hodnocení"), ("user_rating", "čtenářského hodnocení"), ("views", "počtu shlédnutí"), ("media", "počtu médií")], default="timestamp")
+        sort = SelectField("Řazení", choices=[("timestamp", "data publikace"), ("rating", "hodnocení"), ("user_rating", "čtenářského hodnocení"), ("views", "počtu shlédnutí"), ("media", "počtu médií")], default="rating")
         order = SelectField("Typ řazení", choices=[("desc", "sestupně"), ("asc", "vzestupně")], default="desc")
         # No submit so it doesn't get struck in the URL
     
@@ -711,18 +712,23 @@ def register():
 
 @app.route("/users", methods=['GET'])
 def users():
+    class AnonsForm(Form):
+        numanons = TextField('Počet', [validators.optional()], default=32)
+    
+    form = AnonsForm(request.args)
+    
     users = db.session.query(db.User) \
         .order_by(db.User.name.asc()).filter(db.User.password != None).all()
     anons = db.session.query(db.User) \
-        .order_by(db.User.laststamp.desc()).filter(db.User.password == None).all()
-    return render_template("users.html", users=users, anons=anons)
+        .order_by(db.User.laststamp.desc()).filter(db.User.password == None).limit(form.numanons.data).all()
+    return render_template("users.html", users=users, anons=anons, form=form)
 
 @app.route("/users/<int:user_id>", methods=['GET'])
 @app.route("/users/<int:user_id>-<path:name>", methods=['GET'])
 def user(user_id, name=None):
     user = db.session.query(db.User).get(user_id)
-    articles = g.article_query.filter(db.Article.author == user).order_by(db.Article.publish_timestamp.desc()).all()
     if not user: abort(404)
+    articles = g.article_query.filter(db.Article.author == user).order_by(db.Article.publish_timestamp.desc()).all()
     page = get_page()
     return render_template('user.html', user=user, page=page, articles=articles)
 
@@ -1153,7 +1159,7 @@ Sitemap: http://www.zabij10prasat.cz/sitemap
 """
 
 if __name__ == "__main__":
-    app.run(host="", port=5631, debug=True, threaded=True)
+    app.run(host="", port=8080, debug=True, threaded=True)
 
 if not app.debug:
     import logging

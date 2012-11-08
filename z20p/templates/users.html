@@ -19,6 +19,9 @@
     </table>
     {% if g.user.admin %}
         <h2>Anonymové (vidí jen admini)</h2>
+        <form method="GET" action="{{url_for_here()}}">
+            Jen {{form.numanons}} posledních anonymů <input type="submit" value="Zobrazit">
+        </form>
         <table><thead><tr><td>Jméno</td><td>Naposledy</td></tr></thead>
         <tbody>
             {% for user in anons %}

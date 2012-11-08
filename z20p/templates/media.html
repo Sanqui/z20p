@@ -5,9 +5,15 @@
 {% block title %}{{title}}{% endblock %}
 
 {% block content %}
+    <div class="linkbar">
+        <a href="{{url_for_here(type='image', page=None)}}">{{icon("images-stack", "")}} Obrázky</a> • 
+        <a href="{{url_for_here(type='video', page=None)}}">{{icon("films", "")}} Videa</a> • 
+        <a href="{{url_for_here(type='both', page=None)}}">{{icon("images-stack", "")}} Obojí</a>
+    </div>
     <h2>{{title}}</h2>
+    
     <form action="/media" method="GET" class="rightalign">
-        Vypisovat {{form.type()}} dle data {{form.order()}}, {{form.filter()}}, od {{form.author()}} <input type="submit" value="Vypsat">
+        Vypisovat dle data {{form.order()}}, {{form.filter()}}, od {{form.author()}} <input type="submit" value="Vypsat">
     </form>
     <article class="mediagrid">
         {% for image in media -%}
@@ -29,7 +35,7 @@
         <form method="POST" action="/media/post?type=video#add">
             {{render_field(video_form.url)}}
             {{render_field(video_form.video_title)}}
-            {{ render_field(video_form.rank) }}
+            {{render_field(video_form.rank)}}
             {{render_field(video_form.submit)}}
         </form>
         Video přidané tímto formulářem nebude přiřazen k žádnému článku.

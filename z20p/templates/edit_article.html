@@ -3,6 +3,7 @@
 {% block title %}Upravit článek{% endblock %}
 
 {% block content %}
+    <a href="{{article.url}}">{{icon("arrow-180-medium")}} {{article.title}}</a>
     <h2>Upravit článek</h2>
     <article>
         <form method="POST" action="{{article.url}}/edit" enctype="multipart/form-data">

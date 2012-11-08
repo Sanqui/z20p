@@ -3,7 +3,7 @@
 <html lang="cs">
     <head>
         <meta charset="utf-8">
-        <title>Zabij 10 prasat » {% block title %}{% endblock %}</title>
+        <title>{{g.title}} » {% block title %}{% endblock %}</title>
         <meta name="description" content="Zabij 10 prasat, recenze a novinky MMORPG, MMOFPS i offline PC, konzolových her a flashových her">
         <meta name="keywords" content="recenze,mmorpg,mmofps,zdarma,online,xbox,playstation,minecraft,3DS,NDS,flash,hry,fantasy,rpg,on,line,free">
         <meta name="author" content="Zabij 10 prasat">
@@ -98,7 +98,14 @@ $(document).ready(function(){
         {%- if g.kip -%}
             <img src="/static/img/kip{{g.kiptype}}.png" title="kip" alt="kip" class="kip" style="position:fixed; top:{{g.kiptop}}%; left:{{g.kipleft}}%;">
         {%- endif -%}
-        <h1 id="logo"><a href="/"><img src="/static/img/prasarny.png" alt="Zabij 10 prasat"></a></h1>
+        <h1 id="logo">
+            <a href="/">
+                <img src="/static/img/prasarny.png" alt="{{g.title}}">
+                {% if g.title != "Zabij 10 prasat" %}
+                    <div id="nameoverlay" style="background-color: #f0f0f8;background-image: url('/static/img/pigs.png'); background-attachment:fixed; position:absolute; top:0px; left:110px; font-size:40px; width:435px; text-align:center; text-shadow: 2px 2px 2px #444; color:rgb(187, 20, 26); letter-spacing:4px;">{{g.title|upper}}</div>
+                {% endif %} 
+            </a>
+        </h1>
         <header>
             <div class="linkbar">
                 {% if not g.user.guest %}

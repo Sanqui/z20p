@@ -8,7 +8,7 @@ ul, ul * {list-style:none;}
 .clear {clear:both;}
 header, #content {width: 55%; margin: auto;}
 #content {min-height:240px;}
-#logo {margin:auto; width:650px;}
+#logo {margin:auto; width:650px; position:relative;}
 #logo img {width:650px; height:115px;}
 #leftmenu, #rightmenu { width:160px; text-align:left;}
 #leftmenu, #rightmenu {position: fixed; top: 150px;  /*width: 12.5%;*/ margin:0; padding:0; list-style:none;}

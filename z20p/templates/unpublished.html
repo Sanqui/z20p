@@ -5,7 +5,7 @@
 {% block content %}
     {% for title, articles in [("Vlastní", mine)]+([("Cizí", unpublished), ("Schválně", intentionally_unpublished)] if g.user.redactor else []) %}
         <h2>{{title}} nepublikované články</h2>
-        <table><thead><tr><td>Titulek</td><td>Znaků</td><td>Reakcí</td><td>Autor</td><td>Datum napsání</td></thead>
+        <table><thead><tr><td>Titulek</td><td>Znaků</td><td>Reakcí</td><td>Autor</td><td>Datum vytvoření</td><td>Poslední editace</td></thead>
         <tbody>
             {% for article in articles %}
                 <tr>
@@ -14,9 +14,10 @@
                     <td>{{article.reactions|count}}</td>
                     <td>{{author(article.author)}}</td>
                     <td>{{article.timestamp|datetime}}</td>
+                    <td>{{article.edit_timestamp|datetime}}</td>
                 </tr>
             {% else %}
-                <tr><td colspan="3">Nic tu není.</td></tr>
+                <tr><td colspan="5">Nic tu není.</td></tr>
             {% endfor %}
         </tbody>
         </table>

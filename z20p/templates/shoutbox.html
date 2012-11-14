@@ -6,7 +6,8 @@
     <div class="shoutbox">
     <form method="POST" action="/shoutbox/post">
         {% if g.user.guest %}
-            Jméno: {{ form.name() }}
+            <span class="nodisplay">NEVYPLŇVAT: {{ form.name() }}</span>
+            Jméno: {{ form.pancakes() }}
         {% endif %}
         {{ form.text(autofocus="autofocus") }}
         {{ form.submit() }}

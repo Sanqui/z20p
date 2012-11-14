@@ -960,7 +960,8 @@ class ShoutboxPostForm(Form):
     submit = SubmitField('Odeslat')
 
 class GuestShoutboxPostForm(ShoutboxPostForm):
-    name = TextField("Jméno", [validators.required()])
+    pancakes = TextField("Jméno", [validators.required()])
+    name = TextField("NEVYPLŇOVAT")
 
 @app.route("/shoutbox", methods=['GET'])
 @app.route("/shoutbox/post", methods=['POST'])
@@ -974,14 +975,16 @@ def shoutbox():
         name = None
         if guest:
             name = guest.name
-        form = GuestShoutboxPostForm(request.form, name=name)
+        form = GuestShoutboxPostForm(request.form, pancakes=name)
     else:
         form = ShoutboxPostForm(request.form)
     
     
     if request.method == 'POST' and form.validate():
         if g.user.guest:
-            user = get_guest(form.name.data)
+            if form.name.data:
+                abort(403)
+            user = get_guest(form.pancakes.data)
         else: user = g.user
         post = db.ShoutboxPost(author=user, text=form.text.data, timestamp=datetime.now(), )
         db.session.add(post)

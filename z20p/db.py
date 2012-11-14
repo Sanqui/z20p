@@ -116,7 +116,7 @@ class Label(Base):
     
     @property
     def url(self):
-        return "/search?labels&noform&{0}_labels={1}".format("other" if self.category=="column" else self.category, self.id)
+        return "/search?labels&{2}noform&{0}_labels={1}".format("other" if self.category=="column" else self.category, self.id, "sort=timestamp&" if self.category == 'column' else "")
 
 class ButtonLabel(Base):
     __tablename__ = 'buttons_labels'

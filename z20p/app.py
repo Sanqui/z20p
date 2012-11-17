@@ -696,9 +696,11 @@ def register():
     form = RegistrationForm(request.form)
     if request.method == 'POST' and form.validate():
         # TODO confirm that username is unique
+        numusers = db.session.query(db.User).filter(db.User.password != None).count()
+        # If we're the first user, automatically mark as admin.
         user = db.User(name=form.name.data, gender=form.gender.data, 
-            rights=1, password=pwhash(form.password.data), timestamp=datetime.now(),
-            laststamp=datetime.now(), last_post_read_id=0)
+            rights=(1 if numusers else 4), password=pwhash(form.password.data), timestamp=datetime.now(),
+            laststamp=datetime.now(), last_post_read_id=None)
         db.session.add(user)
         db.session.commit()
         g.user = user

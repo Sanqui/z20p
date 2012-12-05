@@ -413,7 +413,8 @@ def article(article_id, title=None):
     else:
         name_validators = [validators.optional()]
     class ReactionForm(MediaForm):
-        name = TextField('Jméno', name_validators) # Only for guests
+        name = TextField('NEVYPLŇOVAT')
+        oranges = TextField('Jméno', name_validators) # Only for guests
         text = TextAreaField('Text', [validators.required()])
         rating = rating_field
         image = FileField('Obrázek', [file_allowed(uploads, "Jen obrázky")])
@@ -429,8 +430,10 @@ def article(article_id, title=None):
     #    if media.author == g.user and not media.assigned_article and not media.assigned_reaction:
     #        reaction_form.image.choices.append((media.id, media.title))
     if request.method == 'POST' and request.form['submit'] == reaction_form.submit.label.text and reaction_form.validate():
-        if reaction_form.name.data: # This technically allows logged-in users to post as guests if they hack the input in.
-            user = get_guest(reaction_form.name.data)
+        if reaction_form.name.data:
+            abort(403)
+        if reaction_form.oranges.data: # This technically allows logged-in users to post as guests if they hack the input in.
+            user = get_guest(reaction_form.oranges.data)
         else:
             user = g.user
         rating = None

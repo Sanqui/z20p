@@ -66,7 +66,8 @@
         <h2>Napsat reakci</h2>
         <form method="POST" action="{{article.url}}/post" enctype="multipart/form-data">
           <dl>
-            {% if g.user.guest %} {{ render_field(reaction_form.name) }} {% endif %}
+            <span class="nodisplay">NEVYPLŇOVAT: {{ reaction_form.name() }}<br></span>
+            {% if g.user.guest %} {{ render_field(reaction_form.oranges) }} {% endif %}
             {{ render_field(reaction_form.text) }}
             {% if g.user != article.author and article.rating %} {{ render_field(reaction_form.rating) }} {% endif %}
             {{ render_field(reaction_form.image, accept="image/*") }}

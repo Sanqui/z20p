@@ -47,6 +47,11 @@ menu li { margin: 2px; width:100%; }
 .linkbar a:hover {color:white; text-decoration:underline;}
 .linkbar .logged {float:left;}
 
+.linkbarmiddle {text-align:center; font-size:12px;}
+.linkbarmiddle, .linkbarmiddle a {text-decoration:none;}
+.linkbarmiddle a {font-weight:bold; white-space:nowrap;}
+.linkbarmiddle a:hover {text-decoration:underline;}
+
 .flash {padding:6px; background-color:yellow; margin: 2px 16% 2px 16%; border:1px solid gold; border-radius:12px;}
 
 .pages {text-align:center;}
@@ -195,6 +200,8 @@ article.reaction {}
 article.reaction h1 a {text-decoration:none;}
 article.reaction footer {/*background-color:#fced9a*/}
 
+.ratingform {text-align:right;}
+
 .largeimage {margin:auto; max-width:250px; max-height:200px; border:1px solid black;}
 
 .mediagrid {text-align:center;}
@@ -211,11 +218,12 @@ thead td {border-color: #5F0B0E;
     box-shadow: inset 0px -5px 5px #A20E14;}
 td {border: 1px solid #444;}
 
-.leftcolumn {width:47.5%; float:left; border-right:1px solid #aaa;}
-.rightcolumn {width:47.5%; float:right;}
+.leftcolumn {width:50%; float:left; /*border-right:1px solid #aaa;*/}
+.rightcolumn {width:50%; float:right;}
 .leftfloat {float:left;}
 .rightfloat {float:right;}
 .rightalign {text-align:right;}
+.centeralign {text-align:center;}
 
 .search form {margin-top:22px;}
 .foundsort {margin-top:6px; text-align:right;}

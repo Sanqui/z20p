@@ -43,9 +43,12 @@
     {% endif %}
     {% if g.user.admin %}
         <h3 id="logs">Logy</h3>
+        <form method="GET" action="{{url_for_here()}}">
+            Jen {{form.numlogs}} posledních logů <input type="submit" value="Zobrazit">
+        </form>
         <table>
             <thead><tr><td>id</td><td>Čas</td><td>Aktivní</td><td>Věc</td><td>ID věci</td><td>Akce</td><td>Expů</td><td>Data</td></tr></thead>
-            {% for entry in user.logs %}
+            {% for entry in logs %}
                 <tr><td>{{entry.id}}</td><td class='nobr'>{{entry.timestamp|datetime}}</td><td>{{{True: "Ano", False: "Ne"}[entry.active]}}</td><td>{{entry.thing}}</td><td>{{entry.thing_id or "-"}}</td><td>{{entry.action}}</td><td>{{entry.exp}}</td>
                 <td>
                     {%- if entry.data -%}

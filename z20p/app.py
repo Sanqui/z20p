@@ -382,7 +382,7 @@ def article(article_id, title=None):
     
     class RatingForm(Form):
         rating = rating_field
-        submit = SubmitField('Přidat hodnocení')
+        submit = SubmitField('Ohodnotit')
     
     rating = db.session.query(db.Rating).filter(db.Rating.article == article) \
          .filter(db.Rating.user == g.user).first()
@@ -418,8 +418,8 @@ def article(article_id, title=None):
         text = TextAreaField('Text', [validators.required()])
         rating = rating_field
         image = FileField('Obrázek', [file_allowed(uploads, "Jen obrázky")])
-        article_image = BooleanField("Obrázek ke článku", default=True)
-        title = TextField('Titulek obrázku', [validators.optional()])
+        article_image = BooleanField("Ke článku", default=True)
+        title = TextField('Titulek', [validators.optional()])
         submit = SubmitField('Přidat reakci')
     
     
@@ -718,7 +718,7 @@ def register():
 @app.route("/users", methods=['GET'])
 def users():
     class AnonsForm(Form):
-        numanons = TextField('Počet', [validators.optional()], default=32)
+        numanons = IntegerField('Počet', [validators.optional()], default=32)
     
     form = AnonsForm(request.args)
     
@@ -731,11 +731,15 @@ def users():
 @app.route("/users/<int:user_id>", methods=['GET'])
 @app.route("/users/<int:user_id>-<path:name>", methods=['GET'])
 def user(user_id, name=None):
+    class LogsForm(Form):
+        numlogs = IntegerField('Počet', [validators.optional()], default=64)
+    form = LogsForm(request.args)
     user = db.session.query(db.User).get(user_id)
     if not user: abort(404)
     articles = g.article_query.filter(db.Article.author == user).order_by(db.Article.publish_timestamp.desc()).all()
+    logs = db.session.query(db.LogEntry).filter(db.LogEntry.user == user).order_by(db.LogEntry.timestamp.desc()).limit(form.numlogs.data).all()
     page = get_page()
-    return render_template('user.html', user=user, page=page, articles=articles)
+    return render_template('user.html', user=user, page=page, articles=articles, form=form, logs=logs)
 
 @app.route("/users/<int:user_id>/edit", methods=['GET', 'POST'])
 @app.route("/users/<int:user_id>-<path:name>/edit", methods=['GET', 'POST'])

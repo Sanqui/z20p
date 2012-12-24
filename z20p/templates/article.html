@@ -42,40 +42,38 @@
             {{ display_article(reaction) }}
         {% endfor %}
     </div>
-    <div class="rightcolumn">
-        {% if article.rating %}
-            <h2>Ohodnotit</h2>
-            <form method="POST" action="{{article.url}}/post">
-              <dl>
-                {{ render_field(rating_form.rating) }}
-                {{ rating_form.submit() }}
-              </dl>
-            </form>
-        {% endif %}
-        {% if g.user.admin %} 
-            <h2>Čtenářská hodnocení</h2>
-            (vidí jen admini)
-            <ul>
-                {% for rating in article.ratings %}
-                    <li>{{rating.rating}}/10 - {{author(rating.user)}}
-                {% endfor %}
-            </ul>
-        {% endif %}
-    </div>
-    <div class="leftcolumn">
+    {% if article.rating %}
+        <form method="POST" action="{{article.url}}/post" class="ratingform">
+            <strong>Vaše hodnocení: </strong>
+            {{ rating_form.rating() }}
+            {{ rating_form.submit() }}
+        </form>
+    {% endif %}
+    <article>
         <h2>Napsat reakci</h2>
         <form method="POST" action="{{article.url}}/post" enctype="multipart/form-data">
-          <dl>
+          <dl class="leftcolumn">
             <span class="nodisplay">NEVYPLŇOVAT: {{ reaction_form.name() }}<br></span>
             {% if g.user.guest %} {{ render_field(reaction_form.oranges) }} {% endif %}
             {{ render_field(reaction_form.text) }}
             {% if g.user != article.author and article.rating %} {{ render_field(reaction_form.rating) }} {% endif %}
+          </dl>
+          <dl class="rightcolumn">
             {{ render_field(reaction_form.image, accept="image/*") }}
             {{ render_field(reaction_form.rank) }}
             {{ render_field(reaction_form.article_image) }}
             {{ render_field(reaction_form.title) }}
-            {{ reaction_form.submit() }}
           </dl>
+        <div class="clear centeralign"> {{ reaction_form.submit() }}</div>
         </form>
-    </div>
+    </article>
+    {% if g.user.admin %} 
+    <h2>Čtenářská hodnocení</h2>
+    (vidí jen admini)
+    <ul>
+        {% for rating in article.ratings %}
+            <li>{{rating.rating}}/10 - {{author(rating.user)}}
+        {% endfor %}
+    </ul>
+{% endif %}
 {% endblock %}

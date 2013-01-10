@@ -154,6 +154,11 @@ def before_request():
         g.left_buttons = db.session.query(db.Button).filter(db.Button.location=="left").order_by(db.Button.position).all()
         g.right_buttons = db.session.query(db.Button).filter(db.Button.location=="right").order_by(db.Button.position).all()
         g.button_ids = [button.id for button in g.left_buttons+g.right_buttons] # blargh
+    
+        g.images = db.session.query(db.Media).filter(db.Media.type=="image").filter(db.Media.rank >= 2) \
+            .order_by(db.Media.timestamp.desc()).outerjoin(db.Media.article).filter((db.Article.published == True) | (db.Media.article == None)).limit(8).all()
+        g.videos = db.session.query(db.Media).filter(db.Media.type=="video") \
+            .order_by(db.Media.timestamp.desc()).outerjoin(db.Media.article).filter((db.Article.published == True) | (db.Media.article == None)).limit(2).all()
         g.kip = random.randint(0, 12) == 0
         if g.kip:
             g.kipleft = random.randint(0, 100)
@@ -214,19 +219,15 @@ def page_not_found(e):
 @app.route("/")
 def main():
     page = get_page()
-    page_columns = get_page("page_columns")
+    page_columns = page
     column_labels = db.session.query(db.Label).filter(db.Label.category == "column").all()
     articles_q = g.article_query.order_by(db.Article.publish_timestamp.desc()).filter(~ db.Article.labels.any(db.Label.id.in_([l.id for l in column_labels])))
     articles = articles_q[(page-1)*3:page*3]
     num_articles = articles_q.count()
     columns_q = g.article_query.order_by(db.Article.publish_timestamp.desc()).filter(db.Article.labels.any(db.Label.id.in_([l.id for l in column_labels])))
-    columns = columns_q[(page_columns-1)*2:page_columns*2]
+    columns = columns_q[(page_columns-1)*3:page_columns*3]
     num_columns = columns_q.count()
-    images = db.session.query(db.Media).filter(db.Media.type=="image").filter(db.Media.rank >= 2) \
-        .order_by(db.Media.timestamp.desc()).outerjoin(db.Media.article).filter((db.Article.published == True) | (db.Media.article == None)).limit(8).all()
-    videos = db.session.query(db.Media).filter(db.Media.type=="video") \
-        .order_by(db.Media.timestamp.desc()).outerjoin(db.Media.article).filter((db.Article.published == True) | (db.Media.article == None)).limit(2).all()
-    return render_template("main.html", articles=articles, images=images, columns=columns, videos=videos, page=page, page_columns=page_columns, num_articles = num_articles, num_columns = num_columns)
+    return render_template("main.html", articles=articles, columns=columns, page=page, page_columns=page_columns, num_articles = num_articles, num_columns = num_columns)
 
 def get_page(name="page"):
     try: # This needs more magic...
@@ -703,15 +704,16 @@ def register():
         # If we're the first user, automatically mark as admin.
         user = db.User(name=form.name.data, gender=form.gender.data, 
             rights=(1 if numusers else 4), password=pwhash(form.password.data), timestamp=datetime.now(),
-            laststamp=datetime.now(), last_post_read_id=None)
+            laststamp=datetime.now(), last_post_read_id=None, user_agent=g.user.user_agent)
         db.session.add(user)
         db.session.commit()
         g.user = user
         g.user.ip = request.remote_addr
         log('create', user)
         db.session.commit()
+        g.user_id = user.id
         flash("Jste zaregistrováni.")
-        return redirect("/login")
+        return redirect("/")
     
     return render_template("register.html", form=form)
 

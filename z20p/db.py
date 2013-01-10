@@ -240,7 +240,7 @@ class Article(Base):
     is_article=True
     @property
     def url(self):
-        u = "/articles/"+str(self.id)+"-"+self.title.replace(" ", "_").replace("?", "").lstrip("/").replace("/", "_")
+        u = "/articles/"+str(self.id)+"-"+self.title.replace(" ", "_").replace("?", "").replace("#","").lstrip("/").replace("/", "_")
         return u
     
     @property

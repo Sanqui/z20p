@@ -11,7 +11,7 @@ header, #content {width: 55%; margin: auto;}
 #logo {margin:auto; width:650px; position:relative;}
 #logo img {width:650px; height:115px;}
 #leftmenu, #rightmenu { width:160px; text-align:left;}
-#leftmenu, #rightmenu {position: fixed; top: 150px;  /*width: 12.5%;*/ margin:0; padding:0; list-style:none;}
+#leftmenu, #rightmenu {position: absolute; top: 150px;  /*width: 12.5%;*/ margin:0; padding:0; list-style:none;}
 #leftmenu {right: 80.5%;}
 #rightmenu {left: 79.5%;}
 #leftmenu li, #rightmenu li {width:100%; position:relative;}
@@ -189,6 +189,7 @@ article.crop .adminline {display:none;}*/
 .mediagallery .mediabox.rank-1 .image, .mediagrid .mediabox.rank-1 .image {   border-color:gray !important;}
 
 .mediabox {max-width:200px; display:inline-block; text-align:center; white-space: normal; vertical-align:top; margin-right:2px;}
+menu .mediabox {width:100% !important;}
 .mediabox dd {margin-left:0;}
 
 .imagewrap {position:relative; max-width:auto; display:inline-block; white-space:nowrap; }
@@ -224,6 +225,7 @@ td {border: 1px solid #444;}
 .rightfloat {float:right;}
 .rightalign {text-align:right;}
 .centeralign {text-align:center;}
+.centermargin {margin:auto;}
 
 .search form {margin-top:22px;}
 .foundsort {margin-top:6px; text-align:right;}

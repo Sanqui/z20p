@@ -45,13 +45,15 @@
         {% if article.title %}
             <h1><a href="{{article.url}}">{{ article.title }}</a></h1>
         {% endif %}
-        {% if not crop %}
-            {% if not (cut or crop) or article.text|striptags|length <= 2100 %}
+        {% if True %}
+            {% if not (cut or crop) or article.text|striptags|length <= (2100 if cut else 300) %}
                 {{(("<p>"|safe)+(article.text|safe)|replace("\n", "\n<p>"|safe))|clean|safe}}
-            {% else %}
-                
+            {% elif cut %}
                 {{(("<p>"|safe)+(article.text)|truncate(1000)|safe|replace("\n", "\n<p>"|safe))|clean|safe}}
-                <p>…<a href="{{article.url}}">celý článek</a>
+                {% if cut %}<p><a href="{{article.url}}">→ Celý článek</a>{% endif %}
+            {% elif crop %}
+                {{(("<p>"|safe)+(article.text)|striptags|truncate(300)|safe|replace("\n", "  "|safe))|clean|safe}}
+                {% if cut %}<p><a href="{{article.url}}">→ Celý článek</a>{% endif %}
             {% endif %}
         {% else %}
             <ul class="platforms">

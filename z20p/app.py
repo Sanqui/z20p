@@ -222,10 +222,10 @@ def main():
     page_columns = page
     column_labels = db.session.query(db.Label).filter(db.Label.category == "column").all()
     articles_q = g.article_query.order_by(db.Article.publish_timestamp.desc()).filter(~ db.Article.labels.any(db.Label.id.in_([l.id for l in column_labels])))
-    articles = articles_q[(page-1)*3:page*3]
+    articles = articles_q[(page-1)*6:page*6]
     num_articles = articles_q.count()
     columns_q = g.article_query.order_by(db.Article.publish_timestamp.desc()).filter(db.Article.labels.any(db.Label.id.in_([l.id for l in column_labels])))
-    columns = columns_q[(page_columns-1)*3:page_columns*3]
+    columns = columns_q[(page_columns-1)*6:page_columns*6]
     num_columns = columns_q.count()
     return render_template("main.html", articles=articles, columns=columns, page=page, page_columns=page_columns, num_articles = num_articles, num_columns = num_columns)
 

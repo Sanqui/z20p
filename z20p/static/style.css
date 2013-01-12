@@ -124,7 +124,7 @@ article .image {
     max-width:172px; max-height:250px;
     border: 1px solid black;
     float:left;
-    margin:0px 5px 3px 0px;
+    margin:0px 5px 0px 0px;
     clear:both;}
 article.crop .image {width:106px;height:87px;}
 article.crop .platforms li {display:inline; padding-left:2px;}
@@ -135,7 +135,7 @@ article footer {display:block;
     border-radius:6px; -moz-border-radius:6px;
     background-color:#dcdee4;
     padding:1px 5px 1px 5px;}
-article.crop footer {clear:right; margin-left: 112px;}
+article.crop footer {clear:right;/* margin-left: 112px;*/}
 article.crop footer .stats {clear:none;}
 
 article.crop .labels {display:none;}

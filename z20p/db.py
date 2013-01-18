@@ -133,7 +133,7 @@ class Button(Base):
     __singlename__ = 'button'
     
     id = Column(Integer, primary_key=True, nullable=False)
-    location = Column(Enum("left", "right"), nullable=False)
+    location = Column(Enum("left", "right", "top"), nullable=False)
     position = Column(Integer, nullable=False)
     name = Column(Unicode(256), nullable=False)
     icon = Column(Unicode(256))

@@ -10,6 +10,9 @@ header, #content {width: 55%; margin: auto;}
 #content {min-height:240px;}
 #logo {margin:auto; width:650px; position:relative;}
 #logo img {width:650px; height:115px;}
+
+#topicons {position:absolute; right:8px; top:4px;}
+
 #leftmenu, #rightmenu { width:160px; text-align:left;}
 #leftmenu, #rightmenu {position: absolute; top: 150px;  /*width: 12.5%;*/ margin:0; padding:0; list-style:none;}
 #leftmenu {right: 80.5%;}
@@ -189,7 +192,8 @@ article.crop .adminline {display:none;}*/
 .mediagallery .mediabox.rank-1 .image, .mediagrid .mediabox.rank-1 .image {   border-color:gray !important;}
 
 .mediabox {max-width:200px; display:inline-block; text-align:center; white-space: normal; vertical-align:top; margin-right:2px;}
-menu .mediabox {width:100% !important;}
+menu .mediabox { width:100% !important; margin-top:18px;}
+menu .mediabox .image {max-width:152px !important;}
 .mediabox dd {margin-left:0;}
 
 .imagewrap {position:relative; max-width:auto; display:inline-block; white-space:nowrap; }
@@ -218,6 +222,8 @@ thead td {border-color: #5F0B0E;
     -webkit-box-shadow: inset 0px -5px 5px #A20E14;
     box-shadow: inset 0px -5px 5px #A20E14;}
 td {border: 1px solid #444;}
+
+.w16 {width:16px;}
 
 .leftcolumn {width:50%; float:left; /*border-right:1px solid #aaa;*/}
 .rightcolumn {width:50%; float:right;}

@@ -47,7 +47,7 @@
         {% endif %}
         {% if True %}
             {% if not (cut or crop) or article.text|striptags|length <= (2100 if cut else 300) %}
-                {{(("<p>"|safe)+(article.text|safe)|replace("\n", "\n<p>"|safe))|clean|safe}}
+                {{(("<p>"|safe)+((article.text if not crop else article.text|striptags)|safe)|replace("\n", "\n<p>"|safe))|clean|safe}}
             {% elif cut %}
                 {{(("<p>"|safe)+(article.text)|truncate(1000)|safe|replace("\n", "\n<p>"|safe))|clean|safe}}
                 {% if cut %}<p><a href="{{article.url}}">→ Celý článek</a>{% endif %}
@@ -192,8 +192,8 @@
         {%- endif -%}
     </div>
 {%- endmacro %}
-{% macro icon(name, alt, title="") -%}
-<img src="{{'/static/icons/'+name+'.png' if '/' not in name else name}}" alt="{{alt}}" title="{{alt if title=='' else title}}" class="icon" width=16 height=16>
+{% macro icon(name, alt, title="", w=16, h=16) -%}
+<img src="{{'/static/icons/'+name+'.png' if '/' not in name else name}}" alt="{{alt}}" title="{{alt if title=='' else title}}" class="icon" width={{w}} height={{h}}>
 {%- endmacro %}
 {% macro author(user, clip=False) -%}
 <span class="author"><a href="{{user.url if (not user.guest or g.user.admin) else '#'}}" class="iconlink">{{icon(user.minipic, user.name) if user.minipic else icon('user-silhouette', user.name or user.ip) if not user.is_bot else icon('computer', user.ip)}}{{" " if not clip}}</a>

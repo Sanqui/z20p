@@ -107,6 +107,11 @@ $(document).ready(function(){
             </a>
         </h1>
         <header>
+            <div id="topicons">
+                {% for button in g.buttons['top'] %}
+                    <a href="{{button.url}}">{{icon(button.icon, button.name, button.name, 32, 32)}}</a>
+                {% endfor %}
+            </div>
             <div class="linkbar">
                 {% if not g.user.guest %}
                     <div class="logged">{{author(g.user)}}</div>
@@ -136,15 +141,15 @@ $(document).ready(function(){
                 {% endfor %}
             {% endwith %}
             <menu id="leftmenu">
-                {{ render_buttons(g.left_buttons) }}
-                {{ render_media_box(g.images[0], rel="images", icons=False, ) }}
+                {{ render_buttons(g.buttons['left']) }}
+                {{ render_media_box(g.images[0], rel="left", icons=False, ) }}
                 <a href="/media"">{{icon("images-stack", "")}} Všechny obrázky</a>
             </menu>
         
             <menu id="rightmenu">
-                {{ render_buttons(g.right_buttons) }}
+                {{ render_buttons(g.buttons['right']) }}
                 {% if g.videos %}
-                    <div class="centermargin">{{ render_media_box(g.videos[0], rel="images", icons=False) }}</div>
+                    <div class="centermargin">{{ render_media_box(g.videos[0], rel="right", icons=False) }}</div>
                     <a href="/media?type=video&filter=all">{{icon("films", "")}} Všechna videa</a>
                 {% endif %}
             </menu>

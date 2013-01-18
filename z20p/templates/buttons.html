@@ -4,9 +4,11 @@
 
 {% block content %}
     <h2>Tlačítka</h2>
-    {% for side, buttons in (('left', g.left_buttons), ('right', g.right_buttons))%}
+    {% for side in ('top', 'left', 'right')%}
+        {% set buttons = g.buttons[side] %}
         <div class="{{side}}column">
-            <table><thead><tr><td>pos</td><td>^</td><td>v</td><td>i</td><td>tlačítko</td><td>štítků</td></tr></thead>
+            <h3>{{side}}</h3>
+            <table><thead><tr><td class="w16">pos</td><td class="w16">^</td><td class="w16">v</td><td class="w16">i</td><td>tlačítko</td><td>štítků</td></tr></thead>
                 {% for button in buttons %}
                     <tr>
                         <td>{{button.position}}</td>

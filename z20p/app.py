@@ -19,7 +19,7 @@ import random
 UPLOADS_DIR = "z20p/static/uploads/"
 
 def pwhash(string):
-    return hashlib.sha224(string+"***REMOVED***").hexdigest()
+    return hashlib.sha224((string+u"***REMOVED***").encode('utf-8')).hexdigest()
     
 from werkzeug import secure_filename
 from flask import Flask, render_template, request, flash, redirect, session, abort, url_for, make_response, g
@@ -151,10 +151,12 @@ def before_request():
             if latest:
                 g.unread = latest.id - (g.user.last_post_read_id or 0)
         # Templating stuff.
-        g.left_buttons = db.session.query(db.Button).filter(db.Button.location=="left").order_by(db.Button.position).all()
-        g.right_buttons = db.session.query(db.Button).filter(db.Button.location=="right").order_by(db.Button.position).all()
-        g.button_ids = [button.id for button in g.left_buttons+g.right_buttons] # blargh
-    
+        button_enum = ('left', 'right', 'top')
+        g.buttons = {}
+        for b in button_enum:
+            g.buttons[b] = db.session.query(db.Button).filter(db.Button.location==b).order_by(db.Button.position).all()
+        g.button_ids = [button.id for button in g.buttons['left']+g.buttons['right']] # blargh
+        
         g.images = db.session.query(db.Media).filter(db.Media.type=="image").filter(db.Media.rank >= 2) \
             .order_by(db.Media.timestamp.desc()).outerjoin(db.Media.article).filter((db.Article.published == True) | (db.Media.article == None)).limit(8).all()
         g.videos = db.session.query(db.Media).filter(db.Media.type=="video") \
@@ -1017,12 +1019,11 @@ def buttons(): # QUICK 'N DIRTY OKAY.
         icon = TextField('Ikonka')
         name = TextField('Jméno', [validators.required()])
         url = TextField('URL (ne pokud bude mít štítky)')
-        location = SelectField('Umístění', choices=[("left","vlevo"),("right","vpravo")], default="left")
+        location = SelectField('Umístění', choices=[("left","vlevo"),("right","vpravo"),("top","nahoře")], default="left")
         submit = SubmitField('Přidat tlačítko')
     form = ButtonForm(request.form)
     if request.method == 'POST' and form.validate():
-        if form.location.data == "left": count=len(g.left_buttons)
-        else: count = len(g.right_buttons)
+        count=len(g.buttons[form.location.data])
         button = db.Button(icon=form.icon.data or None, name=form.name.data, url=form.url.data or None, location=form.location.data, position=count, function="")
         db.session.add(button)
         flash('Tlačítko "'+button.name+'" přidáno', "success")
@@ -1031,7 +1032,7 @@ def buttons(): # QUICK 'N DIRTY OKAY.
         move = request.args['move']
         id = request.args['id']
         button = db.session.query(db.Button).get(int(id))
-        thisside = {'left':g.left_buttons, 'right':g.right_buttons}[button.location] # WOW.
+        thisside = g.buttons[button.location] # WOW. # LESS WOW
         if move == "up":
             thisside[button.position-1].position += 1
             button.position -= 1
@@ -1041,8 +1042,11 @@ def buttons(): # QUICK 'N DIRTY OKAY.
     
     db.session.commit()
     
-    g.left_buttons = db.session.query(db.Button).filter(db.Button.location=="left").order_by(db.Button.position).all()
-    g.right_buttons = db.session.query(db.Button).filter(db.Button.location=="right").order_by(db.Button.position).all()
+    # copypasta code XXX
+    button_enum = ('left', 'right', 'top')
+    g.buttons = {}
+    for b in button_enum:
+        g.buttons[b] = db.session.query(db.Button).filter(db.Button.location==b).order_by(db.Button.position).all()
     
     return render_template("buttons.html", form=form)
 
@@ -1104,7 +1108,7 @@ def edit_button(button_id): # quick and dirty 2: electric boogaloo
 def delete_button(button_id): # quick and dirty 3: dark dawn
     button = db.session.query(db.Button).get(button_id)
     if not button: abort(404)
-    thisside = {'left':g.left_buttons, 'right':g.right_buttons}[button.location]
+    thisside = g.buttons[button.location]
     for i in range(button.position, len(thisside)):
         thisside[i].position -= 1
     db.session.delete(button)

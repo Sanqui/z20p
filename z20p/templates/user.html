@@ -34,6 +34,24 @@
         </dl>
         <p class="clear">{{user.profile|replace('\n','<p>')|clean|safe or '-'}}
     </article>
+    {% if user.minecraft_name %}
+        <article>
+            <img src="/static/img/32/minecraft.png" class="rightfloat">
+            <h3>Minecraft - {{user.minecraft_name}}</h3>
+            <ul>
+                {% if minecraft_user %}
+                    <li>Hraje již od {{minecraft_user.joins[0].date}}
+                    <li>Hrál{{gr(user.gender)}} {{minecraft_user.joins|count}}× na našem serveru, naposledy dne {{minecraft_user.joins[-1].date}}
+                    <!--<li>Promluvil{{gr(user.gender)}} {{minecraft_user.chat_lines}}×.-->
+                    <li>Zničil{{gr(user.gender)}} {{minecraft_user.blocks_destroyed}} kostek.
+                    <li>Položil{{gr(user.gender)}} {{minecraft_user.blocks_placed}} kostek.
+                    <li>Zemřel{{gr(user.gender)}} {{minecraft_user.death_count}}×.
+                {% else %}
+                    <li>Nikdy nehrál{{gr(user.gender)}} na našem serveru.  :(
+                {% endif %}
+            </ul>
+        </article>
+    {% endif %}
     {% if articles %}
         <h3 id="articles">Články</h3>
         {% for article in articles[(page-1)*5:page*5] %}

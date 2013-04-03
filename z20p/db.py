@@ -58,6 +58,7 @@ class User(Base):
     profile = Column(UnicodeText)
     last_url = Column(Unicode(256))
     last_post_read_id = Column(Integer, ForeignKey('shoutbox_posts.id'))
+    minecraft_name = Column(Unicode(64))
     
     @property
     def guest(self):

@@ -4,6 +4,7 @@ from __future__ import absolute_import, unicode_literals, print_function
 #from z20p import db
 #import db
 from z20p import db
+from z20p import db_minecraft as db_mc
 from sqlalchemy import or_, and_, asc, desc, func
 
 from lxml.html.clean import Cleaner
@@ -740,10 +741,16 @@ def user(user_id, name=None):
     form = LogsForm(request.args)
     user = db.session.query(db.User).get(user_id)
     if not user: abort(404)
+    
+    minecraft_user = None
+    if user.minecraft_name:
+        minecraft_user = db_mc.session.query(db_mc.HawkeyePlayer).filter(db_mc.HawkeyePlayer.player == user.minecraft_name).scalar()
+    
     articles = g.article_query.filter(db.Article.author == user).order_by(db.Article.publish_timestamp.desc()).all()
-    logs = db.session.query(db.LogEntry).filter(db.LogEntry.user == user).order_by(db.LogEntry.timestamp.desc()).limit(form.numlogs.data).all()
+    logs = []
+    if g.user.admin: logs = db.session.query(db.LogEntry).filter(db.LogEntry.user == user).order_by(db.LogEntry.timestamp.desc()).limit(form.numlogs.data).all()
     page = get_page()
-    return render_template('user.html', user=user, page=page, articles=articles, form=form, logs=logs)
+    return render_template('user.html', user=user, page=page, articles=articles, form=form, logs=logs, minecraft_user=minecraft_user)
 
 @app.route("/users/<int:user_id>/edit", methods=['GET', 'POST'])
 @app.route("/users/<int:user_id>-<path:name>/edit", methods=['GET', 'POST'])
@@ -759,6 +766,7 @@ def edit_user(user_id, name=None):
         confirm = PasswordField('Heslo znovu', [validators.optional()])
         gender = SelectField('Pohlaví', choices=[("m", "ten"), ("f", "ta"), ("-", "to")])
         minipic = TextField('URL ikonky', [validators.optional()])
+        minecraft_name = TextField('Jméno v Minecraftu', [validators.optional()])
         profile = TextAreaField('Profil', [validators.optional()])
     
     class AdminEditUserForm(EditUserForm):
@@ -782,6 +790,7 @@ def edit_user(user_id, name=None):
             user.password = pwhash(form.password.data)
         user.gender = form.gender.data
         user.minipic = form.minipic.data
+        user.minecraft_name = form.minecraft_name.data
         user.profile = form.profile.data
         log('edit', user)
         db.session.commit()
@@ -1111,6 +1120,8 @@ def delete_button(button_id): # quick and dirty 3: dark dawn
     thisside = g.buttons[button.location]
     for i in range(button.position, len(thisside)):
         thisside[i].position -= 1
+    for label in button.labels:
+        db.session.delete(label)
     db.session.delete(button)
     db.session.commit()
     flash('Tlačítko "'+button.name+'" odstraněno')

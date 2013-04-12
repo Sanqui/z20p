@@ -1,6 +1,7 @@
 *.pyc
 *~
 db
+db_mc
 flask.log
 z20p/db
 z20p/static/uploads/*

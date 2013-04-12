@@ -743,9 +743,11 @@ def user(user_id, name=None):
     if not user: abort(404)
     
     minecraft_user = None
-    if user.minecraft_name:
-        minecraft_user = db_mc.session.query(db_mc.HawkeyePlayer).filter(db_mc.HawkeyePlayer.player == user.minecraft_name).scalar()
-    
+    try:
+        if user.minecraft_name:
+            minecraft_user = db_mc.session.query(db_mc.HawkeyePlayer).filter(db_mc.HawkeyePlayer.player == user.minecraft_name).scalar()
+    except Exception: pass
+        
     articles = g.article_query.filter(db.Article.author == user).order_by(db.Article.publish_timestamp.desc()).all()
     logs = []
     if g.user.admin: logs = db.session.query(db.LogEntry).filter(db.LogEntry.user == user).order_by(db.LogEntry.timestamp.desc()).limit(form.numlogs.data).all()

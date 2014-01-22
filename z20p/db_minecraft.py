@@ -26,7 +26,7 @@ class HawkeyePlayer(Base):
     
     @property
     def joins(self):
-        return session.query(HawkeyeAction).filter(HawkeyeAction.action == 5, HawkeyeAction.player_id == self.player_id).order_by(HawkeyeAction.date).all()
+        return session.query(HawkeyeAction).filter(HawkeyeAction.action == 5, HawkeyeAction.player_id == self.player_id).order_by(HawkeyeAction.timestamp).all()
     @property
     def blocks_placed(self):
         return session.query(HawkeyeAction).filter(HawkeyeAction.action == 1, HawkeyeAction.player_id == self.player_id).count()
@@ -54,7 +54,7 @@ class HawkeyeAction(Base):
     __tablename__ = 'hawkeye'
     __singlename__ = 'hawk_actions'
     data_id = Column(Integer, primary_key=True)
-    date = Column(Unicode(255), nullable=False)
+    timestamp = Column(DateTime, nullable=False)
     player_id = Column(Integer, ForeignKey('hawk_players.player_id'), nullable=False)
     player = relationship("HawkeyePlayer")
     action = Column(Integer, nullable=False) # enum

@@ -37,19 +37,25 @@
     {% if user.minecraft_name %}
         <article>
             <img src="/static/img/32/minecraft.png" class="rightfloat">
-            <h3>Minecraft - {{user.minecraft_name}}</h3>
-            <ul>
-                {% if minecraft_user %}
-                    <li>Hraje již od {{minecraft_user.joins[0].date}}
-                    <li>Hrál{{gr(user.gender)}} {{minecraft_user.joins|count}}× na našem serveru, naposledy dne {{minecraft_user.joins[-1].date}}
-                    <!--<li>Promluvil{{gr(user.gender)}} {{minecraft_user.chat_lines}}×.-->
-                    <li>Zničil{{gr(user.gender)}} {{minecraft_user.blocks_destroyed}} kostek.
-                    <li>Položil{{gr(user.gender)}} {{minecraft_user.blocks_placed}} kostek.
-                    <li>Zemřel{{gr(user.gender)}} {{minecraft_user.death_count}}×.
-                {% else %}
-                    <li>Nikdy nehrál{{gr(user.gender)}} na našem serveru.  :(
-                {% endif %}
-            </ul>
+            <h3><img src="https://minotar.net/avatar/{{user.minecraft_name}}/32" class="icon"> Minecraft - {{user.minecraft_name}}</h3>
+            {% if mc_broke %}
+                <p>Připojení k MC databázi se nezdařilo :(
+            {% else %}
+                <ul>
+                    {% if minecraft_user %}
+                        <li>Hraje již od {{minecraft_user.joins[0].timestamp|datetime}}
+                        <li>Hrál{{gr(user.gender)}} {{minecraft_user.joins|count}}× na našem serveru, naposledy dne {{minecraft_user.joins[-1].timestamp|datetime}}
+                        <!--<li>Promluvil{{gr(user.gender)}} {{minecraft_user.chat_lines}}×.-->
+                        <li>Zničil{{gr(user.gender)}} {{minecraft_user.blocks_destroyed}} kostek.
+                        <li>Položil{{gr(user.gender)}} {{minecraft_user.blocks_placed}} kostek.
+                        <li>Zemřel{{gr(user.gender)}} {{minecraft_user.death_count}}×.
+                    {% else %}
+                        <li>Nikdy nehrál{{gr(user.gender)}} na našem serveru.  :(
+                    {% endif %}
+                </ul>
+            {% endif %}
+            <a href="/articles/417-Nav%C5%A1tivte_n%C3%A1%C5%A1_Minecraft_server!">Navštivte náš Minecraft server!</a>
+            <div style="clear"></div>
         </article>
     {% endif %}
     {% if articles %}

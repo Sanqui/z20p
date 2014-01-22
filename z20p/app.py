@@ -743,16 +743,18 @@ def user(user_id, name=None):
     if not user: abort(404)
     
     minecraft_user = None
+    mc_works = True
     try:
         if user.minecraft_name:
             minecraft_user = db_mc.session.query(db_mc.HawkeyePlayer).filter(db_mc.HawkeyePlayer.player == user.minecraft_name).scalar()
-    except Exception: pass
+    except Exception: 
+        mc_works = False
         
     articles = g.article_query.filter(db.Article.author == user).order_by(db.Article.publish_timestamp.desc()).all()
     logs = []
     if g.user.admin: logs = db.session.query(db.LogEntry).filter(db.LogEntry.user == user).order_by(db.LogEntry.timestamp.desc()).limit(form.numlogs.data).all()
     page = get_page()
-    return render_template('user.html', user=user, page=page, articles=articles, form=form, logs=logs, minecraft_user=minecraft_user)
+    return render_template('user.html', user=user, page=page, articles=articles, form=form, logs=logs, minecraft_user=minecraft_user, mc_works=mc_works)
 
 @app.route("/users/<int:user_id>/edit", methods=['GET', 'POST'])
 @app.route("/users/<int:user_id>-<path:name>/edit", methods=['GET', 'POST'])

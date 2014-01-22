@@ -30,6 +30,7 @@ app.config.from_object('z20p.settings')
 
 # TODO split this into file
 from wtforms import Form, BooleanField, TextField, TextAreaField, PasswordField, RadioField, SelectField, SelectMultipleField, BooleanField, HiddenField, SubmitField, validators, ValidationError, widgets
+#validators.Required.message = u"Toto pole je vyžadováno."
 from flask.ext.wtf import FileField, file_allowed, file_required
 from flask.ext.wtf.html5 import IntegerField
 from flask.ext.uploads import UploadSet, IMAGES

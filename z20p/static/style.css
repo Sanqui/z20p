@@ -201,6 +201,7 @@ menu .mediabox .image {max-width:152px !important;}
 
 #gallery-upload input {max-width:60%;}
 
+
 article.reaction {}
 article.reaction h1 a {text-decoration:none;}
 article.reaction footer {/*background-color:#fced9a*/}
@@ -252,6 +253,23 @@ td {border: 1px solid #444;}
 .dateright {float:right; color:#999;}
 
 textarea {width:90%; min-height:172px;}
+input[type="submit"] { border:1px solid #aaa; background:white; padding:2px; color:black; text-decoration:none;
+    border-radius:4px;
+    -moz-box-shadow: inset 0px -5px 5px #ddd;
+    -webkit-box-shadow: inset 0px -5px 5px #ddd;
+    box-shadow: inset 0px -5px 5px #ddd;
+    
+    -webkit-transition: all 0.2s ease-in-out;
+       -moz-transition: all 0.2s ease-in-out;
+         /*-o-transition: all 0.2s ease-in-out;*/
+            transition: all 0.2s ease-in-out;
+}
+input[type="submit"]:hover {
+background-color:rgb(187, 20, 26); color:white; border-color: #5F0B0E;
+    -moz-box-shadow: inset 0px -5px 5px #A20E14;
+    -webkit-box-shadow: inset 0px -5px 5px #A20E14;
+    box-shadow: inset 0px -5px 5px #A20E14;
+}
 
 body > footer p {clear:both; text-align:right; font-size:10px;}
 

@@ -1,6 +1,6 @@
 {% extends "_base.html" %}
 
-{% set title = {"both":"Média", 'image':'Obrázky', 'video':'Videa'}[form.type.data] %}
+{% set title = {"both":"Obrázky a videa", 'image':'Obrázky', 'video':'Videa'}[form.type.data] %}
 
 {% block title %}{{title}}{% endblock %}
 
@@ -21,7 +21,7 @@
         {%- endfor %}
     </article>
     {{render_pages(page, count, per_page=30)}}
-    {% if form.type.data == 'image' %}
+    {% if form.type.data in ('image', "both")  %}
         <h2 id="add">Nahrát obrázek</h2>
         <form method="POST" action="/media/post?type=image#add" enctype="multipart/form-data">
             {{render_field(upload_form.image)}}
@@ -30,13 +30,14 @@
             {{upload_form.submit()}}
         </form>
         Obrázek přidaný tímto formulářem nebude přiřazen k žádnému článku.
-    {% elif form.type.data == 'video' %}
+    {% endif %}
+    {% if form.type.data in ("video", "both") %}
         <h2 id="add">Přidat video</h2>
         <form method="POST" action="/media/post?type=video#add">
             {{render_field(video_form.url)}}
             {{render_field(video_form.video_title)}}
             {{render_field(video_form.rank)}}
-            {{render_field(video_form.submit)}}
+            {{video_form.submit()}}
         </form>
         Video přidané tímto formulářem nebude přiřazen k žádnému článku.
     {% endif %}

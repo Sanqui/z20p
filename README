@@ -1,0 +1,12 @@
+This is the Czech video game review website Zabij 10 prasat, live at:
+http://zabij10prasat.cz
+
+It's essentially a specialized CMS written in Flask (Python microframework)
+with support for labels (tags), media, ratings, reactions, and more.
+It's unlikely that more progress will be made on the software.
+
+Apologies about the password storage.  I know better today, and hardly
+anybody registered, anyway.
+
+The name z20p comes from it being the second version of Z10P (Zabij 10 prasat).
+The first version was written in PHP.

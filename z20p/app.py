@@ -18,9 +18,10 @@ import subprocess
 import random
 
 UPLOADS_DIR = "z20p/static/uploads/"
+SALT = open("salt").read()
 
 def pwhash(string):
-    return hashlib.sha224((string+u"***REMOVED***").encode('utf-8')).hexdigest()
+    return hashlib.sha224((string+SALT).encode('utf-8')).hexdigest()
     
 from werkzeug import secure_filename
 from flask import Flask, render_template, request, flash, redirect, session, abort, url_for, make_response, g
